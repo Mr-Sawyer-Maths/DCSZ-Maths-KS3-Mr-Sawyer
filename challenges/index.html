@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maths Side Quests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a dark ink masthead with the tabs, then a quest log of cards with a coloured spine per kind. Marigold is reserved for points and this week's picks. */
+:root{
+  --paper:#f2f4f9; --card:#ffffff; --ink:#141b30; --muted:#566080; --line:#d7dcea;
+  --mast:#141b30; --mast-ink:#f2f4f9; --mast-muted:#a9b2cc;
+  --gold:#f2a900; --gold-ink:#3d2a00; --gold-soft:#fff3d1;
+  --ok:#17794e; --ok-soft:#dcf3e7; --wait:#9a5b00; --wait-soft:#ffecc7; --bad:#b3261e;
+  --k-level:#2b63d9; --k-puzzle:#6a45c4; --k-explore:#17794e; --k-play:#c82d68; --k-compete:#b86100; --k-create:#0b7f8c; --k-report:#5b6b00;
+  --display:"Bricolage Grotesque","Trebuchet MS","Segoe UI",sans-serif;
+  --body:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#0e1322; --card:#182036; --ink:#e9ecf6; --muted:#9aa4c2; --line:#2b3552;
+    --mast:#090d18; --mast-ink:#f2f4f9; --mast-muted:#9aa4c2;
+    --gold:#f5b829; --gold-ink:#2b1d00; --gold-soft:#3a2f10;
+    --ok:#5fd19b; --ok-soft:#143526; --wait:#f0b64e; --wait-soft:#3a2c0d; --bad:#ff8a80;
+    --k-level:#7ea6ff; --k-puzzle:#b095ff; --k-explore:#5fd19b; --k-play:#ff7fae; --k-compete:#f0a04e; --k-create:#5cc8d4; --k-report:#c3d65c;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#0e1322; --card:#182036; --ink:#e9ecf6; --muted:#9aa4c2; --line:#2b3552;
+  --mast:#090d18; --mast-ink:#f2f4f9; --mast-muted:#9aa4c2;
+  --gold:#f5b829; --gold-ink:#2b1d00; --gold-soft:#3a2f10;
+  --ok:#5fd19b; --ok-soft:#143526; --wait:#f0b64e; --wait-soft:#3a2c0d; --bad:#ff8a80;
+  --k-level:#7ea6ff; --k-puzzle:#b095ff; --k-explore:#5fd19b; --k-play:#ff7fae; --k-compete:#f0a04e; --k-create:#5cc8d4; --k-report:#c3d65c;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+p{margin:0}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+
+.mast{background:var(--mast);color:var(--mast-ink)}
+.mast .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;padding-top:20px}
+.mast h1{font-size:clamp(1.6rem,4vw,2.3rem);font-weight:800;letter-spacing:-.01em}
+.mast h1 span{color:var(--gold)}
+.mast .brand{padding-bottom:14px}
+.mast .sub{color:var(--mast-muted);font-size:.9rem;margin-top:4px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs a{display:block;padding:10px 14px;border-radius:var(--r) var(--r) 0 0;text-decoration:none;color:var(--mast-muted);font-weight:700}
+.tabs a:hover{color:var(--mast-ink)}
+.tabs a[aria-current="page"]{background:var(--paper);color:var(--ink)}
+
+main{padding:20px 0 48px}
+.stack{display:flex;flex-direction:column;gap:20px}
+.note{background:var(--gold-soft);border:1px solid var(--gold);border-radius:var(--r);padding:10px 14px;font-size:.95rem}
+.note.plain{background:var(--card);border-color:var(--line)}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+
+.btn{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);background:var(--card);border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer;text-decoration:none;font-size:.925rem}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.gold{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--muted);padding:7px 8px}
+.btn.quiet:hover{color:var(--ink)}
+.btn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.danger{color:var(--bad)}
+input[type=text],input[type=number],input[type=date],input[type=password],input[type=search],select,textarea{border:1.5px solid var(--line);background:var(--card);border-radius:8px;padding:7px 10px;max-width:100%}
+textarea{width:100%;min-height:90px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem}
+label{font-weight:700;font-size:.875rem;display:flex;flex-direction:column;gap:4px}
+label.inline{flex-direction:row;align-items:center;gap:6px;font-weight:400}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+
+/* this week */
+.week h2,.sect h2{font-size:1.25rem}
+.week .head{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filters .gap{flex:1 1 20px}
+.chip{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-weight:700;font-size:.875rem;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--kc)}
+
+.card{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--kc);border-radius:var(--r);padding:14px 14px 12px;display:flex;flex-direction:column;gap:8px}
+.card.pick{border-top:3px solid var(--gold)}
+.k-level{--kc:var(--k-level)}.k-puzzle{--kc:var(--k-puzzle)}.k-explore{--kc:var(--k-explore)}.k-play{--kc:var(--k-play)}.k-compete{--kc:var(--k-compete)}.k-create{--kc:var(--k-create)}.k-report{--kc:var(--k-report)}
+.card .top{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:.8rem}
+.kind{color:var(--kc);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.tag{border-radius:5px;padding:1px 7px;font-weight:700;background:var(--paper);border:1px solid var(--line)}
+.tag.new{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.tag.hid{background:var(--wait-soft);color:var(--wait);border-color:transparent}
+.pts{margin-left:auto;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pips{color:var(--gold);letter-spacing:1px}
+.card h3{font-size:1.15rem}
+.card .blurb{font-size:.95rem}
+.card .how{font-size:.875rem;color:var(--muted)}
+.card .social{font-size:.875rem;border-top:1px dashed var(--line);padding-top:8px;display:flex;flex-direction:column;gap:2px}
+.card .social b{font-weight:700}
+.unsolved{color:var(--k-play);font-weight:700}
+.card .acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:auto;padding-top:4px}
+.status{font-size:.875rem;font-weight:700;border-radius:6px;padding:4px 8px}
+.status.ok{background:var(--ok-soft);color:var(--ok)}
+.status.wait{background:var(--wait-soft);color:var(--wait)}
+
+/* boards */
+.boards{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.panel.wide{grid-column:1/-1}
+.panel h2{font-size:1.15rem}
+.panel .lede{font-size:.875rem;color:var(--muted)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{text-align:left;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;padding:4px 8px}
+td{padding:7px 8px;border-top:1px solid var(--line);vertical-align:middle}
+td.num,th.num{text-align:right}
+tr.me td{background:var(--gold-soft);font-weight:700}
+.rank{font-family:var(--display);font-weight:800;width:2.2em}
+.bar{height:8px;border-radius:4px;background:var(--gold);min-width:3px}
+.kd{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:3px;background:var(--kc);opacity:.18}
+.kd.on{opacity:1}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.list li{font-size:.95rem}
+.rec{border-top:1px solid var(--line);padding-top:8px}
+.rec:first-of-type{border-top:0;padding-top:0}
+.rec .ttl{font-weight:700}
+.rec ol{margin:4px 0 0;padding-left:1.4em}
+
+/* teacher */
+.subtabs{display:flex;flex-wrap:wrap;gap:6px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:end}
+.form .full{grid-column:1/-1}
+.form input[type=text],.form select,.form textarea{width:100%}
+.form textarea{font-family:var(--body);font-size:.95rem;min-height:64px}
+.ticks{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:4px 16px}
+.ticks label{flex-direction:row;align-items:center;font-weight:400;gap:8px;font-size:.95rem;padding:3px 0}
+.ticks input[type=number]{width:90px;padding:3px 6px}
+
+/* topics */
+.topic{display:flex;flex-direction:column;gap:10px}
+.topic .th{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;border-bottom:2px solid var(--line);padding-bottom:6px}
+.topic .th h3{font-size:1.15rem}
+.classline{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.cgrid td,.cgrid th{text-align:center;white-space:nowrap}
+.cgrid td:first-child,.cgrid th:first-child{text-align:left;white-space:normal}
+.cgrid input[type=text]{width:110px;text-align:center;font-weight:700}
+/* ladder, reports, resources */
+.rung .th h3{font-size:1.15rem}
+.rung.locked .th h3{color:var(--muted)}
+.rung.locked{opacity:.8}
+.lock{font-size:.9rem;color:var(--muted);border:1.5px dashed var(--line);border-radius:var(--r);padding:10px 12px}
+.tier{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.875rem;color:var(--muted)}
+.tier b{color:var(--ink)}
+details.help{font-size:.875rem;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--paper)}
+details.help summary{cursor:pointer;font-weight:700}
+details.help ol{margin:6px 0;padding-left:1.3em;display:flex;flex-direction:column;gap:3px}
+.res td{vertical-align:top}
+.res td.rnote{min-width:220px;color:var(--muted);font-size:.875rem}
+footer{color:var(--muted);font-size:.8rem;padding:0 0 32px}
+@media (max-width:480px){.grid{grid-template-columns:1fr}.boards{grid-template-columns:1fr}.pts{margin-left:0}}
+@media (prefers-reduced-motion:no-preference){.btn,.chip{transition:border-color .12s,background .12s}}
+</style>
+</head>
+<body>
+<header class="mast"><div class="wrap">
+  <div class="brand"><h1 id="title"></h1><p class="sub" id="sub"></p></div>
+  <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+</div></header>
+<main><div class="wrap" id="app"></div></main>
+<footer><div class="wrap">Many of these quests come from Dylan Kane's <a href="https://fivetwelvethirteen.substack.com/p/glimpses" target="_blank" rel="noopener">Glimpses</a> list, Play With Your Math, Naoki Inaba, Transum and Math With Bad Drawings. Your own ticks stay on this device.</div></footer>
+
+<script src="data.js"></script>
+<script>
+"use strict";
+/* Maths Side Quests. Everything a teacher changes lives in data.js, written by the Teacher tab. */
+const NEW_DAYS = 14, PICKS = 3;
+const DIRS = {
+  level:   {n:"Level up", d:"The site marks it for you. Earn the trophy. Start here in each topic."},
+  puzzle:  {n:"Puzzle",   d:"One right answer, but nobody marks it for you. Stick with it."},
+  explore: {n:"Explore",  d:"Open-ended. See how far you can take it."},
+  play:    {n:"Play",     d:"A game against someone on the board."},
+  create:  {n:"Create",   d:"Make something for other people to use."},
+  report:  {n:"Report",   d:"Investigate a question and write it up. Agree a plan with your teacher before you start."},
+  compete: {n:"Competition", d:"Real competition papers, one rung at a time."}
+};
+const DIR_ORDER = Object.keys(DIRS);
+const QUEST_DIRS = DIR_ORDER.filter(k => k !== "compete");
+const STAGES = ["Not started", "Plan agreed", "Draft seen", "Finished"];
+const RKINDS = {site:"Website", papers:"Papers or printables", event:"Real competition", app:"App or game", data:"Data", book:"Book"};
+const RSTAT = {find:"To find", add:"Found, to add", using:"In use"};
+const TIER = {1:"Quick", 2:"Solid", 3:"Deep", 5:"Epic"};
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function iso(d){ return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
+function today(){ return iso(new Date()); }
+function nice(d){ if(!d) return ""; const p = d.split("-"); return (+p[2]) + " " + ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+p[1]-1]; }
+function daysAgo(d){ return Math.round((new Date(today()) - new Date(d)) / 864e5); }
+function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "x"; }
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function uid(p){ return p + Date.now().toString(36) + Math.floor(Math.random()*36).toString(36); }
+function norm(it, topics){ // one fixed shape for a quest
+  const o = {id:it.id || slug(it.title || "quest"), title:it.title || "Untitled", dir:DIRS[it.dir] ? it.dir : "puzzle", topic:topics.some(t => t.id === it.topic) ? it.topic : "any", pts:TIER[+it.pts] ? +it.pts : 2};
+  if(it.url) o.url = it.url;
+  if(it.src) o.src = it.src;
+  if(it.paper) o.paper = true;
+  o.blurb = it.blurb || ""; o.how = it.how || "";
+  if(it.record && it.record.label) o.record = {label:it.record.label, best:it.record.best === "low" ? "low" : "high"};
+  if(o.dir === "compete") o.rung = Math.max(0, Math.round(+it.rung || 0));
+  if(it.pass != null && it.pass !== "" && !isNaN(+it.pass)) o.pass = +it.pass;
+  if(it.added) o.added = it.added;
+  if(it.hidden) o.hidden = true;
+  return o;
+}
+function normRes(r){
+  const o = {id:r.id || slug(r.name || "resource"), name:r.name || "Untitled"};
+  if(r.url) o.url = r.url;
+  o.kind = RKINDS[r.kind] ? r.kind : "site"; o.status = RSTAT[r.status] ? r.status : "add"; o.note = r.note || "";
+  return o;
+}
+const DEFAULT_RUNGS = [{n:0, name:"Team rounds", d:"Get a team together. Open to everyone."}, {n:1, name:"First steps", d:"Short problems in competition style."}];
+function fill(d){ // tolerate a hand-edited or older data file
+  d = Object.assign({rev:0, published:"", topics:[], classes:[], spotlight:[], players:[], solves:{}, records:{}, reports:{}, matches:[], shouts:[], hall:[], rungs:[], resources:[], quests:[]}, d);
+  if(!d.rungs.length) d.rungs = clone(DEFAULT_RUNGS);
+  d.resources = d.resources.map(normRes);
+  d.settings = Object.assign({title:"Maths Side Quests", teacher:"your teacher", pin:"6767", firstBonus:0, nudge:true}, d.settings);
+  d.season = Object.assign({name:"Season 1", start:today()}, d.season);
+  if(!d.topics.some(t => t.id === "any")) d.topics.unshift({id:"any", name:"Any time"});
+  d.classes.forEach(c => { c.open = c.open || []; c.now = c.now || ""; });
+  d.quests = d.quests.map(q => norm(q, d.topics));
+  return d;
+}
+
+/* ---------- data ---------- */
+const PUB = window.SQ_DATA ? fill(clone(window.SQ_DATA)) : null;
+let me = Object.assign({name:"", cls:"", claims:{}}, store.get("mathsChallenges.me.v1", {}));
+let T = PUB ? store.get("mathsChallenges.teacher.v1", null) : null;   // the teacher's working copy; only on a device that has unlocked the Teacher tab
+if(T) T = fill(T);
+let unlocked = false;
+const ui = {view:"quests", dir:"all", q:"", todo:false, open:false, claiming:null, bcls:"", tsub:"mark", tStudent:"", edit:null, pending:null, flash:""};
+
+function saveMe(){ store.set("mathsChallenges.me.v1", me); }
+function saveT(){ T.rev = (T.rev||0) + 1; store.set("mathsChallenges.teacher.v1", T); }
+const D = () => T || PUB;
+const S = () => D().settings;
+const dirty = () => T && T.rev !== PUB.rev;
+const item = id => D().quests.find(x => x.id === id);
+const topicName = id => (D().topics.find(t => t.id === id) || {name:id}).name;
+const cls = id => D().classes.find(c => c.id === id);
+const player = id => D().players.find(p => p.id === id);
+const pn = id => { const p = player(id); return p ? p.n : "?"; };
+function myPid(){ const n = me.name.trim().toLowerCase(); if(!n) return null; const p = D().players.find(p => p.n.toLowerCase() === n); return p ? p.id : null; }
+function openTopics(cid){ if(cid === "*") return D().topics.map(t => t.id); const c = cls(cid); return ["any"].concat(c ? c.open : []); }
+function visible(cid){ const o = openTopics(cid === undefined ? me.cls : cid); return D().quests.filter(q => !q.hidden && o.includes(q.topic)); }
+function questList(){ return visible().filter(q => q.dir !== "compete"); }
+function locked(){ const o = openTopics(me.cls); return D().quests.filter(q => !q.hidden && q.dir !== "compete" && !o.includes(q.topic)).length; }
+function stageOf(pid, cid){ const r = (D().reports[cid] || []).find(x => x.p === pid); return r ? r.s : 0; }
+function compQuests(n){ return D().quests.filter(q => q.dir === "compete" && !q.hidden && (q.rung || 0) === n); }
+function passed(q){ // on the board, or claimed with the score the rung asks for
+  if(myState(q.id) === "ok") return true;
+  const c = me.claims[q.id]; if(!c || c.s !== "done") return false;
+  return q.pass == null || (c.v != null && +c.v >= q.pass);
+}
+function rungDone(n){ return compQuests(n).some(passed); }
+function ladder(){ return D().rungs.filter(r => r.n > 0).slice().sort((a,b) => a.n - b.n); }
+function setRung(){ const p = player(myPid()); return p && p.rung ? p.rung : 0; } // a rung set by the teacher overrides the automatic ladder
+function rungOpen(n){ if(T) return true; const fixed = setRung(); if(fixed) return n <= fixed; const L = ladder(), i = L.findIndex(r => r.n === n); return i <= 0 || rungDone(L[i-1].n); }
+function solvers(cid){ return (D().solves[cid] || []).filter(s => player(s.p)); }
+function recs(cid){ const it = item(cid); const lo = it && it.record && it.record.best === "low"; return (D().records[cid] || []).filter(r => player(r.p)).slice().sort((a,b) => (lo ? a.v-b.v : b.v-a.v) || (a.d < b.d ? -1 : 1)); }
+function isNew(it){ return it.added && daysAgo(it.added) >= 0 && daysAgo(it.added) <= NEW_DAYS; }
+
+function picks(){ // this week: pinned first, then an automatic choice that changes each Monday and leans to the class's current topic
+  const vis = questList(), c = cls(me.cls), now = c ? c.now : "";
+  const pinned = D().spotlight.map(id => vis.find(x => x.id === id)).filter(Boolean);
+  const out = pinned.slice(0, PICKS);
+  if(out.length < PICKS){
+    const d = new Date(), week = Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(1970,0,5)) / 6048e5);
+    const r = rng(week * 7919);
+    const pool = vis.filter(x => !out.includes(x)).map(x => ({x, k:r() + (solvers(x.id).length ? 1 : 0) - (now && x.topic === now ? 1.5 : 0)})).sort((a,b) => a.k - b.k).map(o => o.x);
+    for(const x of pool){ if(out.length >= PICKS) break; if(!out.some(o => o.dir === x.dir)) out.push(x); }
+    for(const x of pool){ if(out.length >= PICKS) break; if(!out.includes(x)) out.push(x); }
+  }
+  return {list:out, auto:pinned.length === 0};
+}
+function stats(){
+  const b = D(), start = b.season.start || "", by = {};
+  b.players.forEach(p => by[p.id] = {p, pts:0, n:0, dirs:{}, firsts:0, w:0, l:0});
+  for(const cid in b.solves){
+    const arr = solvers(cid), it = item(cid);
+    arr.forEach((s, i) => { const r = by[s.p]; if(i === 0) r.firsts++; if(s.d >= start){ r.pts += (s.pts||0) + (i === 0 ? (+S().firstBonus||0) : 0); r.n++; if(it) r.dirs[it.dir] = 1; } });
+  }
+  b.matches.forEach(m => { if(m.d >= start){ if(by[m.w]) by[m.w].w++; if(by[m.l]) by[m.l].l++; } });
+  return Object.values(by);
+}
+function ranked(rows, key){ // ties share a rank
+  const s = rows.slice().sort((a,b) => key(b) - key(a) || a.p.n.localeCompare(b.p.n));
+  let rank = 0, last = null; s.forEach((r, i) => { const v = key(r); if(v !== last){ rank = i + 1; last = v; } r.rank = rank; });
+  return s;
+}
+
+/* ---------- claims (student device) ---------- */
+function myState(cid){ const pid = myPid(); if(pid && solvers(cid).some(s => s.p === pid)) return "ok"; const c = me.claims[cid]; return c ? c.s : ""; }
+function claimCode(){
+  const c = Object.keys(me.claims).filter(id => me.claims[id].s === "done" && myState(id) !== "ok").map(id => [id, me.claims[id].v == null ? null : me.claims[id].v, me.claims[id].d]);
+  return "SQ1." + btoa(unescape(encodeURIComponent(JSON.stringify({n:me.name.trim(), k:me.cls, c}))));
+}
+function readCode(txt){
+  const m = /SQ1\.([A-Za-z0-9+/=]+)/.exec(txt || ""); if(!m) return null;
+  try { const o = JSON.parse(decodeURIComponent(escape(atob(m[1])))); return o && Array.isArray(o.c) ? o : null; } catch(e){ return null; }
+}
+
+/* ---------- teacher actions ---------- */
+function addSolve(pid, cid, d, v){
+  const it = item(cid); if(!it) return;
+  const arr = T.solves[cid] = T.solves[cid] || [];
+  if(!arr.some(s => s.p === pid)){ arr.push({p:pid, d:d || today(), pts:it.pts}); arr.sort((a,b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0); }
+  if(v != null && v !== "" && it.record) setRecord(pid, cid, +v, d);
+}
+function removeSolve(pid, cid){ if(T.solves[cid]){ T.solves[cid] = T.solves[cid].filter(s => s.p !== pid); if(!T.solves[cid].length) delete T.solves[cid]; } }
+function setRecord(pid, cid, v, d){
+  const arr = T.records[cid] = (T.records[cid] || []).filter(r => r.p !== pid);
+  if(!isNaN(v)) arr.push({p:pid, v, d:d || today()});
+  if(!arr.length) delete T.records[cid];
+}
+function putQuest(it){ const q = norm(it, T.topics), i = T.quests.findIndex(x => x.id === q.id); if(i >= 0) T.quests[i] = q; else T.quests.push(q); }
+function dataFile(d, note){
+  const o = clone(d); o.published = today(); const q = o.quests, r = o.resources; delete o.quests; delete o.resources;
+  let s = JSON.stringify(o, null, 1); s = s.slice(0, s.lastIndexOf("}")).trimEnd();
+  const arr = (k, a) => ',\n "' + k + '": [\n' + a.map(x => "  " + JSON.stringify(x)).join(",\n") + "\n ]";
+  return "/* Maths Side Quests data. " + note + " " + today() + ". Publish next to index.html. */\nwindow.SQ_DATA = " + s + arr("resources", r) + arr("quests", q) + "\n};\n";
+}
+function starter(){ const o = clone(T); o.rev = 1; delete o.demo; o.settings.teacher = "your teacher"; o.settings.pin = "6767"; o.players = []; o.solves = {}; o.records = {}; o.reports = {}; o.matches = []; o.shouts = []; o.hall = []; o.spotlight = []; o.season = {name:"Season 1", start:today()}; o.classes.forEach(c => { c.open = []; c.now = ""; }); return o; }
+
+/* ---------- student views ---------- */
+function pips(n){ return '<span class="pips" aria-hidden="true">' + "●".repeat(Math.min(n, 5)) + "</span>"; }
+function reportHelp(){ const T_ = esc(S().teacher);
+  return '<details class="help"><summary>How a report works</summary><ol><li><b>Plan.</b> Write your question and how you will answer it in three lines. Agree it with ' + T_ + '.</li><li><b>Investigate.</b> Try cases, collect data, draw diagrams. Keep it all in your book.</li><li><b>Write it up</b> as one page, a poster or a three-minute talk: your question, what you did, what you found, why it happens, and what you would ask next.</li><li><b>Draft.</b> Show ' + T_ + ' a draft and fix what they point out.</li><li><b>Finish.</b> Hand it in or present it, and it goes on the board.</li></ol><p class="muted">What counts: a clear question, real evidence, an explanation of why, and a reader who can follow it. One report at a time.</p></details>'; }
+function cardHTML(it, pick){
+  const sv = solvers(it.id), rc = it.record ? recs(it.id) : [], st = myState(it.id), c = me.claims[it.id], T_ = esc(S().teacher);
+  const isRep = it.dir === "report", pid = myPid(), stg = isRep && pid ? stageOf(pid, it.id) : 0;
+  let social = sv.length ? "<span><b>First:</b> " + esc(pn(sv[0].p)) + (sv.length > 1 ? " · " + sv.length + " on the board" : "") + "</span>" : '<span class="unsolved">Nobody yet. Be the first.</span>';
+  if(it.record) social += "<span><b>" + esc(it.record.label) + ":</b> " + (rc.length ? esc(rc[0].v) + " (" + esc(pn(rc[0].p)) + ")" : "no record set") + "</span>";
+  if(isRep){ const n = (D().reports[it.id] || []).filter(x => x.s > 0 && x.s < 3 && player(x.p)).length; if(n) social += "<span><b>In progress:</b> " + n + "</span>"; }
+  let acts = it.url ? '<a class="btn primary" href="' + esc(it.url) + '" target="_blank" rel="noopener">Open ↗</a>' : '<span class="tag">It\'s all in the question</span>';
+  if(st === "ok") acts += '<span class="status ok">On the board ✓</span>';
+  else if(isRep && stg) acts += '<span class="status wait">' + STAGES[stg] + "</span>";
+  else if(isRep) acts += '<button class="btn' + (st === "try" ? " on" : "") + '" data-act="try" data-id="' + it.id + '" aria-pressed="' + (st === "try") + '">' + (st === "try" ? "On my list" : "Add to my list") + '</button><span class="small muted">Talk to ' + T_ + " to agree a plan.</span>";
+  else if(ui.claiming === it.id) acts += '<label class="inline">' + esc(it.record.label) + ' <input type="number" step="any" style="width:110px"></label><button class="btn gold" data-act="claim" data-id="' + it.id + '">Claim it</button><button class="btn quiet" data-act="cancelclaim">Cancel</button>';
+  else if(st === "done") acts += '<span class="status wait">Claimed' + (c.v != null ? " (" + esc(c.v) + ")" : "") + ". Show " + T_ + '.</span><button class="btn quiet" data-act="unclaim" data-id="' + it.id + '">Undo</button>';
+  else acts += '<button class="btn' + (st === "try" ? " on" : "") + '" data-act="try" data-id="' + it.id + '" aria-pressed="' + (st === "try") + '">' + (st === "try" ? "On my list" : "Add to my list") + '</button><button class="btn" data-act="done" data-id="' + it.id + '">Done it</button>';
+  return '<article class="card k-' + it.dir + (pick ? " pick" : "") + '">' +
+    '<div class="top"><span class="kind">' + DIRS[it.dir].n + "</span>" + (pick && it.topic !== "any" ? '<span class="tag">' + esc(topicName(it.topic)) + "</span>" : "") + (isNew(it) ? '<span class="tag new">New</span>' : "") + (it.paper ? '<span class="tag">Paper: ask for a copy</span>' : "") +
+    '<span class="pts" title="' + it.pts + ' points">' + pips(it.pts) + " " + TIER[it.pts] + " · " + it.pts + "</span></div>" +
+    "<h3>" + esc(it.title) + "</h3>" +
+    '<p class="blurb">' + esc(it.blurb) + "</p>" +
+    (it.how ? '<p class="how"><b>To get on the board:</b> ' + esc(it.how) + (it.pass != null ? " Move up a rung with " + it.pass + " or more." : "") + "</p>" : "") +
+    (isRep ? reportHelp() : "") +
+    '<div class="social">' + social + "</div>" +
+    '<div class="acts">' + acts + "</div></article>";
+}
+function filtered(){
+  const q = ui.q.trim().toLowerCase();
+  return questList().filter(it =>
+    (ui.dir === "all" || it.dir === ui.dir) &&
+    (!ui.todo || !myState(it.id) || myState(it.id) === "try") &&
+    (!ui.open || !solvers(it.id).length) &&
+    (!q || (it.title + " " + it.blurb + " " + (it.src||"")).toLowerCase().includes(q)));
+}
+function listHTML(){ // quests grouped by topic: the class's current topic first, Any time last
+  const list = filtered(), c = cls(me.cls), now = c ? c.now : "";
+  if(!list.length) return '<p class="note plain">Nothing matches. Clear a filter to see more.</p>';
+  const order = D().topics.map(t => t.id).filter(t => t !== "any" && t !== now);
+  if(now) order.unshift(now); order.push("any");
+  let h = "";
+  order.forEach(tid => {
+    const qs = list.filter(x => x.topic === tid).sort((a,b) => DIR_ORDER.indexOf(a.dir) - DIR_ORDER.indexOf(b.dir) || a.pts - b.pts);
+    if(!qs.length) return;
+    const lv = questList().filter(x => x.topic === tid && x.dir === "level"), nudge = S().nudge && tid !== "any" && lv.length && !lv.some(x => myState(x.id) === "ok" || myState(x.id) === "done");
+    h += '<section class="topic"><div class="th"><h3>' + esc(topicName(tid)) + "</h3>" + (tid === now ? '<span class="tag new">What we\'re doing now</span>' : "") + '<span class="muted small">' + qs.length + (qs.length === 1 ? " quest" : " quests") + "</span>" +
+      (nudge && ui.dir === "all" ? '<span class="muted small">Start with a Level up quest here, then try the puzzles.</span>' : "") + '</div><div class="grid">' + qs.map(it => cardHTML(it)).join("") + "</div></section>";
+  });
+  return h;
+}
+function classPicker(){
+  const cs = D().classes;
+  return '<div class="classline"><b>Which class are you in?</b>' + cs.map(c => '<button class="btn" data-act="pickcls" data-id="' + c.id + '">' + esc(c.name) + "</button>").join("") + (T ? '<button class="btn quiet" data-act="pickcls" data-id="*">Everything (teacher view)</button>' : "") + "</div>";
+}
+function viewQuests(){
+  const b = D(), c = cls(me.cls), star = me.cls === "*";
+  let h = '<div class="stack">';
+  if(b.demo) h += '<p class="note">This is a sample board with made-up names, so you can see how it looks once people are on it.</p>';
+  if(dirty()) h += '<p class="note">You are seeing changes on this device that are not published yet. Students see the last published file.</p>';
+  if(T && PUB.rev > T.rev) h += '<p class="note">A newer data.js has been published than the copy on this device. Go to Teacher to load it.</p>';
+  if(!c && !star){ me.cls = ""; h += '<div class="note plain">' + classPicker() + '<p class="small muted" style="margin-top:6px">Until you choose, you only see the quests that are open to everyone.</p></div>'; }
+  else h += '<div class="classline"><b>' + (star ? "Everything (teacher view)" : esc(c.name)) + "</b>" + (c && c.now ? '<span class="muted">Now doing: ' + esc(topicName(c.now)) + "</span>" : "") + '<button class="btn quiet" data-act="pickcls" data-id="">Change class</button></div>';
+  const pk = picks(), open = questList().filter(x => !solvers(x.id).length).length, lk = locked();
+  h += '<section class="week"><div class="head"><h2>This week</h2><span class="muted small">' + (pk.auto ? "Three fresh picks every Monday" : "Picked by " + esc(S().teacher)) + '</span></div><div class="grid">' + pk.list.map(it => cardHTML(it, true)).join("") + "</div></section>";
+  h += '<section class="sect stack"><div class="head"><h2>All quests</h2></div><div class="filters">';
+  h += '<button class="chip" data-act="dir" data-k="all" aria-pressed="' + (ui.dir === "all") + '">All</button>';
+  QUEST_DIRS.forEach(k => { h += '<button class="chip k-' + k + '" data-act="dir" data-k="' + k + '" aria-pressed="' + (ui.dir === k) + '"><span class="dot"></span>' + DIRS[k].n + "</button>"; });
+  h += '<a class="chip k-compete" href="#compete" style="text-decoration:none"><span class="dot"></span>Competition ladder →</a>';
+  h += '<span class="gap"></span><button class="chip" data-act="toggle" data-f="open" aria-pressed="' + ui.open + '">Nobody\'s cracked it (' + open + ")</button>";
+  h += '<button class="chip" data-act="toggle" data-f="todo" aria-pressed="' + ui.todo + '">Not done by me</button>';
+  h += '<input type="search" id="q" placeholder="Search" aria-label="Search quests" value="' + esc(ui.q) + '" style="width:150px"><button class="btn gold" data-act="surprise">Surprise me</button></div>';
+  h += ui.dir === "all" ? '<div class="tier"><span><b>Start:</b> Level up in each topic</span><span><b>Go further:</b> Puzzle, Explore, Play, Create</span><span><b>Stretch:</b> Report, and the <a href="#compete">Competition ladder</a></span></div>' : '<p class="small muted"><b>' + DIRS[ui.dir].n + ".</b> " + esc(DIRS[ui.dir].d.replace("your teacher", S().teacher)) + "</p>";
+  h += '<div class="stack" id="grid">' + listHTML() + "</div>";
+  if(lk) h += '<p class="note plain">' + lk + " more " + (lk === 1 ? "quest unlocks" : "quests unlock") + " as your class starts new topics.</p>";
+  return h + "</section></div>";
+}
+function viewCompete(){
+  const b = D(), T_ = esc(S().teacher), L = ladder();
+  let here = null; const fixed = T ? 0 : setRung();
+  if(fixed && !rungDone(fixed)) here = fixed; else for(const r of L){ if(r.n > fixed && rungOpen(r.n) && !rungDone(r.n)){ here = r.n; break; } }
+  let h = '<div class="stack"><section class="stack"><h2>Competition ladder</h2><p class="note plain">Competition maths is a ladder. Finish any quest on a rung, with the score it asks for, to open the next rung. Mark your own paper from the solutions, then show ' + T_ + '. Papers are for practice: never look at the solutions until you have finished.</p>' + (T ? '<p class="note">Teacher view: every rung is open on this device.</p>' : setRung() ? '<p class="note">' + T_ + ' has put you on rung ' + setRung() + '.</p>' : "") + "</section>";
+  L.forEach((r, i) => {
+    const qs = compQuests(r.n).sort((a,c) => a.pts - c.pts || a.title.localeCompare(c.title)), o = rungOpen(r.n), done = rungDone(r.n);
+    h += '<section class="topic rung' + (o ? "" : " locked") + '"><div class="th"><h3>' + (o ? "" : "🔒 ") + "Rung " + r.n + ": " + esc(r.name) + "</h3>" + (done ? '<span class="status ok">Done ✓</span>' : r.n === here ? '<span class="tag new">You are here</span>' : "") + '<span class="muted small">' + esc(r.d) + "</span></div>";
+    h += o ? '<div class="grid">' + qs.map(q => cardHTML(q)).join("") + "</div>" : '<p class="lock">Opens when you finish a quest on rung ' + L[i-1].n + ". Waiting here: " + qs.map(q => esc(q.title)).join(", ") + ".</p>";
+    h += "</section>";
+  });
+  const team = compQuests(0), tr = b.rungs.find(r => r.n === 0) || DEFAULT_RUNGS[0];
+  if(team.length) h += '<section class="topic"><div class="th"><h3>' + esc(tr.name) + '</h3><span class="muted small">' + esc(tr.d) + '</span></div><div class="grid">' + team.map(q => cardHTML(q)).join("") + "</div></section>";
+  const ev = b.resources.filter(r => r.kind === "event" && r.status === "using");
+  if(ev.length) h += '<section class="panel"><h2>Real competitions</h2><p class="lede">Ask ' + T_ + ' about entering. Your best rung is a good guide to which one suits you.</p><ul class="list">' + ev.map(r => "<li>" + (r.url ? '<a href="' + esc(r.url) + '" target="_blank" rel="noopener"><b>' + esc(r.name) + "</b></a>" : "<b>" + esc(r.name) + "</b>") + ' <span class="muted small">' + esc(r.note) + "</span></li>").join("") + "</ul></section>";
+  return h + "</div>";
+}
+function viewBoards(){
+  const b = D(), mine = myPid(), all = stats(), S_ = ui.bcls ? all.filter(r => r.p.c === ui.bcls) : all;
+  if(!b.players.length) return '<p class="note plain">Nobody is on the board yet. Finish a quest and show ' + esc(S().teacher) + " to be the first name up.</p>";
+  let h = '<div class="stack">';
+  if(b.demo) h += '<p class="note">Sample board with made-up names.</p>';
+  h += '<div class="filters"><button class="chip" data-act="bcls" data-id="" aria-pressed="' + (!ui.bcls) + '">Everyone</button>' + b.classes.map(c => '<button class="chip" data-act="bcls" data-id="' + c.id + '" aria-pressed="' + (ui.bcls === c.id) + '">' + esc(c.name) + "</button>").join("") + "</div>";
+  h += '<div class="boards">';
+  const L = ranked(S_, r => r.pts), max = Math.max(1, ...L.map(r => r.pts));
+  h += '<section class="panel wide"><h2>' + esc(b.season.name) + ' ladder</h2><p class="lede">Points for quests checked off since ' + nice(b.season.start) + ". Range shows which of the six directions you have tried.</p><div class=\"tw\"><table><thead><tr><th></th><th>Name</th><th>Class</th><th class=\"num\">Points</th><th style=\"width:30%\"></th><th class=\"num\">Quests</th><th>Range</th></tr></thead><tbody>";
+  L.forEach(r => { h += '<tr class="' + (r.p.id === mine ? "me" : "") + '"><td class="rank">' + r.rank + "</td><td>" + esc(r.p.n) + "</td><td>" + esc((cls(r.p.c) || {name:""}).name) + '</td><td class="num">' + r.pts + '</td><td><div class="bar" style="width:' + Math.round(r.pts / max * 100) + '%"></div></td><td class="num">' + r.n + "</td><td>" + DIR_ORDER.map(k => '<span class="kd k-' + k + (r.dirs[k] ? " on" : "") + '" title="' + DIRS[k].n + '"></span>').join("") + "</td></tr>"; });
+  h += "</tbody></table></div></section>";
+  const F = ranked(S_.filter(r => r.firsts), r => r.firsts), open = questList().filter(x => !solvers(x.id).length);
+  h += '<section class="panel"><h2>Firsts</h2><p class="lede">First name on the board for a quest. These stay forever.</p><div class="tw"><table><tbody>';
+  F.forEach(r => { h += '<tr class="' + (r.p.id === mine ? "me" : "") + '"><td class="rank">' + r.rank + "</td><td>" + esc(r.p.n) + '</td><td class="num">' + r.firsts + "</td></tr>"; });
+  h += '</tbody></table></div><p class="small"><span class="unsolved">' + open.length + " open quests nobody has cracked.</span> " + (open.length ? '<button class="btn quiet" data-act="showopen">Show them</button>' : "") + "</p></section>";
+  const R = b.quests.filter(it => it.record && recs(it.id).length);
+  h += '<section class="panel"><h2>Records to beat</h2><p class="lede">Same quest, best score. Beat it and the record is yours.</p>';
+  R.forEach(it => { h += '<div class="rec"><div class="ttl">' + esc(it.title) + ' <span class="muted small">' + esc(it.record.label) + "</span></div><ol>" + recs(it.id).slice(0,3).map(r => "<li" + (r.p === mine ? ' style="font-weight:700"' : "") + ">" + esc(r.v) + " · " + esc(pn(r.p)) + ' <span class="muted small">' + nice(r.d) + "</span></li>").join("") + "</ol></div>"; });
+  if(!R.length) h += '<p class="muted small">No records yet.</p>';
+  h += "</section>";
+  const G = S_.filter(r => r.w + r.l).sort((a,c) => c.w - a.w || a.l - c.l), ms = b.matches.filter(m => m.d >= (b.season.start||"")).slice().sort((a,c) => a.d < c.d ? 1 : -1);
+  h += '<section class="panel"><h2>Games ladder</h2><p class="lede">Play anyone on the board, then tell ' + esc(S().teacher) + ' who won.</p><div class="tw"><table><thead><tr><th>Name</th><th class="num">Won</th><th class="num">Lost</th></tr></thead><tbody>';
+  G.forEach(r => { h += '<tr class="' + (r.p.id === mine ? "me" : "") + '"><td>' + esc(r.p.n) + '</td><td class="num">' + r.w + '</td><td class="num">' + r.l + "</td></tr>"; });
+  h += "</tbody></table></div>" + (ms.length ? '<ul class="list small muted">' + ms.slice(0,4).map(m => "<li>" + esc(pn(m.w)) + " beat " + esc(pn(m.l)) + " at " + esc((item(m.c)||{title:"a game"}).title) + " · " + nice(m.d) + "</li>").join("") + "</ul>" : '<p class="muted small">No games played yet.</p>') + "</section>";
+  if(b.shouts.length) h += '<section class="panel"><h2>Shout-outs</h2><ul class="list">' + b.shouts.slice().reverse().slice(0,5).map(s => "<li><b>" + esc(pn(s.p)) + ".</b> " + esc(s.t) + ' <span class="muted small">' + nice(s.d) + "</span></li>").join("") + "</ul></section>";
+  const CL = ranked(S_.map(r => { let top = 0; b.quests.forEach(q => { if(q.dir === "compete" && q.rung > 0 && solvers(q.id).some(s => s.p === r.p.id)) top = Math.max(top, q.rung); }); return {p:r.p, top}; }).filter(x => x.top), x => x.top);
+  if(CL.length) h += '<section class="panel"><h2>Competition ladder</h2><p class="lede">Highest rung each person has finished.</p><div class="tw"><table><tbody>' + CL.map(x => '<tr class="' + (x.p.id === mine ? "me" : "") + '"><td class="rank">' + x.rank + "</td><td>" + esc(x.p.n) + '</td><td>Rung ' + x.top + ": " + esc((b.rungs.find(r => r.n === x.top) || {name:""}).name) + "</td></tr>").join("") + "</tbody></table></div></section>";
+  const RP = [];
+  for(const cid in b.reports) (b.reports[cid] || []).forEach(x => { const p = player(x.p); if(p && x.s > 0 && x.s < 3 && (!ui.bcls || p.c === ui.bcls)) RP.push({p, x, it:item(cid)}); });
+  if(RP.length) h += '<section class="panel"><h2>Reports in progress</h2><ul class="list">' + RP.map(o => "<li><b>" + esc(o.p.n) + "</b> · " + esc(o.it ? o.it.title : "") + ' <span class="status wait">' + STAGES[o.x.s] + "</span></li>").join("") + "</ul></section>";
+  const ev = [];
+  for(const cid in b.solves) solvers(cid).forEach((s,i) => ev.push({d:s.d, t:"<b>" + esc(pn(s.p)) + "</b> " + (i === 0 ? "was first to finish " : "finished ") + esc((item(cid)||{title:cid}).title)}));
+  ev.sort((a,c) => a.d < c.d ? 1 : -1);
+  h += '<section class="panel"><h2>Latest</h2><ul class="list">' + ev.slice(0,7).map(e => "<li>" + e.t + ' <span class="muted small">' + nice(e.d) + "</span></li>").join("") + "</ul></section>";
+  if(b.hall.length) h += '<section class="panel"><h2>Past seasons</h2><ul class="list">' + b.hall.slice().reverse().map(s => "<li><b>" + esc(s.name) + ".</b> " + s.top.map((t,i) => (i+1) + ". " + esc(t.n) + " (" + t.pts + ")").join(" · ") + "</li>").join("") + "</ul></section>";
+  return h + '</div><p class="muted small">Board last updated ' + (b.published ? nice(b.published) : "not yet") + ".</p></div>";
+}
+function viewMine(){
+  const b = D(), pid = myPid(), mineRow = pid ? ranked(stats(), r => r.pts).find(r => r.p.id === pid) : null, T_ = esc(S().teacher);
+  const ids = Object.keys(me.claims), waiting = ids.filter(id => me.claims[id].s === "done" && myState(id) !== "ok" && item(id)), trying = ids.filter(id => me.claims[id].s === "try" && myState(id) !== "ok" && item(id));
+  const onBoard = pid ? b.quests.filter(it => solvers(it.id).some(s => s.p === pid)) : [];
+  let h = '<div class="stack"><section class="panel"><h2>Who are you?</h2><div class="row"><label>Name on the board<input type="text" id="myname" list="names" value="' + esc(me.name) + '" autocomplete="off"></label><datalist id="names">' + b.players.map(p => '<option value="' + esc(p.n) + '">').join("") + "</datalist>" +
+    '<label>Class<select id="mycls"><option value="">Choose</option>' + b.classes.map(c => '<option value="' + c.id + '"' + (me.cls === c.id ? " selected" : "") + ">" + esc(c.name) + "</option>").join("") + '</select></label><button class="btn primary" data-act="saveme">Save</button></div>' +
+    '<p class="small muted">' + (pid ? "You are on the board." + (mineRow ? " " + esc(b.season.name) + ": " + mineRow.pts + " points, rank " + mineRow.rank + "." : "") : me.name ? "You are not on the board yet. Your first checked quest puts you there." : "Use the same name every time so your quests line up with the board.") + "</p></section>";
+  h += '<section class="panel"><h2>Waiting to be checked</h2>';
+  if(waiting.length){
+    h += '<ul class="list">' + waiting.map(id => "<li><b>" + esc(item(id).title) + "</b>" + (me.claims[id].v != null ? " (" + esc(me.claims[id].v) + ")" : "") + ' <span class="muted small">claimed ' + nice(me.claims[id].d) + ". " + esc(item(id).how) + "</span></li>").join("") + "</ul>";
+    h += '<p class="small">Show ' + T_ + " in class, or send your claims as a code.</p>";
+    h += me.name.trim() ? '<div class="row"><button class="btn gold" data-act="mkcode">Make my claim code</button></div>' : '<p class="small muted">Save your name first.</p>';
+    if(ui.code) h += '<textarea id="codeout" readonly aria-label="Claim code">' + esc(ui.code) + '</textarea><div class="row"><button class="btn primary" data-act="copy" data-t="codeout">Copy</button><span class="small muted">Paste it into a message to ' + T_ + ".</span></div>";
+  } else h += '<p class="muted small">Nothing waiting. Press "Done it" on a quest when you finish one.</p>';
+  h += "</section>";
+  const myReps = pid ? b.quests.filter(q => q.dir === "report" && stageOf(pid, q.id) > 0 && stageOf(pid, q.id) < 3) : [];
+  if(myReps.length) h += '<section class="panel"><h2>My report</h2><ul class="list">' + myReps.map(q => "<li><b>" + esc(q.title) + '</b> <span class="status wait">' + STAGES[stageOf(pid, q.id)] + "</span></li>").join("") + "</ul></section>";
+  h += '<section class="panel"><h2>On my list</h2>' + (trying.length ? '<div class="grid">' + trying.map(id => cardHTML(item(id))).join("") + "</div>" : '<p class="muted small">Add quests to your list to find them again here.</p>') + "</section>";
+  h += '<section class="panel"><h2>On the board</h2>' + (onBoard.length ? '<ul class="list">' + onBoard.map(it => "<li>" + esc(it.title) + ' <span class="muted small">' + DIRS[it.dir].n + " · " + it.pts + " points</span></li>").join("") + "</ul>" : '<p class="muted small">Nothing yet.</p>') + "</section></div>";
+  return h;
+}
+
+/* ---------- teacher view ---------- */
+function pOpts(sel){ return D().players.slice().sort((a,b) => a.n.localeCompare(b.n)).map(p => '<option value="' + p.id + '"' + (p.id === sel ? " selected" : "") + ">" + esc(p.n) + " (" + esc((cls(p.c)||{name:"no class"}).name) + ")</option>").join(""); }
+function cOpts(sel){ return D().classes.map(c => '<option value="' + c.id + '"' + (c.id === sel ? " selected" : "") + ">" + esc(c.name) + "</option>").join(""); }
+function viewTeacher(){
+  if(!unlocked) return '<section class="panel" style="max-width:420px"><h2>Teacher</h2><p class="small muted">Checking off quests, opening topics, adding quests and publishing.</p><form class="row" data-form="pin"><label>PIN<input type="password" id="pin" inputmode="numeric" autocomplete="off"></label><button class="btn primary">Unlock</button></form>' + (ui.flash ? '<p class="small" style="color:var(--bad)">' + esc(ui.flash) + "</p>" : "") + "</section>";
+  const subs = {mark:"Check off", games:"Games and shout-outs", classes:"Classes and topics", quests:"Quests", resources:"Resources", people:"Students and season", publish:"Setup and publish" + (dirty() ? " •" : "")};
+  let h = '<div class="stack"><div class="subtabs">' + Object.keys(subs).map(k => '<button class="btn' + (ui.tsub === k ? " on" : "") + '" data-act="tsub" data-k="' + k + '">' + subs[k] + "</button>").join("") + "</div>";
+  if(ui.flash) h += '<p class="note plain">' + esc(ui.flash) + "</p>";
+  if(PUB.rev > T.rev) h += '<p class="note">The published file is newer than the copy on this device. <button class="btn" data-act="loadpub" data-confirm="1">Load the published file</button></p>';
+  return h + ({mark:tMark, games:tGames, classes:tClasses, quests:tQuests, resources:tResources, people:tPeople, publish:tPublish})[ui.tsub]() + "</div>";
+}
+function tMark(){
+  let h = '<section class="panel"><h2>Paste a claim code</h2><p class="lede">Students make these on their My log tab. Nothing counts until you approve it here.</p><form data-form="code" class="stack"><textarea id="codein" aria-label="Claim code" placeholder="SQ1. …"></textarea><div class="row"><button class="btn primary">Read code</button></div></form>';
+  if(ui.pending){
+    const P = ui.pending, pl = T.players.find(p => p.n.toLowerCase() === P.n.toLowerCase());
+    h += '<div class="stack"><p><b>' + esc(P.n) + "</b>" + (cls(P.k) ? " (" + esc(cls(P.k).name) + ")" : "") + (pl ? "" : ' is not on the board yet. <button class="btn" data-act="addfromcode">Add ' + esc(P.n) + "</button>") + "</p>";
+    if(pl){
+      const todo = P.c.filter(c => item(c[0]) && !solvers(c[0]).some(s => s.p === pl.id));
+      h += todo.length ? '<ul class="list">' + todo.map(c => "<li><b>" + esc(item(c[0]).title) + "</b>" + (c[1] != null ? " · " + esc(item(c[0]).record ? item(c[0]).record.label : "value") + " " + esc(c[1]) : "") + ' <span class="muted small">claimed ' + nice(c[2]) + '</span> <button class="btn" data-act="approve" data-id="' + c[0] + '">Approve</button></li>').join("") + '</ul><div class="row"><button class="btn gold" data-act="approveall">Approve all</button><button class="btn quiet" data-act="clearpending">Done</button></div>' : '<p class="muted small">Nothing left to approve. <button class="btn quiet" data-act="clearpending">Close</button></p>';
+    }
+    h += "</div>";
+  }
+  h += '</section><section class="panel"><h2>Tick off by student</h2>';
+  if(!T.players.length) return h + '<p class="muted small">Add students first, under Students and season.</p></section>';
+  h += '<div class="row"><label>Student<select id="tstudent"><option value="">Choose</option>' + pOpts(ui.tStudent) + "</select></label></div>";
+  const p = player(ui.tStudent);
+  if(p){
+    const o = openTopics(p.c), qs = T.quests.filter(it => o.includes(it.topic) || it.dir === "compete" || solvers(it.id).some(s => s.p === p.id));
+    D().topics.forEach(t => {
+      const g = qs.filter(x => x.topic === t.id).sort((a,b) => DIR_ORDER.indexOf(a.dir) - DIR_ORDER.indexOf(b.dir) || a.title.localeCompare(b.title));
+      if(!g.length) return;
+      h += '<div><b class="small">' + esc(t.name) + '</b><div class="ticks">' + g.map(it => {
+        const s = solvers(it.id).find(s => s.p === p.id), r = (T.records[it.id]||[]).find(r => r.p === p.id);
+        if(it.dir === "report"){ const sg = stageOf(p.id, it.id); return '<label><span>' + esc(it.title) + ' <span class="muted small">Report · ' + it.pts + "</span></span>" + '<select data-stage="' + it.id + '" aria-label="Stage for ' + esc(it.title) + '">' + STAGES.map((n, i) => '<option value="' + i + '"' + (sg === i ? " selected" : "") + ">" + n + "</option>").join("") + "</select></label>"; }
+        return '<label><input type="checkbox" data-tick="' + it.id + '"' + (s ? " checked" : "") + "> <span>" + esc(it.title) + ' <span class="muted small">' + DIRS[it.dir].n + " · " + it.pts + (s ? " · " + nice(s.d) : "") + "</span></span>" + (it.record ? '<input type="number" step="any" data-rec="' + it.id + '" value="' + (r ? esc(r.v) : "") + '" placeholder="score" title="' + esc(it.record.label) + '" aria-label="' + esc(it.record.label) + '">' : "") + "</label>";
+      }).join("") + "</div></div>";
+    });
+    h += '<p class="small muted">Only quests open to this student\'s class are listed, plus every competition quest. Ticks are dated today. A score in the box updates the records board. A report goes on the board when you set it to Finished.</p>';
+  }
+  return h + "</section>";
+}
+function tGames(){
+  const games = T.quests.filter(it => it.dir === "play");
+  let h = '<section class="panel"><h2>Log a game</h2><form data-form="match" class="row"><label>Game<select id="mgame">' + games.map(g => '<option value="' + g.id + '">' + esc(g.title) + "</option>").join("") + '</select></label><label>Winner<select id="mw">' + pOpts() + '</select></label><label>Beat<select id="ml">' + pOpts() + '</select></label><button class="btn primary">Log it</button></form>';
+  h += '<ul class="list small">' + T.matches.map((m,i) => ({m,i})).reverse().slice(0,8).map(o => "<li>" + esc(pn(o.m.w)) + " beat " + esc(pn(o.m.l)) + " at " + esc((item(o.m.c)||{title:"?"}).title) + " · " + nice(o.m.d) + ' <button class="btn quiet danger" data-act="delmatch" data-i="' + o.i + '">Remove</button></li>').join("") + "</ul></section>";
+  h += '<section class="panel"><h2>Shout-out</h2><p class="lede">For a good explanation, a stubborn effort, or teaching someone else. Shows on the Boards tab.</p><form data-form="shout" class="form"><label>Student<select id="sp">' + pOpts() + '</select></label><label class="full">What for<input type="text" id="st" maxlength="160"></label><div><button class="btn primary">Add</button></div></form>';
+  h += '<ul class="list small">' + T.shouts.map((s,i) => ({s,i})).reverse().slice(0,8).map(o => "<li><b>" + esc(pn(o.s.p)) + ".</b> " + esc(o.s.t) + ' <button class="btn quiet danger" data-act="delshout" data-i="' + o.i + '">Remove</button></li>').join("") + "</ul></section>";
+  return h;
+}
+function tClasses(){
+  const cs = T.classes, ts = T.topics.filter(t => t.id !== "any");
+  let h = '<section class="panel"><h2>What each class can see</h2><p class="lede">Tick a topic once a class has started it and its quests appear for them. "Doing now" puts that topic at the top and steers the weekly picks. Any time quests are always open.</p><div class="tw"><table class="cgrid"><thead><tr><th>Topic</th><th class="num">Quests</th>' + cs.map(c => '<th><input type="text" data-cname="' + c.id + '" value="' + esc(c.name) + '" aria-label="Class name"></th>').join("") + "</tr></thead><tbody>";
+  h += "<tr><td><b>Doing now</b></td><td></td>" + cs.map(c => '<td><select data-now="' + c.id + '" aria-label="Doing now, ' + esc(c.name) + '"><option value="">Not set</option>' + ts.filter(t => c.open.includes(t.id)).map(t => '<option value="' + t.id + '"' + (c.now === t.id ? " selected" : "") + ">" + esc(t.name) + "</option>").join("") + "</select></td>").join("") + "</tr>";
+  ts.forEach(t => { h += "<tr><td>" + esc(t.name) + '</td><td class="num">' + T.quests.filter(q => q.topic === t.id && !q.hidden).length + "</td>" + cs.map(c => '<td><input type="checkbox" data-open="' + c.id + "|" + t.id + '"' + (c.open.includes(t.id) ? " checked" : "") + ' aria-label="' + esc(t.name) + ", " + esc(c.name) + '"></td>').join("") + "</tr>"; });
+  h += '<tr><td class="muted">Any time</td><td class="num">' + T.quests.filter(q => q.topic === "any" && !q.hidden).length + "</td>" + cs.map(() => '<td class="muted small">always</td>').join("") + "</tr></tbody></table></div></section>";
+  h += '<section class="panel"><h2>Add or remove</h2><form data-form="addclass" class="row"><label>New class<input type="text" id="nc" placeholder="e.g. 9 Extended" required></label><button class="btn primary">Add class</button></form><form data-form="addtopic" class="row"><label>New topic<input type="text" id="nt" placeholder="e.g. Transformations" required></label><button class="btn primary">Add topic</button></form><div class="row">' + cs.map(c => '<button class="btn quiet danger" data-act="delclass" data-id="' + c.id + '" data-confirm="1">Remove ' + esc(c.name) + "</button>").join("") + "</div></section>";
+  return h;
+}
+function tQuests(){
+  const pk = picks(), pinned = T.spotlight, e = ui.edit;
+  let h = '<section class="panel"><h2>' + (e && e !== "new" ? "Edit quest" : "Add a quest") + "</h2>";
+  if(e){
+    const it = e === "new" ? {dir:"puzzle", topic:"any", pts:2} : item(e);
+    h += '<form data-form="quest" class="form"><label>Title<input type="text" id="f_title" required value="' + esc(it.title) + '"></label><label>Link (optional)<input type="text" id="f_url" value="' + esc(it.url) + '" placeholder="https://"></label>' +
+      '<label>Direction<select id="f_dir">' + DIR_ORDER.map(k => '<option value="' + k + '"' + (it.dir === k ? " selected" : "") + ">" + DIRS[k].n + "</option>").join("") + "</select></label>" +
+      '<label>Topic it needs<select id="f_topic">' + T.topics.map(t => '<option value="' + t.id + '"' + (it.topic === t.id ? " selected" : "") + ">" + esc(t.name) + "</option>").join("") + "</select></label>" +
+      '<label>Size<select id="f_pts">' + Object.keys(TIER).map(p => '<option value="' + p + '"' + (+it.pts === +p ? " selected" : "") + ">" + TIER[p] + " · " + p + (p === "1" ? " point" : " points") + "</option>").join("") + "</select></label>" +
+      '<label>From (optional)<input type="text" id="f_src" value="' + esc(it.src) + '"></label>' +
+      '<label class="full">What is it? (students read this)<textarea id="f_blurb">' + esc(it.blurb) + "</textarea></label>" +
+      '<label class="full">What do they show you to get on the board?<input type="text" id="f_how" value="' + esc(it.how) + '"></label>' +
+      '<label>Record to beat (optional)<input type="text" id="f_rec" value="' + esc(it.record ? it.record.label : "") + '" placeholder="e.g. Fewest moves"></label>' +
+      '<label>Best is<select id="f_best"><option value="high">Highest</option><option value="low"' + (it.record && it.record.best === "low" ? " selected" : "") + ">Lowest</option></select></label>" +
+      '<label>Competition rung (Competition quests only)<select id="f_rung">' + T.rungs.slice().sort((a,b) => a.n - b.n).map(r => '<option value="' + r.n + '"' + ((it.rung || 0) === r.n ? " selected" : "") + ">" + (r.n ? "Rung " + r.n + ": " : "") + esc(r.name) + "</option>").join("") + "</select></label>" +
+      '<label>Score that opens the next rung (optional)<input type="number" id="f_pass" min="0" value="' + (it.pass != null ? it.pass : "") + '"></label>' +
+      '<label class="inline"><input type="checkbox" id="f_paper"' + (it.paper ? " checked" : "") + "> Paper copy</label>" +
+      '<div class="row full"><button class="btn primary">Save quest</button><button type="button" class="btn quiet" data-act="edit" data-id="">Cancel</button></div></form>';
+  } else h += '<p class="lede">Found something good? Add it here. It gets a New tag for two weeks.</p><div><button class="btn primary" data-act="edit" data-id="new">Add a quest</button></div>';
+  h += '</section><section class="panel"><h2>Import quests</h2><p class="lede">Paste quest lines written for you (for example by Claude from a list of links). Quests with an id you already have are replaced.</p><form data-form="import" class="stack"><textarea id="imp" aria-label="Quest lines" placeholder=\'{"id":"...","title":"...","dir":"puzzle","topic":"any","pts":2, ...}\'></textarea><div class="row"><button class="btn primary">Import</button></div></form></section>';
+  h += '<section class="panel"><h2>All quests</h2><p class="lede">This week for the class you are viewing: ' + pk.list.map(x => esc(x.title)).join(", ") + (pk.auto ? " (picked automatically, changes Monday). Pin any quest to choose it yourself." : ".") + '</p><div class="tw"><table><thead><tr><th>Quest</th><th>Direction</th><th>Topic</th><th class="num">Pts</th><th class="num">Done by</th><th></th></tr></thead><tbody>';
+  T.topics.forEach(t => T.quests.filter(q => q.topic === t.id).forEach(it => {
+    const pin = pinned.includes(it.id);
+    h += "<tr><td>" + esc(it.title) + (it.hidden ? ' <span class="tag hid">Hidden</span>' : "") + '</td><td class="small">' + DIRS[it.dir].n + '</td><td class="small">' + esc(t.name) + '</td><td class="num">' + it.pts + '</td><td class="num">' + solvers(it.id).length + '</td><td style="white-space:nowrap"><button class="btn quiet' + (pin ? " on" : "") + '" data-act="pin" data-id="' + it.id + '">' + (pin ? "Pinned" : "Pin") + '</button><button class="btn quiet" data-act="hide" data-id="' + it.id + '">' + (it.hidden ? "Show" : "Hide") + '</button><button class="btn quiet" data-act="edit" data-id="' + it.id + '">Edit</button></td></tr>';
+  }));
+  return h + "</tbody></table></div></section>";
+}
+function tResources(){
+  const R = T.resources, cnt = r => T.quests.filter(q => q.src && (q.src === r.name || (r.url && q.url && q.url.split("/")[2] === r.url.split("/")[2]))).length;
+  let h = '<section class="panel"><h2>Resources</h2><p class="lede">Everything the quests come from, what you have found but not added yet, and what you are still looking for. Students only see the real competitions marked In use, on the Competitions tab. This list is in data.js, so anyone with the link to data.js can read it.</p>';
+  h += '<form data-form="addres" class="form"><label>Name<input type="text" id="r_name" required></label><label>Link (optional)<input type="text" id="r_url" placeholder="https://"></label><label>Kind<select id="r_kind">' + Object.keys(RKINDS).map(k => '<option value="' + k + '">' + RKINDS[k] + "</option>").join("") + '</select></label><label>Status<select id="r_status">' + Object.keys(RSTAT).map(k => '<option value="' + k + '">' + RSTAT[k] + "</option>").join("") + '</select></label><label class="full">Note<input type="text" id="r_note" placeholder="What it is, and what still needs doing"></label><div><button class="btn primary">Add resource</button></div></form></section>';
+  Object.keys(RSTAT).forEach(st => {
+    const rs = R.filter(r => r.status === st).sort((a,b) => (a.kind === "event") - (b.kind === "event") || a.name.localeCompare(b.name));
+    h += '<section class="panel"><h2>' + RSTAT[st] + ' <span class="muted small">' + rs.length + "</span></h2>";
+    if(!rs.length){ h += '<p class="muted small">Nothing here.</p></section>'; return; }
+    h += '<div class="tw"><table class="res"><thead><tr><th>Resource</th><th>Kind</th>' + (st === "using" ? '<th class="num">Quests</th>' : "") + "<th>Note</th><th>Status</th><th></th></tr></thead><tbody>";
+    rs.forEach(r => { h += "<tr><td>" + (r.url ? '<a href="' + esc(r.url) + '" target="_blank" rel="noopener">' + esc(r.name) + "</a>" : esc(r.name)) + '</td><td class="small">' + RKINDS[r.kind] + "</td>" + (st === "using" ? '<td class="num">' + (r.kind === "event" ? "" : cnt(r)) + "</td>" : "") + '<td class="rnote">' + esc(r.note) + '</td><td><select data-rstat="' + r.id + '" aria-label="Status of ' + esc(r.name) + '">' + Object.keys(RSTAT).map(k => '<option value="' + k + '"' + (r.status === k ? " selected" : "") + ">" + RSTAT[k] + "</option>").join("") + '</select></td><td><button class="btn quiet danger" data-act="delres" data-id="' + r.id + '" data-confirm="1">Remove</button></td></tr>'; });
+    h += "</tbody></table></div></section>";
+  });
+  const md = Object.keys(RSTAT).map(st => "## " + RSTAT[st] + "\n\n" + R.filter(r => r.status === st).map(r => "- " + (r.url ? "[" + r.name + "](" + r.url + ")" : r.name) + (r.note ? ": " + r.note : "")).join("\n")).join("\n\n");
+  h += '<section class="panel"><h2>Copy as a list</h2><p class="lede">Markdown, ready to paste into your notes.</p><textarea id="out_res" readonly aria-label="Resources as a list">' + esc(md) + '</textarea><div class="row"><button class="btn" data-act="copy" data-t="out_res">Copy list</button></div></section>';
+  return h;
+}
+function tPeople(){
+  let h = '<section class="panel"><h2>Students</h2><p class="lede">The name is what everyone sees on the board. First names or nicknames are safest on a public page.</p><form data-form="player" class="row"><label>Name<input type="text" id="np" required></label><label>Class<select id="nk">' + cOpts() + '</select></label><button class="btn primary">Add</button></form>';
+  const rOpts = sel => '<option value="0">Ladder: automatic</option>' + ladder().map(r => '<option value="' + r.n + '"' + (sel === r.n ? " selected" : "") + ">Ladder: rung " + r.n + "</option>").join("");
+  h += '<p class="small muted">Students move up the competition ladder by themselves. Set a rung here to put a student on it (for example, a strong AMC 8 scorer straight to rung 5), or to move them back. Set it to automatic to hand control back.</p>';
+  h += '<div class="tw"><table><tbody>' + T.players.map(p => "<tr><td>" + esc(p.n) + '</td><td><select data-pcls="' + p.id + '" aria-label="Class for ' + esc(p.n) + '">' + (cls(p.c) ? "" : '<option value="">No class</option>') + cOpts(p.c) + '</select></td><td><select data-prung="' + p.id + '" aria-label="Ladder rung for ' + esc(p.n) + '">' + rOpts(p.rung || 0) + '</select></td><td class="num"><button class="btn quiet danger" data-act="delplayer" data-id="' + p.id + '" data-confirm="1">Remove</button></td></tr>').join("") + "</tbody></table></div>";
+  if(T.demo) h += '<div><button class="btn" data-act="cleardemo" data-confirm="1">Clear the sample names and start empty</button></div>';
+  h += '</section><section class="panel"><h2>Season</h2><p class="lede">The ladder and games ladder only count this season. Firsts and records carry on. A new season saves the top three to Past seasons and gives everyone a fresh start.</p><form data-form="season" class="row"><label>Name<input type="text" id="sn" value="' + esc(T.season.name) + '"></label><label>Started<input type="date" id="ss" value="' + esc(T.season.start) + '"></label><button class="btn primary">Save</button><button type="button" class="btn" data-act="newseason" data-confirm="1">Start a new season today</button></form></section>';
+  return h;
+}
+function tPublish(){
+  const s = T.settings;
+  let h = '<section class="panel"><h2>Setup</h2><form data-form="settings" class="form"><label>Page title<input type="text" id="s_title" value="' + esc(s.title) + '"></label><label>What students call you<input type="text" id="s_teacher" value="' + esc(s.teacher) + '"></label><label>Teacher PIN<input type="text" id="s_pin" inputmode="numeric" value="' + esc(s.pin) + '"></label><label>Bonus points for being first<input type="number" id="s_bonus" min="0" max="5" value="' + (+s.firstBonus||0) + '"></label><label class="inline full"><input type="checkbox" id="s_nudge"' + (s.nudge ? " checked" : "") + '> Remind students to start each topic with a Level up quest</label><div><button class="btn primary">Save setup</button></div></form></section>';
+  h += '<section class="panel"><h2>Publish</h2><p class="lede">Students see whatever is in <b>data.js</b> next to the page. On GitHub: open data.js, press the pencil, select everything, paste, then Commit changes. The page updates within a few minutes.</p><div><span class="small ' + (dirty() ? "" : "muted") + '">' + (dirty() ? "Changed on this device since the published copy." : "Matches the published copy.") + '</span></div><textarea id="out_data" readonly aria-label="data.js">' + esc(dataFile(T, "Written by the Teacher tab on")) + '</textarea><div class="row"><button class="btn primary" data-act="copy" data-t="out_data">Copy data.js</button></div></section>';
+  h += '<section class="panel"><h2>This device</h2><p class="lede">Your working copy lives in this browser. The published data.js is also your backup: on a new device, unlock this tab and it starts from the published copy.</p><div class="row"><button class="btn" data-act="loadpub" data-confirm="1">Throw away my changes and reload the published file</button></div></section>';
+  h += '<section class="panel"><h2>Share with another teacher</h2><p class="lede">A clean data.js with your quests and topics but no students, scores or name. Give them this and index.html.</p><textarea id="out_start" readonly aria-label="Starter data.js">' + esc(dataFile(starter(), "Starter copy made on")) + '</textarea><div class="row"><button class="btn" data-act="copy" data-t="out_start">Copy starter data.js</button></div></section>';
+  return h;
+}
+
+/* ---------- render and events ---------- */
+function render(){
+  if(!PUB){ $("#title").textContent = "Maths Side Quests"; $("#app").innerHTML = '<p class="note">The quests didn\'t load. Check that <b>data.js</b> is in the same folder as this page.</p>'; return; }
+  const b = D();
+  document.title = S().title;
+  $("#title").innerHTML = esc(S().title).replace(/(\S+)$/, "<span>$1</span>");
+  $("#sub").textContent = b.season.name + (b.published ? " · board updated " + nice(b.published) : "");
+  const tabs = {quests:"Quests", compete:"Competitions", boards:"Boards", mine:"My log", teacher:"Teacher"};
+  $("#tabs").innerHTML = Object.keys(tabs).map(k => '<a href="#' + k + '"' + (ui.view === k ? ' aria-current="page"' : "") + ">" + tabs[k] + "</a>").join("");
+  $("#app").innerHTML = ({quests:viewQuests, compete:viewCompete, boards:viewBoards, mine:viewMine, teacher:viewTeacher})[ui.view]();
+  ui.flash = "";
+}
+function route(){ const v = location.hash.replace("#",""); ui.view = ["quests","compete","boards","mine","teacher"].includes(v) ? v : "quests"; render(); }
+window.addEventListener("hashchange", route);
+
+let armed = null;
+document.addEventListener("click", ev => {
+  const el = ev.target.closest("[data-act]"); if(!el) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  if(el.dataset.confirm && armed !== el){ armed = el; el.dataset.label = el.textContent; el.textContent = "Sure? Press again"; setTimeout(() => { if(armed === el){ armed = null; if(el.isConnected) el.textContent = el.dataset.label; } }, 4000); return; }
+  armed = null;
+  switch(act){
+    case "dir": ui.dir = el.dataset.k; break;
+    case "toggle": ui[el.dataset.f] = !ui[el.dataset.f]; break;
+    case "bcls": ui.bcls = id; break;
+    case "pickcls": me.cls = id; saveMe(); break;
+    case "showopen": ui.open = true; ui.dir = "all"; ui.q = ""; location.hash = "quests"; break;
+    case "surprise": { ui.q = ""; const pool = filtered().filter(it => !myState(it.id)); if(pool.length) ui.q = pool[Math.floor(Math.random()*pool.length)].title; break; }
+    case "try": { const c = me.claims[id]; if(c && c.s === "try") delete me.claims[id]; else me.claims[id] = {s:"try", d:today()}; saveMe(); break; }
+    case "done": { if(item(id).record) ui.claiming = id; else { me.claims[id] = {s:"done", d:today()}; saveMe(); } break; }
+    case "claim": { const v = el.closest(".card").querySelector("input[type=number]").value; me.claims[id] = {s:"done", d:today(), v: v === "" ? null : +v}; ui.claiming = null; saveMe(); break; }
+    case "cancelclaim": ui.claiming = null; break;
+    case "unclaim": delete me.claims[id]; saveMe(); break;
+    case "saveme": me.name = $("#myname").value.trim(); me.cls = $("#mycls").value; saveMe(); ui.code = ""; break;
+    case "mkcode": ui.code = claimCode(); break;
+    case "copy": { const ta = $("#" + el.dataset.t); const done = () => { el.textContent = "Copied"; }; const fb = () => { ta.focus(); ta.select(); try { document.execCommand("copy"); done(); } catch(e){ el.textContent = "Select the text and copy it"; } };
+      try { navigator.clipboard.writeText(ta.value).then(done, fb); } catch(e){ fb(); } return; }
+    /* teacher */
+    case "tsub": ui.tsub = el.dataset.k; ui.edit = null; break;
+    case "addfromcode": T.players.push({id:uid("p"), n:ui.pending.n, c:cls(ui.pending.k) ? ui.pending.k : (T.classes[0]||{id:""}).id}); saveT(); break;
+    case "approve": case "approveall": { const P = ui.pending, pl = T.players.find(p => p.n.toLowerCase() === P.n.toLowerCase());
+      P.c.filter(c => act === "approveall" || c[0] === id).forEach(c => addSolve(pl.id, c[0], c[2], c[1])); saveT(); break; }
+    case "clearpending": ui.pending = null; break;
+    case "delmatch": T.matches.splice(+el.dataset.i, 1); saveT(); break;
+    case "delshout": T.shouts.splice(+el.dataset.i, 1); saveT(); break;
+    case "edit": ui.edit = id || null; break;
+    case "pin": { const i = T.spotlight.indexOf(id); if(i >= 0) T.spotlight.splice(i,1); else T.spotlight.push(id); saveT(); break; }
+    case "hide": { const it = item(id); if(it.hidden) delete it.hidden; else it.hidden = true; saveT(); break; }
+    case "delclass": T.classes = T.classes.filter(c => c.id !== id); saveT(); break;
+    case "delres": T.resources = T.resources.filter(r => r.id !== id); saveT(); break;
+    case "delplayer": { T.players = T.players.filter(p => p.id !== id); for(const k of ["solves","records","reports"]) for(const c in T[k]){ T[k][c] = T[k][c].filter(s => s.p !== id); if(!T[k][c].length) delete T[k][c]; } T.matches = T.matches.filter(m => m.w !== id && m.l !== id); T.shouts = T.shouts.filter(s => s.p !== id); if(ui.tStudent === id) ui.tStudent = ""; saveT(); break; }
+    case "cleardemo": T.players = []; T.solves = {}; T.records = {}; T.reports = {}; T.matches = []; T.shouts = []; T.hall = []; delete T.demo; ui.tStudent = ""; saveT(); break;
+    case "newseason": { const top = ranked(stats(), r => r.pts).filter(r => r.pts > 0).slice(0,3).map(r => ({n:r.p.n, pts:r.pts})); if(top.length) T.hall.push({name:T.season.name, top}); T.season = {name:"New season", start:today()}; saveT(); ui.flash = "New season started. Give it a name."; break; }
+    case "loadpub": T = clone(PUB); store.set("mathsChallenges.teacher.v1", T); ui.tStudent = ""; ui.pending = null; ui.flash = "Loaded the published file."; break;
+  }
+  render();
+});
+document.addEventListener("submit", ev => {
+  ev.preventDefault();
+  const f = ev.target.dataset.form, v = id => ($("#" + id).value || "").trim();
+  if(f === "pin"){ if(v("pin") === String(S().pin)){ unlocked = true; if(!T){ T = clone(PUB); store.set("mathsChallenges.teacher.v1", T); } } else ui.flash = "That PIN isn't right."; }
+  if(f === "code"){ const o = readCode(v("codein")); if(o && o.n) ui.pending = o; else ui.flash = "That doesn't look like a claim code. It should start with SQ1."; }
+  if(f === "match"){ const w = v("mw"), l = v("ml"); if(w && l && w !== l){ T.matches.push({c:v("mgame"), w, l, d:today()}); saveT(); } else ui.flash = "Pick two different students."; }
+  if(f === "shout"){ if(v("sp") && v("st")){ T.shouts.push({p:v("sp"), t:v("st"), d:today()}); saveT(); } }
+  if(f === "player"){ const n = v("np"); if(n && !T.players.some(p => p.n.toLowerCase() === n.toLowerCase())){ T.players.push({id:uid("p"), n, c:v("nk")}); saveT(); } else ui.flash = "That name is already on the board."; }
+  if(f === "season"){ T.season = {name:v("sn") || "Season", start:v("ss") || today()}; saveT(); ui.flash = "Season saved."; }
+  if(f === "addclass"){ const n = v("nc"); let id = slug(n), k = 2; while(cls(id)) id = slug(n) + "-" + k++; T.classes.push({id, name:n, open:[], now:""}); saveT(); }
+  if(f === "addtopic"){ const n = v("nt"); let id = slug(n), k = 2; while(T.topics.some(t => t.id === id)) id = slug(n) + "-" + k++; T.topics.push({id, name:n}); saveT(); }
+  if(f === "settings"){ Object.assign(T.settings, {title:v("s_title") || "Maths Side Quests", teacher:v("s_teacher") || "your teacher", pin:v("s_pin") || "6767", firstBonus:+v("s_bonus") || 0, nudge:$("#s_nudge").checked}); saveT(); ui.flash = "Setup saved. Publish data.js so students see it."; }
+  if(f === "quest"){
+    const isNewQ = ui.edit === "new", old = isNewQ ? null : item(ui.edit);
+    let id = old ? old.id : slug(v("f_title")); if(isNewQ){ let n = 2, base = id; while(item(id)) id = base + "-" + n++; }
+    putQuest({id, title:v("f_title"), url:v("f_url"), dir:v("f_dir"), topic:v("f_topic"), pts:+v("f_pts"), src:v("f_src"), paper:$("#f_paper").checked, blurb:v("f_blurb"), how:v("f_how"),
+      record:v("f_rec") ? {label:v("f_rec"), best:v("f_best")} : null, rung:+v("f_rung") || 0, pass:v("f_pass"), added:old ? old.added : today(), hidden:old ? old.hidden : false});
+    saveT(); ui.edit = null; ui.flash = "Saved on this device. Publish data.js to share it.";
+  }
+  if(f === "addres"){ const n = v("r_name"); let id = slug(n), k = 2; while(T.resources.some(r => r.id === id)) id = slug(n) + "-" + k++; T.resources.push(normRes({id, name:n, url:v("r_url"), kind:v("r_kind"), status:v("r_status"), note:v("r_note")})); saveT(); }
+  if(f === "import"){
+    let arr = null; const txt = v("imp").replace(/,\s*$/, "");
+    try { const o = JSON.parse(txt); arr = Array.isArray(o) ? o : [o]; } catch(e){ try { arr = JSON.parse("[" + txt + "]"); } catch(e2){
+      try { arr = txt.split(/\n/).map(l => l.trim().replace(/,$/, "")).filter(Boolean).map(l => JSON.parse(l)); } catch(e3){ arr = null; } } }
+    if(arr && arr.length && arr.every(o => o && (o.title || (o.name && o.status)))){
+      let nq = 0, nr = 0;
+      arr.forEach(o => {
+        if(!o.title){ const r = normRes(o), i = T.resources.findIndex(x => x.id === r.id); if(i >= 0) T.resources[i] = r; else T.resources.push(r); nr++; return; }
+        if(!o.added && !item(o.id || slug(o.title))) o.added = today(); putQuest(o); nq++;
+      });
+      saveT(); ui.flash = "Imported " + nq + (nq === 1 ? " quest" : " quests") + (nr ? " and " + nr + (nr === 1 ? " resource" : " resources") : "") + ". Publish data.js to share them.";
+    }
+    else ui.flash = "Couldn't read that. Each quest should look like {\"title\": \"…\", \"dir\": \"puzzle\", …}, one per line.";
+  }
+  render();
+});
+document.addEventListener("input", ev => { if(ev.target.id === "q"){ ui.q = ev.target.value; $("#grid").innerHTML = listHTML(); } });
+document.addEventListener("change", ev => {
+  const t = ev.target, ds = t.dataset;
+  if(t.id === "tstudent"){ ui.tStudent = t.value; render(); }
+  else if(ds.tick){ if(t.checked) addSolve(ui.tStudent, ds.tick, today()); else removeSolve(ui.tStudent, ds.tick); saveT(); render(); }
+  else if(ds.rec){ setRecord(ui.tStudent, ds.rec, t.value === "" ? NaN : +t.value, today()); saveT(); }
+  else if(ds.open){ const [c, tp] = ds.open.split("|"), k = cls(c); if(t.checked) k.open.push(tp); else { k.open = k.open.filter(x => x !== tp); if(k.now === tp) k.now = ""; } saveT(); render(); }
+  else if(ds.now){ cls(ds.now).now = t.value; saveT(); }
+  else if(ds.cname){ const n = t.value.trim(); if(n){ cls(ds.cname).name = n; saveT(); } }
+  else if(ds.pcls){ player(ds.pcls).c = t.value; saveT(); }
+  else if(ds.prung){ const p = player(ds.prung); if(+t.value) p.rung = +t.value; else delete p.rung; saveT(); }
+  else if(ds.stage){ const sg = +t.value, cid = ds.stage, pid = ui.tStudent, arr = T.reports[cid] = (T.reports[cid] || []).filter(x => x.p !== pid);
+    if(sg > 0) arr.push({p:pid, s:sg, d:today()}); if(!arr.length) delete T.reports[cid];
+    if(sg === 3) addSolve(pid, cid, today()); else removeSolve(pid, cid); saveT(); render(); }
+  else if(ds.rstat){ const r = T.resources.find(x => x.id === ds.rstat); r.status = t.value; saveT(); render(); }
+});
+route();
+</script>
+</body>
+</html>
