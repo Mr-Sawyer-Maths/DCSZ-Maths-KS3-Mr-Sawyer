@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fact Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f3ee; --panel:#ffffff; --ink:#1d2127; --muted:#636a74; --line:#e2ddd2; --line2:#cfc8ba;
+  --accent:#2c5a86; --accent-ink:#fff; --accent-soft:#e5edf5;
+  --s-none:#ebe7df; --s-learn:#e0705a; --s-slow:#efb648; --s-grow:#a8d08c; --s-secure:#3c9558;
+  --ok:#3c9558; --warn:#c98a22; --bad:#c4513b;
+  --font:'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --r:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+.top{position:sticky;top:0;z-index:5;background:var(--ink);color:#fff;display:flex;align-items:center;gap:14px;padding:10px 20px;flex-wrap:wrap}
+.top .brand{font-weight:700;letter-spacing:.2px;cursor:pointer}
+.top .brand span{opacity:.6;font-weight:400}
+.top .crumb{opacity:.85}
+.top .sp{flex:1}
+.top .bk{font-size:13px;opacity:.85}
+.top button{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:8px;padding:5px 10px;cursor:pointer}
+.top button:hover{background:rgba(255,255,255,.1)}
+.top .warnbk{color:#ffd27a}
+main{max-width:1120px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:26px;margin:4px 0 6px}
+h2{font-size:19px;margin:22px 0 10px}
+h3{font-size:16px;margin:14px 0 6px}
+p{margin:6px 0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line2);background:#fff;border-radius:8px;padding:7px 13px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.big{padding:11px 20px;font-size:17px}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.45;cursor:default}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line2);margin:14px 0 18px;flex-wrap:wrap}
+.tabs button{border:none;background:none;padding:9px 14px;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);font-weight:700}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--accent)}
+.chip{display:inline-block;padding:2px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:700}
+.chip.grey{background:#efece6;color:var(--muted)}
+.gcard h3{margin:0 0 2px;font-size:18px}
+.gcard .stu{color:var(--muted);margin-bottom:10px}
+.gcard .pos{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0 12px;font-size:15px}
+.gcard .pos b{white-space:nowrap}
+label.fld{display:block;margin:8px 0}
+label.fld span{display:block;font-size:13px;color:var(--muted);margin-bottom:3px}
+input[type=text],input[type=number],select,textarea{border:1px solid var(--line2);border-radius:8px;padding:7px 10px;background:#fff;width:100%}
+textarea{min-height:70px}
+table.ed{border-collapse:collapse;width:100%}
+table.ed td,table.ed th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.how ol{margin:6px 0 0 0;padding-left:20px}
+.how li{margin:5px 0}
+.note{background:#fff8e6;border:1px solid #f0dfae;border-radius:8px;padding:10px 12px}
+.ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+
+/* session */
+.sesshead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.timer{font-variant-numeric:tabular-nums;font-size:28px;font-weight:700;padding:2px 12px;border-radius:8px;background:#fff;border:1px solid var(--line)}
+.timer.over{color:var(--warn);border-color:var(--warn)}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps button{border:1px solid var(--line2);background:#fff;border-radius:999px;padding:6px 14px;cursor:pointer}
+.steps button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.steps button.done{border-color:var(--ok);color:var(--ok)}
+.script{font-size:15px;background:var(--accent-soft);border-left:4px solid var(--accent);padding:9px 12px;border-radius:6px;margin:0 0 14px}
+.studycols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.studycard{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.studycard h3{margin:0 0 8px;font-size:20px}
+.studyfact{font-size:30px;font-weight:700;margin:4px 0;letter-spacing:.3px}
+.studyfact.add{font-size:24px}
+.tip{color:var(--muted);font-size:14px;margin:2px 0 10px}
+.qf{display:grid;grid-template-columns:1fr;gap:12px;justify-items:center;text-align:center;padding:16px}
+.qf .who{font-size:22px;font-weight:700;padding:4px 18px;border-radius:999px;background:var(--ink);color:#fff}
+.qf .who.s1{background:#7a4ea3}
+.qf .kind{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.qf .q{font-size:84px;font-weight:700;line-height:1.05;letter-spacing:1px}
+.qf .ans{font-size:44px;font-weight:700;color:var(--accent);min-height:56px}
+.qf .ans.hide{color:transparent}
+.qf .ansbtn{font-size:14px}
+.qf .mark{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.qf .mark button{font-size:19px;padding:12px 20px;border-radius:10px;border:2px solid;background:#fff;cursor:pointer;min-width:170px}
+.qf .mark .m-ok{border-color:var(--ok);color:var(--ok)}
+.qf .mark .m-slow{border-color:var(--warn);color:var(--warn)}
+.qf .mark .m-bad{border-color:var(--bad);color:var(--bad)}
+.qf .mark button:hover{filter:brightness(.95);background:#fafafa}
+.qf .k{font-size:12px;opacity:.7;display:block}
+.rehearse{background:#fff3ef;border:1px solid #f0c7bb;border-radius:8px;padding:8px 14px;font-size:17px}
+.progressbar{height:8px;background:#e8e4db;border-radius:999px;overflow:hidden;width:min(520px,90%)}
+.progressbar i{display:block;height:100%;background:var(--accent)}
+.ladder{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 14px}
+.ladder button{min-width:58px;height:52px;font-size:22px;font-weight:700;border:2px dashed var(--line2);border-radius:8px;background:#fff;cursor:pointer}
+.ladder button.shown{border-style:solid;border-color:var(--accent);color:var(--accent)}
+.sumtab{border-collapse:collapse;width:100%}
+.sumtab td,.sumtab th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+
+/* maps */
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0 10px}
+.legend i{display:inline-block;width:13px;height:13px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+.st-none{background:var(--s-none)} .st-learn{background:var(--s-learn)} .st-slow{background:var(--s-slow)} .st-grow{background:var(--s-grow)} .st-secure{background:var(--s-secure)}
+table.mgrid{border-collapse:separate;border-spacing:3px}
+table.mgrid th{font-size:13px;color:var(--muted);width:34px;height:26px;font-weight:700}
+table.mgrid th.cur{color:var(--accent);background:var(--accent-soft);border-radius:4px}
+table.mgrid td{width:34px;height:30px;border-radius:5px;text-align:center;font-size:12px;cursor:pointer;color:rgba(0,0,0,.55);font-weight:700}
+table.mgrid td.st-secure,table.mgrid td.st-learn{color:#fff}
+table.mgrid td:hover{outline:2px solid var(--ink)}
+.big table.mgrid td{width:50px;height:42px;font-size:15px}
+.big table.mgrid th{width:50px;font-size:16px}
+.famrow{display:grid;grid-template-columns:minmax(150px,220px) 1fr 70px;gap:10px;align-items:center;padding:5px 0;border-bottom:1px dashed var(--line)}
+.famrow .lab{font-weight:700}
+.famrow .lab small{display:block;font-weight:400;color:var(--muted)}
+.famrow.cur .lab{color:var(--accent)}
+.bar{display:flex;height:16px;border-radius:5px;overflow:hidden;background:var(--s-none)}
+.bar i{display:block;height:100%}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 4px}
+.chips button{border:none;border-radius:6px;padding:3px 8px;font-size:13px;cursor:pointer;font-weight:700;color:rgba(0,0,0,.65)}
+.chips button.st-secure,.chips button.st-learn{color:#fff}
+details.fam summary{cursor:pointer;list-style:none}
+details.fam summary::-webkit-details-marker{display:none}
+.overlay{position:fixed;inset:0;background:var(--bg);z-index:50;overflow:auto;padding:24px}
+.overlay .close{position:fixed;top:14px;right:18px}
+
+/* sheet preview */
+.preview{background:#d9d4c9;border-radius:var(--r);padding:16px;overflow:auto;max-height:78vh}
+.preview .sheet{background:#fff;margin:0 auto 16px;box-shadow:0 2px 8px rgba(0,0,0,.15);width:210mm;min-height:297mm;padding:12mm}
+#print{display:none}
+
+/* printable sheet */
+.sheet{font-family:var(--font);color:#111}
+.sheet .sh-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:6px}
+.sheet .sh-title{font-size:20px;font-weight:700}
+.sheet .sh-name{font-size:18px}
+.sheet .sh-meta{font-size:12px;color:#555;text-align:right}
+.sheet .rule{font-size:13px;margin:4px 0 8px}
+.sheet .part{border:1.5px solid #111;border-radius:8px;padding:7px 10px 9px;margin:0 0 9px;break-inside:avoid}
+.sheet .part h2{font-size:16px;margin:0 0 4px;display:flex;justify-content:space-between;gap:10px}
+.sheet .part h2 small{font-weight:400;font-size:12px;color:#444}
+.sheet .study{border:1px dashed #777;border-radius:6px;padding:5px 9px;margin:3px 0 4px;font-size:15px;background:#f7f7f4}
+.sheet .study b{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:#555;margin-right:6px}
+.sheet .study .sf{display:inline-block;margin-right:16px;font-weight:700}
+.sheet .study .stip{display:block;font-size:12px;color:#444;margin-top:2px}
+.sheet .fold{font-size:10px;color:#888;text-align:center;border-top:1px dashed #aaa;margin:2px 0 6px;line-height:1.2;padding-top:1px}
+.sheet .qs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 14px}
+.sheet .qs.c3{grid-template-columns:repeat(3,1fr)}
+.sheet .qi{display:flex;align-items:center;gap:6px;font-size:20px;white-space:nowrap}
+.sheet .qi .n{font-size:11px;color:#777;min-width:16px;text-align:right}
+.sheet .bx{display:inline-block;width:54px;height:31px;border:1.3px solid #333;border-radius:4px;vertical-align:middle;background:#fff}
+.sheet .bx.sm{width:40px}
+.sheet .chainrow{display:flex;gap:8px;align-items:center;font-size:20px;margin:4px 0 9px;flex-wrap:wrap}
+.sheet .chainrow .arr{color:#888}
+.sheet .lad{display:flex;gap:4px;align-items:center;margin:3px 0 6px;font-size:16px;flex-wrap:wrap}
+.sheet .lad .lab{font-size:12px;color:#444;margin-right:4px;min-width:84px}
+.sheet .lad .bx{width:38px;height:26px}
+.sheet .sh-foot{display:flex;justify-content:space-between;font-size:13px;border-top:1px solid #999;padding-top:5px;margin-top:4px}
+.sheet .keyblock{font-size:12px;margin:0 0 8px;break-inside:avoid}
+.sheet .keyblock h3{font-size:13px;margin:4px 0 2px}
+.sheet .keygrid{display:flex;flex-wrap:wrap;gap:2px 12px}
+
+/* report */
+.report h1{font-size:24px;margin:0}
+.report .rsub{color:#555;margin-bottom:10px}
+.report h2{font-size:17px;margin:14px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}
+.report table.mgrid td{cursor:default}
+.report .home li{margin:4px 0}
+
+@media print{
+  @page{size:A4;margin:11mm}
+  html,body{background:#fff}
+  body>*:not(#print){display:none!important}
+  #print{display:block!important}
+  #print .sheet{page-break-after:always;break-after:page;width:auto;min-height:0;padding:0;box-shadow:none}
+  #print .sheet:last-child{page-break-after:auto;break-after:auto}
+  .st-none,.st-learn,.st-slow,.st-grow,.st-secure,.bar i{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media (max-width:700px){ .qf .q{font-size:56px} .famrow{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="top" id="top"></div>
+<main id="app"></main>
+<div id="print"></div>
+<input type="file" id="importFile" accept=".json,application/json" hidden>
+
+<script>
+'use strict';
+/* =========================================================
+   Fact Practice — a teacher-facing tool for 1–3 students
+   per class who need fact-family practice.
+   Everything is saved in this browser (localStorage).
+   Use Settings → Export backup to keep a copy.
+   ========================================================= */
+
+// ---------- small utilities ----------
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+const parseD = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const fmtDate = s => s ? parseD(s).toLocaleDateString('en-NZ', {day: 'numeric', month: 'short'}) : '—';
+const fmtLong = s => s ? parseD(s).toLocaleDateString('en-NZ', {weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'}) : '—';
+const daysAgo = s => Math.round((parseD(todayStr()) - parseD(s)) / 86400000);
+const uid = () => Math.random().toString(36).slice(2, 9);
+function weekKey(s = todayStr()) { const d = parseD(s); const day = (d.getDay() + 6) % 7; d.setDate(d.getDate() - day); return d.toISOString().slice(0, 10); }
+function hashStr(s) { let h = 1779033703 ^ s.length; for (let i = 0; i < s.length; i++) { h = Math.imul(h ^ s.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; } return h >>> 0; }
+function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const rngFrom = s => mulberry(hashStr(String(s)));
+const RI = (r, a, b) => a + Math.floor(r() * (b - a + 1));
+function shuffle(arr, r) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function pickW(items, wfn, r) { let tot = 0; const ws = items.map(x => { const w = Math.max(0, wfn(x)); tot += w; return w; }); if (!items.length) return null; if (tot <= 0) return items[Math.floor(r() * items.length)]; let x = r() * tot; for (let i = 0; i < items.length; i++) { x -= ws[i]; if (x <= 0) return items[i]; } return items[items.length - 1]; }
+
+// ---------- fact families (strands) ----------
+// Each family: {id,label,eg,tip,facts:[{key,show,chip,make(r)->{q,a,blank?}}], chains?, n?}
+// To add a new strand later: write a build function like the ones below and register it in STRANDS.
+const F = (key, show, chip, make, extra = {}) => ({key, show, chip, make, ...extra});
+
+function addBaseKey(u, v) { const s = u + v; if (s === 10) return 'a1:' + u; return 'a2:' + Math.min(u, v) + '+' + Math.max(u, v); }
+function buildAdd() {
+  const fams = [];
+  const a1 = []; for (let n = 1; n <= 9; n++) a1.push(F('a1:' + n, `${n} + ${10 - n} = 10`, `${n} + □`, r => r() < .5 ? {q: `${n} + □ = 10`, a: 10 - n, blank: 1} : {q: `□ + ${n} = 10`, a: 10 - n, blank: 1}));
+  fams.push({id: 'a1', label: 'Bonds to 10', eg: '7 + □ = 10', tip: 'Pairs that make 10: 9 and 1, 8 and 2, 7 and 3, 6 and 4, 5 and 5.', facts: a1});
+  const a2 = []; for (let a = 2; a <= 9; a++) for (let b = a; b <= 9; b++) if (a + b >= 11) a2.push(F(`a2:${a}+${b}`, `${a} + ${b} = ${a + b}`, `${a} + ${b}`, r => r() < .5 ? {q: `${a} + ${b}`, a: a + b} : {q: `${b} + ${a}`, a: a + b}));
+  fams.push({id: 'a2', label: 'Teen facts', eg: '8 + 7', tip: 'Use the 10: 8 + 7 → 8 + 2 makes 10, then 5 more is 15.', facts: a2});
+  const a3 = []; for (let u = 1; u <= 9; u++) a3.push(F('a3:' + u, `3${u} + ${10 - u} = 40`, `…${u} + □`, r => { const t = RI(r, 1, 8); return {q: `${t}${u} + □ = ${(t + 1) * 10}`, a: 10 - u, blank: 1}; }));
+  fams.push({id: 'a3', label: 'To the next ten', eg: '37 + □ = 40', tip: 'How far to the next ten? 37 → 40 is 3, because 7 + 3 = 10.', facts: a3});
+  const a4 = []; for (let u = 1; u <= 8; u++) for (let v = 1; v <= 9 - u; v++) a4.push(F(`a4:${u}+${v}`, `2${u} + ${v} = ${20 + u + v}`, `…${u} + ${v}`, r => { const t = RI(r, 1, 9), A = t * 10 + u; return r() < .25 ? {q: `${v} + ${A}`, a: A + v} : {q: `${A} + ${v}`, a: A + v}; }));
+  fams.push({id: 'a4', label: 'Add ones (no new ten)', eg: '23 + 5', tip: 'Only the ones change: 23 + 5 → 3 + 5 = 8, so 28.', facts: a4});
+  const a5 = []; for (let u = 1; u <= 9; u++) for (let v = 2; v <= 9; v++) if (u + v >= 10) {
+    const base = addBaseKey(u, v), key = `a5:${u}+${v}`;
+    a5.push(F(key, `${u} + ${v} = ${u + v}  →  2${u} + ${v} = ${20 + u + v}`, `…${u} + ${v}`,
+      r => { const t = RI(r, 1, 8), A = t * 10 + u; return r() < .2 ? {q: `${v} + ${A}`, a: A + v} : {q: `${A} + ${v}`, a: A + v}; },
+      {chain: r => { const ts = shuffle([1, 2, 3, 4, 5, 6, 7, 8], r).slice(0, 2).sort((x, y) => x - y); return [{q: `${u} + ${v}`, a: u + v, key: base}, ...ts.map(t => ({q: `${t * 10 + u} + ${v}`, a: t * 10 + u + v, key}))]; }}));
+  }
+  fams.push({id: 'a5', label: 'Bridge a ten', eg: '28 + 7', tip: 'You know 8 + 7 = 15. So 28 + 7 ends in 5 and goes up a ten: 35.', facts: a5, chains: true});
+  const a6 = []; for (let t = 1; t <= 8; t++) for (let s = 1; s <= 9 - t; s++) a6.push(F(`a6:${t}+${s}`, `${t}4 + ${s}0 = ${t + s}4`, `${t}_ + ${s}0`, r => { const u = RI(r, 1, 9); return {q: `${t}${u} + ${s}0`, a: (t + s) * 10 + u}; }));
+  fams.push({id: 'a6', label: 'Add tens', eg: '47 + 30', tip: 'Only the tens change: 47 + 30 → 4 tens + 3 tens = 7 tens, so 77.', facts: a6});
+  const a7 = []; for (let p = 1; p <= 9; p++) for (let q = p; q <= 9; q++) a7.push(F(`a7:${p}+${q}`, `2${p} + 1${q} = ${30 + p + q}`, `…${p} + …${q}`, r => {
+    const c = (p + q >= 10) ? 1 : 0, t1 = RI(r, 1, 8 - c), t2 = RI(r, 1, 9 - c - t1); const [u1, u2] = r() < .5 ? [p, q] : [q, p]; const A = t1 * 10 + u1, B = t2 * 10 + u2; return {q: `${A} + ${B}`, a: A + B};
+  }));
+  fams.push({id: 'a7', label: 'Two 2-digit numbers', eg: '47 + 36', tip: 'Tens first, then ones: 47 + 36 → 47 + 30 = 77, then + 6 = 83.', facts: a7});
+  return fams;
+}
+function subBaseKey(u, v) { if (u === 0) return 's1:' + v; return `s2:${10 + u}-${v}`; }
+function buildSub() {
+  const fams = [];
+  const s1 = []; for (let n = 1; n <= 9; n++) s1.push(F('s1:' + n, `10 − ${n} = ${10 - n}`, `10 − ${n}`, () => ({q: `10 − ${n}`, a: 10 - n})));
+  fams.push({id: 's1', label: 'Take from 10', eg: '10 − 3', tip: 'Use your bonds to 10: 7 + 3 = 10, so 10 − 3 = 7.', facts: s1});
+  const s2 = []; for (let a = 2; a <= 9; a++) for (let b = 2; b <= 9; b++) if (a + b >= 11) s2.push(F(`s2:${a + b}-${b}`, `${a + b} − ${b} = ${a}`, `${a + b} − ${b}`, () => ({q: `${a + b} − ${b}`, a})));
+  fams.push({id: 's2', label: 'Teen take-aways', eg: '15 − 7', tip: 'Think addition: 7 + what makes 15? 7 + 8 = 15, so 15 − 7 = 8.', facts: s2});
+  const s3 = []; for (let u = 1; u <= 9; u++) s3.push(F('s3:' + u, `4${u} − ${u} = 40`, `…${u} − ${u}`, r => { const t = RI(r, 1, 9); return {q: `${t}${u} − ${u}`, a: t * 10}; }));
+  fams.push({id: 's3', label: 'Back to the ten', eg: '43 − 3', tip: 'Take away all the ones and you land on the ten: 43 − 3 = 40.', facts: s3});
+  const s4 = []; for (let u = 2; u <= 9; u++) for (let v = 1; v < u; v++) s4.push(F(`s4:${u}-${v}`, `4${u} − ${v} = ${40 + u - v}`, `…${u} − ${v}`, r => { const t = RI(r, 1, 9); return {q: `${t}${u} − ${v}`, a: t * 10 + u - v}; }));
+  fams.push({id: 's4', label: 'Take ones (no new ten)', eg: '47 − 5', tip: 'Only the ones change: 7 − 5 = 2, so 47 − 5 = 42.', facts: s4});
+  const s5 = []; for (let u = 0; u <= 8; u++) for (let v = u + 1; v <= 9; v++) {
+    const key = `s5:${u}-${v}`, base = subBaseKey(u, v);
+    s5.push(F(key, `1${u} − ${v} = ${10 + u - v}  →  4${u} − ${v} = ${40 + u - v}`, `…${u} − ${v}`,
+      r => { const t = RI(r, 2, 9); return {q: `${t}${u} − ${v}`, a: t * 10 + u - v}; },
+      {chain: r => { const ts = shuffle([2, 3, 4, 5, 6, 7, 8, 9], r).slice(0, 2).sort((x, y) => x - y); return [{q: `1${u} − ${v}`, a: 10 + u - v, key: base}, ...ts.map(t => ({q: `${t}${u} − ${v}`, a: t * 10 + u - v, key}))]; }}));
+  }
+  fams.push({id: 's5', label: 'Bridge back a ten', eg: '43 − 7', tip: 'You know 13 − 7 = 6. So 43 − 7 ends in 6 and drops a ten: 36.', facts: s5, chains: true});
+  const s6 = []; for (let v = 1; v <= 9; v++) s6.push(F('s6:' + v, `40 − ${v} = ${40 - v}`, `_0 − ${v}`, r => { const t = RI(r, 2, 9); return {q: `${t}0 − ${v}`, a: t * 10 - v}; }));
+  fams.push({id: 's6', label: 'From a ten', eg: '40 − 7', tip: 'Drop one ten, then use bonds to 10: 40 − 7 → 30 + 3 = 33.', facts: s6});
+  return fams;
+}
+const MULT_ORDER = [2, 10, 5, 1, 4, 3, 9, 6, 8, 7];
+const MTIPS = {2: 'Double it: 2 × 7 is 7 + 7 = 14.', 10: 'Times 10: the digits move up one place — 7 becomes 70.', 5: 'Half of ×10: 5 × 8 is half of 80, so 40.', 1: '×1 stays the same. ×0 is always 0.', 4: 'Double, then double again: 4 × 7 → 14 → 28.', 3: 'Double plus one more: 3 × 7 → 14 + 7 = 21.', 9: '×10 then take one away: 9 × 7 → 70 − 7 = 63.', 6: '×5 plus one more: 6 × 7 → 35 + 7 = 42.', 8: 'Double, double, double: 8 × 7 → 14 → 28 → 56.', 7: '×5 plus ×2: 7 × 8 → 40 + 16 = 56.'};
+const mkey = (a, b) => 'm:' + Math.min(a, b) + 'x' + Math.max(a, b);
+function buildMult() {
+  return MULT_ORDER.map(n => {
+    const facts = [];
+    for (let k = 1; k <= 10; k++) facts.push(F(mkey(n, k), `${n} × ${k} = ${n * k}`, `${n}×${k}`, r => r() < .5 ? {q: `${n} × ${k}`, a: n * k} : {q: `${k} × ${n}`, a: n * k}));
+    if (n === 1) for (let k = 1; k <= 10; k++) facts.push(F('m:0x' + k, `0 × ${k} = 0`, `0×${k}`, r => r() < .5 ? {q: `0 × ${k}`, a: 0} : {q: `${k} × 0`, a: 0}));
+    return {id: 'x' + n, n: n === 1 ? null : n, label: n === 1 ? '×1 and ×0' : '×' + n, eg: n === 1 ? '1 × 7, 0 × 7' : `${n} × 7`, tip: MTIPS[n], facts};
+  });
+}
+const dkey = (a, b) => 'd:' + Math.min(a, b) + 'x' + Math.max(a, b);
+function buildDiv() {
+  return MULT_ORDER.map(n => {
+    const facts = [];
+    for (let k = 1; k <= 10; k++) facts.push(F(dkey(n, k), `${n * k} ÷ ${n} = ${k}`, `${n * k}÷${n}`, r => r() < .5 ? {q: `${n * k} ÷ ${n}`, a: k} : {q: `${n * k} ÷ ${k}`, a: n}));
+    return {id: 'd' + n, n: n === 1 ? null : n, label: '÷' + n, eg: `${n * 7} ÷ ${n}`, tip: n === 1 ? '÷1 stays the same. Anything ÷ itself is 1.' : `Think multiplication: ${n} × what = ${n * 7}? So ${n * 7} ÷ ${n} = 7.`, facts};
+  });
+}
+const STRANDS = {
+  add: {id: 'add', name: 'Addition', sym: '+', map: 'list', families: buildAdd()},
+  sub: {id: 'sub', name: 'Subtraction', sym: '−', map: 'list', families: buildSub()},
+  mult: {id: 'mult', name: 'Multiplication', sym: '×', map: 'grid', families: buildMult()},
+  div: {id: 'div', name: 'Division', sym: '÷', map: 'list', families: buildDiv()},
+};
+const STRAND_ORDER = ['add', 'sub', 'mult', 'div'];
+const FACT = {}; const STRAND_KEYS = {};
+for (const sid of STRAND_ORDER) {
+  const ks = new Set();
+  STRANDS[sid].families.forEach((fam, i) => fam.facts.forEach(f => { if (!FACT[f.key]) FACT[f.key] = {fact: f, strand: sid, fam: i}; if (countable(f.key)) ks.add(f.key); }));
+  STRAND_KEYS[sid] = [...ks];
+}
+function countable(key) { return !key.startsWith('m:0x'); }
+
+// ---------- fact status ----------
+const STATS = ['none', 'learn', 'slow', 'grow', 'secure'];
+const STAT_LABEL = {none: 'Not seen yet', learn: 'Learning (wrong)', slow: 'Slow / counted', grow: 'Getting there', secure: 'Secure'};
+const STAT_W = {learn: 5, slow: 4, none: 3, grow: 2, secure: 1};
+function stat(rec) {
+  if (!rec) return 'none';
+  if (rec.streak >= 3 && rec.okDays >= 2) return 'secure';
+  if (rec.last === 'wrong') return 'learn';
+  if (rec.last === 'slow') return 'slow';
+  if (rec.last === 'ok') return 'grow';
+  return 'none';
+}
+const statOf = (stu, key) => stat(stu.facts[key]);
+function applyResult(stu, key, res, day) {
+  const r = stu.facts[key] || (stu.facts[key] = {n: 0, streak: 0, okDays: 0, lastOkDay: null, last: null, lastDay: null});
+  r.n++; r.lastDay = day;
+  if (res === 'ok') { r.streak++; if (r.lastOkDay !== day) { r.okDays++; r.lastOkDay = day; } }
+  else r.streak = 0;
+  r.last = res;
+}
+function setManual(stu, key, st) {
+  if (st === 'none') { delete stu.facts[key]; return; }
+  const d = todayStr(), b = {n: 1, lastDay: d};
+  stu.facts[key] = st === 'secure' ? {...b, streak: 3, okDays: 2, last: 'ok', lastOkDay: d}
+    : st === 'grow' ? {...b, streak: 1, okDays: 1, last: 'ok', lastOkDay: d}
+    : st === 'slow' ? {...b, streak: 0, okDays: 0, last: 'slow', lastOkDay: null}
+    : {...b, streak: 0, okDays: 0, last: 'wrong', lastOkDay: null};
+}
+function countKeys(stu, keys) { const c = {none: 0, learn: 0, slow: 0, grow: 0, secure: 0}; keys.forEach(k => c[statOf(stu, k)]++); c.total = keys.length; return c; }
+function famKeys(sid, fi) { return [...new Set(STRANDS[sid].families[fi].facts.map(f => f.key).filter(countable))]; }
+const famStats = (stu, sid, fi) => countKeys(stu, famKeys(sid, fi));
+const strandStats = (stu, sid) => countKeys(stu, STRAND_KEYS[sid]);
+
+// ---------- state ----------
+const STORE = 'factPractice.v1';
+let S = load();
+function defaultState() { return {v: 1, groups: [], settings: {perPart: 16}, lastBackup: null, created: todayStr()}; }
+function load() { try { const raw = localStorage.getItem(STORE); if (raw) { const s = JSON.parse(raw); return {...defaultState(), ...s, settings: {...defaultState().settings, ...(s.settings || {})}}; } } catch (e) { console.warn(e); } return defaultState(); }
+let saveWarned = false;
+function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) { if (!saveWarned) { saveWarned = true; alert('Could not save in this browser. Use Settings → Export backup so you don’t lose data.'); } } }
+const G = id => S.groups.find(g => g.id === id);
+const strandsOf = g => STRAND_ORDER.filter(s => g.strands.includes(s));
+function ensurePos(g) { for (const s of g.strands) if (!g.pos[s]) g.pos[s] = {fam: 0, stage: 'blocked'}; }
+function snapshot(stu, g) {
+  const d = todayStr(), e = {d, s: {}, t: {}};
+  for (const sid of strandsOf(g)) { const c = strandStats(stu, sid); e.s[sid] = c.secure; e.t[sid] = c.total; }
+  stu.hist = (stu.hist || []).filter(h => h.d !== d); stu.hist.push(e);
+}
+
+// ---------- targets & pools ----------
+function targetSeed(stu, sid, pos) { return `${stu.id}|${sid}|${pos.fam}|${weekKey()}`; }
+function pickTargets(stu, sid, pos, k) {
+  const st = STRANDS[sid], r = rngFrom(targetSeed(stu, sid, pos)), pr = {learn: 0, slow: 1, none: 2, grow: 3};
+  const out = [], seen = new Set();
+  for (let fi = pos.fam; fi >= 0 && out.length < k; fi--) {
+    const list = shuffle(st.families[fi].facts, r).filter(f => !seen.has(f.key));
+    list.forEach(f => seen.add(f.key));
+    const ns = list.filter(f => statOf(stu, f.key) !== 'secure').sort((a, b) => pr[statOf(stu, a.key)] - pr[statOf(stu, b.key)]);
+    out.push(...ns.slice(0, k - out.length));
+  }
+  return out;
+}
+function knownPool(stu, sid, pos, targets) {
+  const st = STRANDS[sid], tk = new Set(targets.map(t => t.key));
+  const earlier = st.families.slice(0, pos.fam).flatMap(f => f.facts).filter(f => !tk.has(f.key));
+  const cur = st.families[pos.fam].facts.filter(f => !tk.has(f.key));
+  let pool = earlier.filter(f => ['secure', 'grow'].includes(statOf(stu, f.key)));
+  if (pool.length < 4) pool = pool.concat(cur.filter(f => ['secure', 'grow'].includes(statOf(stu, f.key))));
+  if (pool.length < 4) pool = pool.concat(earlier.filter(f => statOf(stu, f.key) === 'none'));
+  if (pool.length < 4) pool = pool.concat(cur.filter(f => !['learn', 'slow'].includes(statOf(stu, f.key))));
+  if (!pool.length) pool = cur.length ? cur : st.families[0].facts;
+  return [...new Map(pool.map(f => [f.key, f])).values()];
+}
+
+// ---------- sheets ----------
+const SHEET_TYPES = {
+  practice: {label: 'Practice', desc: 'The everyday sheet. Follows each strand’s current stage (new family only, or new family mixed with old ones), with each student’s targets repeated.'},
+  check: {label: 'Weekly check', desc: 'Mixed questions from everything learned so far, plus a couple from the next family. No study strip. Log what they circle.'},
+  bridge: {label: 'Bridge (new ×/÷ family)', desc: 'Count up and down the new family first, then practise it. Use on the first day of a hard family.'},
+  placement: {label: 'Starting check', desc: 'A few questions from every family, easiest first. Use once at the start to find where each strand should begin.'},
+};
+function buildPart(g, stu, sid, type, n, r) {
+  const st = STRANDS[sid], pos = g.pos[sid], fam = st.families[pos.fam];
+  const W = f => STAT_W[statOf(stu, f.key)];
+  const inst = f => ({...f.make(r), key: f.key});
+  const part = {sid, title: st.name, fam: pos.fam, famLabel: fam.label, eg: fam.eg, tip: fam.tip, stage: pos.stage, type, targets: [], chains: [], items: [], ladder: null};
+  if (type === 'practice' || type === 'bridge') {
+    const tg = pickTargets(stu, sid, pos, 3);
+    part.targets = tg.map(f => f.show);
+    let need = n;
+    if (type === 'bridge' && fam.n) { part.ladder = fam.n; }
+    if (pos.stage === 'blocked' && fam.chains && type === 'practice') {
+      const cf = tg.length ? tg : [pickW(fam.facts, W, r)];
+      for (let i = 0; i < 3; i++) { const f = cf[i % cf.length].chain ? cf[i % cf.length] : pickW(fam.facts, W, r); part.chains.push(f.chain(r)); }
+      need = Math.max(4, n - 9);
+    }
+    const earlier = st.families.slice(0, pos.fam).flatMap(f => f.facts);
+    const mixed = pos.stage === 'mixed' && type === 'practice' && earlier.length > 0;
+    const slots = Array.from({length: need}, (_, i) => mixed && i % 2 === 1 ? 'old' : 'cur');
+    const nCur = slots.filter(s => s === 'cur').length;
+    const reps = tg.length ? Math.min(3, Math.floor(nCur * 0.6 / tg.length)) : 0;
+    let curList = [];
+    tg.forEach(f => { for (let i = 0; i < reps; i++) curList.push(f); });
+    const tk = new Set(tg.map(f => f.key));
+    const drawCur = bagDrawer(fam.facts.filter(f => !tk.has(f.key)).length ? fam.facts.filter(f => !tk.has(f.key)) : fam.facts, W, r);
+    while (curList.length < nCur) curList.push(drawCur());
+    curList = spread(shuffle(curList, r), r);
+    const drawOld = earlier.length ? bagDrawer(earlier, W, r) : null;
+    const oldList = spread(slots.filter(s => s === 'old').map(() => drawOld()), r);
+    let ci = 0, oi = 0;
+    part.items = slots.map(s => inst(s === 'cur' ? curList[ci++] : oldList[oi++]));
+  } else if (type === 'check') {
+    const pool = st.families.slice(0, pos.fam + 1).flatMap(f => f.facts);
+    const next = st.families[pos.fam + 1];
+    const nNext = next ? 2 : 0;
+    const uniq = [...new Map(pool.map(f => [f.key, f])).values()];
+    let chosen = [];
+    const avail = uniq.slice();
+    while (chosen.length < n - nNext && avail.length) { const f = pickW(avail, x => W(x) + 1, r); chosen.push(f); avail.splice(avail.indexOf(f), 1); }
+    while (chosen.length < n - nNext) chosen.push(pickW(uniq, W, r));
+    for (let i = 0; i < nNext; i++) chosen.push(next.facts[Math.floor(r() * next.facts.length)]);
+    part.items = spread(shuffle(chosen, r), r).map(inst);
+  } else if (type === 'placement') {
+    const nf = st.families.length, per = Math.max(2, Math.floor(n / nf));
+    let items = [];
+    st.families.forEach(fam2 => { shuffle(fam2.facts.filter(f => countable(f.key)), r).slice(0, per).forEach(f => items.push(inst(f))); });
+    part.items = items.slice(0, Math.max(n, nf * 2));
+  }
+  return part;
+}
+function bagDrawer(facts, W, r) { // weighted, without replacement until the bag is empty — so a sheet covers the family
+  const uniq = [...new Map(facts.map(f => [f.key, f])).values()];
+  let bag = [];
+  return () => {
+    if (!bag.length) { const left = uniq.slice(); while (left.length) { const f = pickW(left, W, r); bag.push(f); left.splice(left.indexOf(f), 1); } }
+    return bag.shift();
+  };
+}
+function spread(list, r) { // avoid the same fact twice in a row
+  const a = list.slice();
+  for (let i = 1; i < a.length; i++) if (a[i] && a[i - 1] && a[i].key === a[i - 1].key) { for (let j = i + 1; j < a.length; j++) if (a[j].key !== a[i - 1].key && (!a[j + 1] || a[j + 1].key !== a[i].key)) { [a[i], a[j]] = [a[j], a[i]]; break; } }
+  return a;
+}
+function buildSheet(g, type, seq = 0) {
+  const date = todayStr();
+  const sheet = {id: uid(), date, type, seq, logged: false, students: []};
+  const n = S.settings.perPart || 16;
+  for (const stu of g.students) {
+    const r = rngFrom(`${sheet.id}|${stu.id}|${seq}`);
+    const parts = strandsOf(g).map(sid => buildPart(g, stu, sid, (type === 'bridge' && !STRANDS[sid].families[g.pos[sid].fam].n) ? 'practice' : type, n, r));
+    sheet.students.push({sid: stu.id, name: stu.name, parts});
+  }
+  return sheet;
+}
+const partItems = p => [...p.chains.flat(), ...p.items];
+const qHTML = q => esc(q).replace(/□/g, '<span class="bx sm"></span>');
+function sheetPageHTML(sheet, s, g) {
+  const tLabel = SHEET_TYPES[sheet.type].label;
+  const letters = 'ABCD';
+  let num = 0;
+  const parts = s.parts.map((p, pi) => {
+    const stageTxt = p.type === 'placement' ? 'every family, easiest first' : p.type === 'check' ? 'check' : (p.stage === 'mixed' ? 'mixed with earlier facts' : 'new facts');
+    let h = `<div class="part"><h2><span>Part ${letters[pi]} · ${esc(p.title)}${p.type === 'placement' ? '' : ` — ${esc(p.famLabel)}`}</span><small>${esc(stageTxt)}</small></h2>`;
+    if (p.targets.length) {
+      h += `<div class="study"><b>Study first</b>${p.targets.map(t => `<span class="sf">${esc(t)}</span>`).join('')}<span class="stip">${esc(p.tip)} Read them, say them, then fold this strip back.</span></div><div class="fold">fold here</div>`;
+    }
+    if (p.ladder) {
+      const n = p.ladder;
+      h += `<div class="lad"><span class="lab">Count up in ${n}s</span>${n} ${Array.from({length: 9}, () => '<span class="bx"></span>').join(' ')}</div>`;
+      h += `<div class="lad"><span class="lab">Count back</span>${n * 10} ${Array.from({length: 9}, () => '<span class="bx"></span>').join(' ')}</div>`;
+    }
+    p.chains.forEach(ch => { h += `<div class="chainrow">${ch.map(it => `<span class="qi"><span class="n">${++num}</span>${qHTML(it.q)}${it.blank ? '' : ' = <span class="bx"></span>'}</span>`).join('<span class="arr">→</span>')}</div>`; });
+    h += `<div class="qs${p.items.length <= 9 ? ' c3' : ''}">${p.items.map(it => `<div class="qi"><span class="n">${++num}</span>${qHTML(it.q)}${it.blank ? '' : ' = <span class="bx"></span>'}</div>`).join('')}</div></div>`;
+    return h;
+  }).join('');
+  const rule = sheet.type === 'placement' ? 'Answer what you can. If you have to count or work it out slowly, <b>circle the question</b>. It’s fine to skip ones you don’t know.' : 'Answer from memory. If you have to count, <b>circle the question</b> and keep going.';
+  return `<div class="sheet"><div class="sh-head"><div><div class="sh-title">${esc(tLabel)} sheet</div><div class="sh-name">${esc(s.name)}</div></div><div class="sh-meta">${esc(g.name)}<br>${fmtLong(sheet.date)}${sheet.seq ? ' · #' + (sheet.seq + 1) : ''}<br>Date done: ________</div></div><p class="rule">${rule}</p>${parts}<div class="sh-foot"><span>How many did you circle? ______</span><span>Teacher ✓ ______</span></div></div>`;
+}
+function answerKeyHTML(sheets, g) {
+  const blocks = sheets.flatMap(sh => sh.students.map(s => {
+    let num = 0;
+    const parts = s.parts.map(p => `<div class="keygrid">${partItems(p).map(it => `<span><b>${++num}.</b> ${it.a}</span>`).join('')}</div>`).join('');
+    return `<div class="keyblock"><h3>${esc(s.name)} — ${esc(SHEET_TYPES[sh.type].label)}${sh.seq ? ' #' + (sh.seq + 1) : ''}</h3>${parts}</div>`;
+  })).join('');
+  return `<div class="sheet"><div class="sh-head"><div class="sh-title">Answers</div><div class="sh-meta">${esc(g.name)} · ${fmtLong(todayStr())}</div></div>${blocks}</div>`;
+}
+
+// ---------- printing ----------
+function printHTML(html) {
+  const p = $('#print'); p.innerHTML = html;
+  const done = () => { p.innerHTML = ''; window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  setTimeout(() => window.print(), 60);
+}
+
+// ---------- UI state ----------
+const UI = {view: 'home', gid: null, tab: 'session', sheetType: 'practice', sheetCount: 1, withKey: true, preview: null, logSheet: null, logMarks: {}, reportSid: null, editing: null, overlay: null, openFam: {}};
+let SESS = null, timerHandle = null;
+
+function go(view, opts = {}) { Object.assign(UI, {view}, opts); if (view !== 'group' || UI.tab !== 'session') stopTimer(); render(); window.scrollTo(0, 0); }
+
+// ---------- rendering ----------
+function render() {
+  renderTop();
+  const app = $('#app');
+  if (UI.view === 'home') app.innerHTML = homeHTML();
+  else if (UI.view === 'edit') app.innerHTML = editHTML();
+  else if (UI.view === 'settings') app.innerHTML = settingsHTML();
+  else if (UI.view === 'group') { const g = G(UI.gid); if (!g) { UI.view = 'home'; return render(); } app.innerHTML = groupHTML(g); }
+  if (UI.overlay) renderOverlay();
+  if (SESS && UI.view === 'group' && UI.tab === 'session') startTimer(); else stopTimer();
+}
+function renderTop() {
+  const g = UI.view === 'group' ? G(UI.gid) : null;
+  const bk = S.lastBackup ? `Backed up ${daysAgo(S.lastBackup) === 0 ? 'today' : daysAgo(S.lastBackup) + ' days ago'}` : 'Not backed up yet';
+  const stale = !S.lastBackup || daysAgo(S.lastBackup) > 7;
+  $('#top').innerHTML = `<span class="brand" data-act="home">Fact Practice <span>· for your 1–2 students</span></span>${g ? `<span class="crumb">/ ${esc(g.name)}</span>` : ''}<span class="sp"></span>${S.groups.length ? `<span class="bk ${stale ? 'warnbk' : ''}">${bk}</span><button data-act="export">Back up</button>` : ''}<button data-act="settings">Settings</button>`;
+}
+
+function famName(g, sid) { const p = g.pos[sid]; const f = STRANDS[sid].families[p.fam]; return `${f.label} <span class="muted small">(${esc(f.eg)}) · ${p.stage === 'mixed' ? 'mixed' : 'new'}</span>`; }
+
+function homeHTML() {
+  const how = `<div class="panel how"><h2 style="margin-top:0">How it runs</h2><ol>
+    <li><b>Starter (5 min).</b> While the class does Super 8s or Plenty in 20, your students do a <b>practice sheet</b>: Part A addition, Part B multiplication. Each part opens with a study strip of their 3 target facts; they read them, fold the strip back, and answer from memory, circling anything they had to count.</li>
+    <li><b>Your 2–3 minutes.</b> Open <b>Session</b>: <i>Study</i> (30 s, they say the targets aloud) → <i>Quick-fire</i> (targets mixed in with facts they know; you tap ✓ / slow / ✗; misses come back two questions later) → <i>Wrap-up</i> (save, and it tells you if they’re ready to move on). Have a 5-minute day? Switch to the long session for a count-up ladder and more questions.</li>
+    <li><b>Once a week</b>, swap the practice sheet for a <b>weekly check</b> and log what they circled (Log sheet tab). That keeps each student’s fact map honest.</li>
+    <li><b>Moving on.</b> Each strand goes new family → mixed with old → next family. The tool suggests when; you decide.</li>
+  </ol><p class="small muted" style="margin-top:10px">Built on incremental rehearsal (new facts in small batches, mixed in among known ones), Pershan’s study-then-quiz routine and Kane’s fact-family sequence. Facts are untimed: “slow / counted” is the signal, not a stopwatch.</p></div>`;
+  const cards = S.groups.map(g => {
+    const last = g.sessions.length ? g.sessions[g.sessions.length - 1].date : null;
+    const wk = g.sessions.filter(s => weekKey(s.date) === weekKey()).length;
+    return `<div class="panel gcard"><h3>${esc(g.name)}</h3><div class="stu">${g.students.map(s => esc(s.name)).join(' & ') || 'No students yet'}</div>
+      <div class="pos">${strandsOf(g).map(sid => `<b>${STRANDS[sid].name}</b><span>${famName(g, sid)}</span>`).join('')}</div>
+      <div class="small muted">Last session: ${last ? fmtDate(last) : 'none yet'} · this week: ${wk}</div>
+      <div class="row" style="margin-top:10px"><button class="btn primary" data-act="open" data-gid="${g.id}" data-tab="session">Start session</button><button class="btn" data-act="open" data-gid="${g.id}" data-tab="sheets">Sheets</button><button class="btn" data-act="open" data-gid="${g.id}" data-tab="maps">Fact maps</button></div></div>`;
+  }).join('');
+  return `<h1>Your groups</h1><p class="muted">One group per class: the one or two students who are working through fact families together.</p>
+    <div class="grid2" style="margin-top:14px">${cards}<div class="panel" style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:8px"><button class="btn primary" data-act="newgroup">+ Add a group</button>${S.groups.length ? '' : '<button class="btn" data-act="demo">Try it with example students</button><span class="small muted">The example group has made-up data so you can see the maps and sheets. Delete it any time.</span>'}</div></div>
+    <div style="margin-top:20px">${how}</div>`;
+}
+
+function editHTML() {
+  const g = UI.editing;
+  const stuRows = [0, 1, 2].map(i => `<label class="fld"><span>Student ${i + 1}${i ? ' (optional)' : ''}</span><input type="text" data-stu="${i}" value="${esc(g.students[i]?.name || '')}" placeholder="First name"></label>`).join('');
+  const strandRows = STRAND_ORDER.map(sid => {
+    const st = STRANDS[sid], on = g.strands.includes(sid), p = g.pos[sid] || {fam: 0, stage: 'blocked'};
+    return `<tr><td><label><input type="checkbox" data-strand="${sid}" ${on ? 'checked' : ''}> <b>${st.name}</b></label></td>
+      <td><select data-fam="${sid}">${st.families.map((f, i) => `<option value="${i}" ${i === p.fam ? 'selected' : ''}>${i + 1}. ${esc(f.label)} — ${esc(f.eg)}</option>`).join('')}</select></td>
+      <td><select data-stage="${sid}"><option value="blocked" ${p.stage === 'blocked' ? 'selected' : ''}>New facts only</option><option value="mixed" ${p.stage === 'mixed' ? 'selected' : ''}>Mixed with earlier</option></select></td></tr>`;
+  }).join('');
+  return `<h1>${g.id ? 'Edit group' : 'New group'}</h1>
+    <div class="panel"><div class="grid2"><div><label class="fld"><span>Class / group name</span><input type="text" id="gname" value="${esc(g.name)}" placeholder="e.g. 9MAT2"></label>${stuRows}</div>
+    <div><p class="small muted">Up to three students per group. They share the same pace (same family, same stage) but each gets their own targets and fact map.</p><p class="small muted">Not sure where to start? Pick family 1, print a <b>Starting check</b> from the Sheets tab, log it, and the maps will show where things break down.</p></div></div>
+    <h2>Strands on their sheets</h2><p class="small muted">Sheet parts appear in this order. Addition and multiplication to begin with; switch on subtraction or division later.</p>
+    <table class="ed"><tr><th>Strand</th><th>Current family</th><th>Stage</th></tr>${strandRows}</table>
+    <div class="row" style="margin-top:16px"><button class="btn primary" data-act="savegroup">Save</button><button class="btn" data-act="${g.id ? 'backgroup' : 'home'}">Cancel</button>${g.id ? '<span class="sp" style="flex:1"></span><button class="btn danger" data-act="delgroup">Delete group</button>' : ''}</div></div>`;
+}
+
+function groupHTML(g) {
+  const tabs = [['session', 'Session'], ['sheets', 'Sheets'], ['log', 'Log sheet'], ['maps', 'Fact maps'], ['report', 'Parent report']];
+  const t = `<div class="row" style="justify-content:space-between"><div><h1 style="margin-bottom:0">${esc(g.name)}</h1><div class="muted">${g.students.map(s => esc(s.name)).join(' & ')}</div></div><button class="btn" data-act="editgroup">Edit group</button></div>
+    <div class="tabs">${tabs.map(([k, l]) => `<button class="${UI.tab === k ? 'on' : ''}" data-act="tab" data-tab="${k}">${l}${k === 'log' && unlogged(g) ? ` <span class="chip">${unlogged(g)}</span>` : ''}</button>`).join('')}</div>`;
+  let body = '';
+  if (!g.students.length) body = `<div class="panel">Add a student first (Edit group).</div>`;
+  else if (UI.tab === 'session') body = sessionHTML(g);
+  else if (UI.tab === 'sheets') body = sheetsHTML(g);
+  else if (UI.tab === 'log') body = logHTML(g);
+  else if (UI.tab === 'maps') body = mapsHTML(g);
+  else if (UI.tab === 'report') body = reportTabHTML(g);
+  return t + body;
+}
+const unlogged = g => g.sheets.filter(s => !s.logged).length;
+
+// ---------- session ----------
+function startSession(g, mode) {
+  const r = rngFrom(uid());
+  const perStudent = g.students.map((stu, si) => {
+    const units = strandsOf(g).flatMap(sid => {
+      const pos = g.pos[sid], k = mode === 'long' ? ((sid === 'mult' || sid === 'div') ? 2 : 1) : 1;
+      const tg = pickTargets(stu, sid, pos, k), pool = knownPool(stu, sid, pos, tg);
+      return tg.map(t => ({t, pool, sid}));
+    });
+    const pat = mode === 'long' ? 'TKTKKT' : 'TKT', seq = [];
+    let lastKey = null;
+    for (const ch of pat) for (const u of units) {
+      let f = u.t, kind = 'T';
+      if (ch === 'K') { kind = 'K'; let tries = 0; do { f = u.pool[Math.floor(r() * u.pool.length)]; } while (f.key === lastKey && ++tries < 5); }
+      lastKey = f.key;
+      seq.push({si, stuId: stu.id, name: stu.name, sid: u.sid, key: f.key, kind, ...f.make(r), tries: 0});
+    }
+    return seq;
+  });
+  const deck = [], maxLen = Math.max(0, ...perStudent.map(s => s.length));
+  for (let i = 0; i < maxLen; i++) perStudent.forEach(s => { if (s[i]) deck.push(s[i]); });
+  SESS = {gid: g.id, mode, step: 'study', deck, i: 0, shown: false, correcting: false, results: [], t0: Date.now(), saved: false, ladderShown: {}, note: ''};
+}
+function sessionHTML(g) {
+  if (!SESS || SESS.gid !== g.id) {
+    const prev = g.sessions.slice(-5).reverse();
+    return `<div class="panel"><h2 style="margin-top:0">Session with ${g.students.map(s => esc(s.name)).join(' & ')}</h2>
+      <p>Today’s focus:</p><div class="pos" style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:6px 0 14px">${strandsOf(g).map(sid => `<b>${STRANDS[sid].name}</b><span>${famName(g, sid)}</span>`).join('')}</div>
+      <div class="row"><button class="btn primary big" data-act="sess" data-mode="short">Start 2–3 min session</button><button class="btn big" data-act="sess" data-mode="long">Start 5 min session</button></div>
+      <p class="small muted" style="margin-top:10px">Short: study → about ${g.students.length * strandsOf(g).length * 3} quick-fire questions → wrap-up. Long: adds a count-up ladder and about twice the questions.</p></div>
+      ${prev.length ? `<h2>Recent sessions</h2><div class="panel"><table class="sumtab"><tr><th>Date</th><th>Type</th><th>Questions</th><th>✓ / slow / ✗</th><th>Time</th></tr>${prev.map(s => `<tr><td>${fmtDate(s.date)}</td><td>${s.mode === 'long' ? '5 min' : '2–3 min'}</td><td>${s.n}</td><td><span class="ok">${s.ok}</span> / <span class="warn">${s.slow}</span> / <span class="bad">${s.wrong}</span></td><td>${Math.floor(s.dur / 60)}:${pad(s.dur % 60)}</td></tr>`).join('')}</table></div>` : ''}`;
+  }
+  const steps = SESS.mode === 'long' ? [['ladder', 'Ladder'], ['study', 'Study'], ['quick', 'Quick-fire'], ['wrap', 'Wrap-up']] : [['study', 'Study'], ['quick', 'Quick-fire'], ['wrap', 'Wrap-up']];
+  const order = steps.map(s => s[0]);
+  const head = `<div class="sesshead"><span class="timer" id="timer">0:00</span><div class="steps">${steps.map(([k, l]) => `<button class="${SESS.step === k ? 'on' : order.indexOf(k) < order.indexOf(SESS.step) ? 'done' : ''}" data-act="step" data-step="${k}">${l}</button>`).join('')}</div><span style="flex:1"></span><button class="btn ghost" data-act="endsess">${SESS.saved ? 'Close' : 'Discard session'}</button></div>`;
+  let body = '';
+  if (SESS.step === 'ladder') body = ladderStepHTML(g);
+  if (SESS.step === 'study') body = studyStepHTML(g);
+  if (SESS.step === 'quick') body = quickStepHTML(g);
+  if (SESS.step === 'wrap') body = wrapStepHTML(g);
+  return head + body;
+}
+function ladderStepHTML(g) {
+  let h = `<p class="script">Say: “Count up with me — just the answers.” Click each box as they say it, then count back down. About 1 minute. Then ask a few jumps: “What’s 6 lots? 7 lots?”</p>`;
+  for (const sid of strandsOf(g)) {
+    const fam = STRANDS[sid].families[g.pos[sid].fam];
+    let seq = null, title = '';
+    if (fam.n && sid === 'mult') { seq = Array.from({length: 10}, (_, i) => ({l: `${i + 1} × ${fam.n}`, v: (i + 1) * fam.n})); title = `Count up in ${fam.n}s`; }
+    else if (fam.n && sid === 'div') { seq = Array.from({length: 10}, (_, i) => ({l: `${(i + 1) * fam.n} ÷ ${fam.n}`, v: i + 1})); title = `Divide by ${fam.n}`; }
+    else if (fam.chains && sid === 'add') { const r =rngFrom(weekKey() + g.id); const ff = pickW(fam.facts, () => 1, r); const [u, v] = ff.key.slice(3).split('+').map(Number); seq = Array.from({length: 9}, (_, t) => ({l: `${t * 10 + u} + ${v}`, v: t * 10 + u + v})); title = `Same ones, up a ten each time`; }
+    else if (fam.chains && sid === 'sub') { const r = rngFrom(weekKey() + g.id); const ff = pickW(fam.facts, () => 1, r); const [u, v] = ff.key.slice(3).split('-').map(Number); seq = Array.from({length: 8}, (_, t) => ({l: `${(t + 1) * 10 + u} − ${v}`, v: (t + 1) * 10 + u - v})); title = `Same ones, up a ten each time`; }
+    if (!seq) continue;
+    h += `<div class="panel" style="margin-bottom:12px"><h3 style="margin-top:0">${STRANDS[sid].name}: ${esc(title)}</h3><p class="tip">${esc(fam.tip)}</p><div class="ladder">${seq.map((x, i) => { const id = sid + i; const sh = SESS.ladderShown[id]; return `<button class="${sh ? 'shown' : ''}" data-act="lad" data-id="${id}" title="${esc(x.l)}">${sh ? x.v : (sid === 'mult' ? '' : '<span style="font-size:14px">' + esc(x.l) + '</span>')}</button>`; }).join('')}</div></div>`;
+  }
+  return h + `<div class="row"><button class="btn primary" data-act="step" data-step="study">Next: Study →</button></div>`;
+}
+function studyStepHTML(g) {
+  const cols = g.students.map(stu => `<div class="studycard"><h3>${esc(stu.name)}</h3>${strandsOf(g).map(sid => {
+    const pos = g.pos[sid], fam = STRANDS[sid].families[pos.fam], k = SESS.mode === 'long' && (sid === 'mult' || sid === 'div') ? 2 : 1;
+    const tg = pickTargets(stu, sid, pos, k);
+    return `<div class="small muted">${STRANDS[sid].name} · ${esc(fam.label)}</div>${tg.map(t => `<div class="studyfact ${sid === 'add' || sid === 'sub' ? 'add' : ''}">${esc(t.show)}</div>`).join('') || '<div class="muted">All secure 🎉</div>'}<p class="tip">${esc(fam.tip)}</p>`;
+  }).join('')}</div>`).join('');
+  return `<p class="script">Say: “These are your facts today. Read each one out loud to me.” Point to the tip if it helps. Then: “Look away — I’m going to ask you. If you’d have to count, just say <i>pass</i>.” (about 30 s)</p>
+    <div class="studycols">${cols}</div><div class="row" style="margin-top:14px"><button class="btn primary big" data-act="step" data-step="quick">Start quick-fire →</button></div>`;
+}
+function quickStepHTML(g) {
+  const d = SESS.deck;
+  if (SESS.i >= d.length) return `<div class="panel" style="text-align:center"><h2 style="margin-top:0">Done — ${SESS.results.length} questions</h2><div class="row" style="justify-content:center"><button class="btn" data-act="undo">Undo last</button><button class="btn primary big" data-act="step" data-step="wrap">Wrap-up →</button></div></div>`;
+  const p = d[SESS.i];
+  const multi = g.students.length > 1;
+  return `<div class="panel qf">
+    ${multi ? `<span class="who ${p.si === 1 ? 's1' : ''}">${esc(p.name)}</span>` : ''}
+    <span class="kind">${STRANDS[p.sid].name} · ${p.kind === 'T' ? 'target' : 'known'}${p.tries ? ' · again' : ''}</span>
+    <div class="q">${esc(p.q)}</div>
+    <div class="ans ${SESS.shown || SESS.correcting ? '' : 'hide'}">${p.a}</div>
+    ${SESS.correcting ? `<div class="rehearse">Tell ${multi ? esc(p.name) : 'them'}: <b>${esc(p.blank ? p.q.replace('□', p.a) : p.q + ' = ' + p.a)}</b> — they say it back.${SESS.results[SESS.results.length - 1]?.inserted !== null ? ' It comes round again in a few questions.' : ''}</div>
+      <div class="mark"><button class="m-ok" data-act="next">Next →<span class="k">space or enter</span></button></div>`
+    : `<button class="btn ghost ansbtn" data-act="reveal">${SESS.shown ? 'Hide' : 'Show'} answer <span class="k">space</span></button>
+    <div class="mark"><button class="m-ok" data-act="mark" data-res="ok">✓ Knew it<span class="k">1 or J</span></button><button class="m-slow" data-act="mark" data-res="slow">Slow / counted<span class="k">2 or K</span></button><button class="m-bad" data-act="mark" data-res="wrong">✗ Wrong / pass<span class="k">3 or L</span></button></div>`}
+    <div class="progressbar"><i style="width:${Math.round(100 * SESS.i / d.length)}%"></i></div>
+    <div class="row small muted"><span>${SESS.i + 1} of ${d.length}</span>${SESS.results.length ? '<button class="btn ghost" data-act="undo">Undo ⌫</button>' : ''}<button class="btn ghost" data-act="step" data-step="wrap">Stop here → wrap-up</button></div></div>`;
+}
+function markResult(res) {
+  if (SESS.correcting) return;
+  const p = SESS.deck[SESS.i];
+  const rec = {i: SESS.i, res, inserted: null};
+  SESS.results.push(rec);
+  if (res !== 'ok') {
+    // incremental rehearsal: tell them now, then it comes back a few questions later
+    if (p.tries < 2) { const at = Math.min(SESS.deck.length, SESS.i + 3); SESS.deck.splice(at, 0, {...p, tries: p.tries + 1}); rec.inserted = at; }
+    SESS.correcting = true;
+  } else { SESS.i++; SESS.shown = false; }
+  render();
+}
+function nextPrompt() { SESS.correcting = false; SESS.i++; SESS.shown = false; render(); }
+function undoResult() {
+  const rec = SESS.results.pop(); if (!rec) return;
+  if (rec.inserted !== null) SESS.deck.splice(rec.inserted, 1);
+  SESS.i = rec.i; SESS.shown = false; SESS.correcting = false;
+  render();
+}
+function resultPrompts() { // reconstruct which prompt each result referred to
+  const out = []; const deck = SESS.deck;
+  // results reference indexes in the deck as it stood when marked; later insertions only happen after the marked index, so indexes stay valid.
+  SESS.results.forEach(r => out.push({...deck[r.i], res: r.res}));
+  return out;
+}
+function wrapStepHTML(g) {
+  const rp = resultPrompts();
+  const rows = g.students.map(stu => strandsOf(g).map(sid => {
+    const mine = rp.filter(p => p.stuId === stu.id && p.sid === sid);
+    const c = {ok: 0, slow: 0, wrong: 0}; mine.forEach(p => c[p.res]++);
+    const missed = [...new Set(mine.filter(p => p.res !== 'ok').map(p => FACT[p.key]?.fact.chip || p.q))];
+    return `<tr><td>${esc(stu.name)}</td><td>${STRANDS[sid].name}</td><td><span class="ok">${c.ok}</span> / <span class="warn">${c.slow}</span> / <span class="bad">${c.wrong}</span></td><td>${missed.map(esc).join(', ') || '—'}</td></tr>`;
+  }).join('')).join('');
+  let h = `<div class="panel"><h2 style="margin-top:0">Wrap-up</h2>${SESS.results.length ? `<table class="sumtab"><tr><th>Student</th><th>Strand</th><th>✓ / slow / ✗</th><th>Missed or slow</th></tr>${rows}</table>` : '<p class="muted">No questions marked yet.</p>'}
+    <label class="fld"><span>Note (optional, shows in recent sessions)</span><input type="text" id="sessnote" value="${esc(SESS.note)}" placeholder="e.g. A was much quicker on ×4 today"></label>
+    ${SESS.saved ? '<p class="ok"><b>Saved.</b> Fact maps updated.</p>' : `<div class="row"><button class="btn primary big" data-act="savesess" ${SESS.results.length ? '' : 'disabled'}>Save session</button><span class="small muted">Say: “Good work. Your sheet next lesson has the same targets — study strip first.”</span></div>`}</div>`;
+  if (SESS.saved) h += `<h2>Ready to move on?</h2>` + progressionHTML(g) + `<div class="row" style="margin-top:12px"><button class="btn" data-act="tab" data-tab="sheets">Print next sheets →</button><button class="btn" data-act="endsess">Close session</button></div>`;
+  return h;
+}
+function saveSession(g) {
+  const day = todayStr(); const rp = resultPrompts();
+  rp.forEach(p => { const stu = g.students.find(s => s.id === p.stuId); if (stu) applyResult(stu, p.key, p.res, day); });
+  g.students.forEach(stu => snapshot(stu, g));
+  const c = {ok: 0, slow: 0, wrong: 0}; rp.forEach(p => c[p.res]++);
+  g.sessions.push({date: day, mode: SESS.mode, n: rp.length, ...c, dur: Math.round((Date.now() - SESS.t0) / 1000), note: ($('#sessnote')?.value || '').trim()});
+  SESS.saved = true; save(); render();
+}
+
+// ---------- progression ----------
+function suggestion(g, sid) {
+  const pos = g.pos[sid], st = STRANDS[sid], fam = st.families[pos.fam];
+  const stats = g.students.map(stu => famStats(stu, sid, pos.fam));
+  const good = stats.map(c => (c.secure + c.grow) / c.total), sec = stats.map(c => c.secure / c.total);
+  const minGood = Math.min(...good), minSec = Math.min(...sec);
+  const last = pos.fam === st.families.length - 1;
+  if (pos.stage === 'blocked' && pos.fam === 0) { if (minGood >= .7) return {ready: true, act: 'next', msg: `Both are mostly getting ${fam.label} right. The first family has nothing to mix with, so move to the next family.`}; }
+  else if (pos.stage === 'blocked') { if (minGood >= .7) return {ready: true, act: 'mixed', msg: `${Math.round(minGood * 100)}%+ of ${fam.label} answered correctly. Ready to mix it with earlier families.`}; }
+  else if (minSec >= .8 && !last) return {ready: true, act: 'next', msg: `${Math.round(minSec * 100)}%+ of ${fam.label} is secure. Ready for the next family.`};
+  else if (minSec >= .8 && last) return {ready: false, msg: `${fam.label} is secure — that’s the whole ${st.name.toLowerCase()} strand. Keep a weekly check going, or switch on another strand.`};
+  const need = pos.stage === 'blocked' ? `aim for 70% right (lowest is ${Math.round(minGood * 100)}%)` : `aim for 80% secure (lowest is ${Math.round(minSec * 100)}%)`;
+  return {ready: false, msg: `Keep going on ${fam.label} — ${need}.`};
+}
+function progressionHTML(g) {
+  return `<div class="grid2">${strandsOf(g).map(sid => {
+    const s = suggestion(g, sid), pos = g.pos[sid], st = STRANDS[sid];
+    return `<div class="panel"><h3 style="margin-top:0">${st.name}: ${famName(g, sid)}</h3><p class="${s.ready ? 'ok' : 'muted'}">${s.ready ? '<b>Ready.</b> ' : ''}${esc(s.msg)}</p>
+      <div class="row small">${pos.stage === 'blocked' && pos.fam > 0 ? `<button class="btn ${s.ready && s.act === 'mixed' ? 'primary' : ''}" data-act="prog" data-sid="${sid}" data-do="mixed">Move to mixed</button>` : ''}
+      ${pos.fam < st.families.length - 1 ? `<button class="btn ${s.ready && s.act === 'next' ? 'primary' : ''}" data-act="prog" data-sid="${sid}" data-do="next">Next family: ${esc(st.families[pos.fam + 1].label)}</button>` : ''}
+      ${pos.fam > 0 || pos.stage === 'mixed' ? `<button class="btn ghost" data-act="prog" data-sid="${sid}" data-do="back">Step back</button>` : ''}</div></div>`;
+  }).join('')}</div>`;
+}
+function progress(g, sid, what) {
+  const pos = g.pos[sid], n = STRANDS[sid].families.length;
+  if (what === 'mixed') pos.stage = 'mixed';
+  else if (what === 'next' && pos.fam < n - 1) { pos.fam++; pos.stage = 'blocked'; }
+  else if (what === 'back') { if (pos.stage === 'mixed') pos.stage = 'blocked'; else if (pos.fam > 0) { pos.fam--; pos.stage = 'mixed'; } }
+  save(); render();
+}
+
+// ---------- sheets tab ----------
+function sheetsHTML(g) {
+  const types = Object.entries(SHEET_TYPES).filter(([k]) => k !== 'bridge' || strandsOf(g).some(sid => STRANDS[sid].families[g.pos[sid].fam].n));
+  if (!types.find(([k]) => k === UI.sheetType)) UI.sheetType = 'practice';
+  const sheets = UI.preview && UI.preview.gid === g.id ? UI.preview.sheets : null;
+  return `<div class="grid2" style="grid-template-columns:minmax(260px,340px) 1fr;align-items:start">
+    <div class="panel"><h3 style="margin-top:0">Sheet type</h3>${types.map(([k, t]) => `<label style="display:block;margin:8px 0;cursor:pointer"><input type="radio" name="stype" value="${k}" ${UI.sheetType === k ? 'checked' : ''} data-act="stype"> <b>${t.label}</b><br><span class="small muted">${t.desc}</span></label>`).join('')}
+      <label class="fld"><span>How many each (one per lesson)</span><select id="scount" data-act="scount">${[1, 2, 3, 4, 5].map(n => `<option ${UI.sheetCount === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+      <label class="fld"><span>Questions per part</span><select id="perpart" data-act="perpart">${[10, 12, 16, 20, 24].map(n => `<option ${S.settings.perPart === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+      <label style="display:block;margin:8px 0"><input type="checkbox" id="withkey" ${UI.withKey ? 'checked' : ''} data-act="withkey"> Add an answer page for me</label>
+      <div class="row" style="margin-top:10px"><button class="btn" data-act="makesheets">Preview</button><button class="btn primary" data-act="printsheets">Print</button></div>
+      <p class="small muted" style="margin-top:10px">Printing saves the sheets here so you can log them later. Each student’s sheet uses their own targets for this week.</p>
+      <h3>Currently</h3><div class="small">${strandsOf(g).map(sid => `<div><b>${STRANDS[sid].name}:</b> ${famName(g, sid)}</div>`).join('')}</div></div>
+    <div class="preview">${sheets ? sheets.map(sh => sh.students.map(s => sheetPageHTML(sh, s, g)).join('')).join('') + (UI.withKey ? answerKeyHTML(sheets, g) : '') : '<p class="muted" style="padding:20px">Press Preview to see the sheets.</p>'}</div></div>`;
+}
+function makeSheets(g) {
+  const sheets = Array.from({length: UI.sheetCount}, (_, i) => buildSheet(g, UI.sheetType, UI.sheetCount > 1 ? i : 0));
+  UI.preview = {gid: g.id, sheets};
+  return sheets;
+}
+
+// ---------- log tab ----------
+function logHTML(g) {
+  const list = g.sheets.slice().reverse();
+  if (!list.length) return `<div class="panel"><p>No printed sheets yet. Print from the Sheets tab, then come back here to log what they circled.</p><p class="small muted">Logging is quickest for the weekly check, but you can log any sheet.</p></div>`;
+  const cur = UI.logSheet ? g.sheets.find(s => s.id === UI.logSheet) : null;
+  const picker = `<div class="panel"><h3 style="margin-top:0">Printed sheets</h3><table class="sumtab"><tr><th>Printed</th><th>Type</th><th></th><th></th></tr>${list.slice(0, 15).map(s => `<tr><td>${fmtDate(s.date)}</td><td>${SHEET_TYPES[s.type].label}${s.seq ? ' #' + (s.seq + 1) : ''}</td><td>${s.logged ? '<span class="ok">logged ' + fmtDate(s.logged) + '</span>' : '<span class="muted">not logged</span>'}</td><td><button class="btn small" data-act="logopen" data-id="${s.id}">${s.logged ? 'View' : 'Log'}</button></td></tr>`).join('')}</table>
+    ${list.length > 15 ? `<p class="small muted">Showing the latest 15.</p>` : ''}<p class="small muted">Not every sheet needs logging. Logging the weekly check is enough to keep the maps honest.</p></div>`;
+  if (!cur) return picker;
+  const order = ['ok', 'slow', 'wrong', 'skip'];
+  const lab = {ok: '✓', slow: '◯', wrong: '✗', skip: '–'};
+  const cols = cur.students.map(s => {
+    let num = 0;
+    return `<div class="panel"><h3 style="margin-top:0">${esc(s.name)}</h3>${s.parts.map((p, pi) => `<div class="small muted" style="margin-top:8px">${esc(p.title)}</div><div class="chips">${partItems(p).map((it, ii) => { const k = `${s.sid}|${pi}|${ii}`; const m = UI.logMarks[k] || 'ok'; return `<button data-act="logmark" data-k="${k}" class="${m === 'ok' ? 'st-grow' : m === 'slow' ? 'st-slow' : m === 'wrong' ? 'st-learn' : 'st-none'}" title="${esc(it.q)} = ${it.a}">${++num}. ${esc(it.q)} ${lab[m]}</button>`; }).join('')}</div>`).join('')}</div>`;
+  }).join('');
+  return `<div class="row" style="margin-bottom:10px"><button class="btn ghost" data-act="logclose">← All sheets</button><b>${SHEET_TYPES[cur.type].label} printed ${fmtDate(cur.date)}</b>${cur.logged ? '<span class="chip">already logged</span>' : ''}</div>
+    <p class="script">Every question starts as ✓. Tap the ones they <b>circled</b> (◯ slow / counted), tap again for <b>wrong</b> (✗), and again for <b>skipped</b> (–, not counted).</p>
+    <div class="grid2">${cols}</div>
+    <div class="row" style="margin-top:12px"><label class="small">Date done <input type="text" id="logdate" value="${cur.logged || todayStr()}" style="width:130px"></label><button class="btn primary" data-act="logsave" ${cur.logged ? 'disabled' : ''}>${cur.logged ? 'Already logged' : 'Save to fact maps'}</button></div>`;
+}
+function saveLog(g) {
+  const cur = g.sheets.find(s => s.id === UI.logSheet); if (!cur || cur.logged) return;
+  let day = ($('#logdate')?.value || todayStr()).trim(); if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) day = todayStr();
+  cur.students.forEach(s => {
+    const stu = g.students.find(x => x.id === s.sid); if (!stu) return;
+    s.parts.forEach((p, pi) => partItems(p).forEach((it, ii) => { const m = UI.logMarks[`${s.sid}|${pi}|${ii}`] || 'ok'; if (m !== 'skip' && FACT[it.key]) applyResult(stu, it.key, m, day); }));
+    snapshot(stu, g);
+  });
+  cur.logged = day; UI.logMarks = {}; save(); render();
+}
+
+// ---------- maps ----------
+function legendHTML() { return `<div class="legend">${STATS.map(s => `<span><i class="st-${s}"></i>${STAT_LABEL[s]}</span>`).join('')}</div>`; }
+function gridHTML(stu, g, sid, interactive = true) {
+  const cur = g?.pos?.[sid] ? STRANDS[sid].families[g.pos[sid].fam].n : null;
+  let h = `<table class="mgrid"><tr><th>×</th>${Array.from({length: 10}, (_, j) => `<th class="${cur === j + 1 ? 'cur' : ''}">${j + 1}</th>`).join('')}</tr>`;
+  for (let i = 1; i <= 10; i++) {
+    h += `<tr><th class="${cur === i ? 'cur' : ''}">${i}</th>`;
+    for (let j = 1; j <= 10; j++) { const k = (sid === 'div' ? dkey : mkey)(i, j); const s = statOf(stu, k); h += `<td class="st-${s}" ${interactive ? `data-act="cyc" data-stu="${stu.id}" data-key="${k}"` : ''} title="${i} × ${j} = ${i * j}: ${STAT_LABEL[s]}">${i * j}</td>`; }
+    h += '</tr>';
+  }
+  return h + '</table>';
+}
+function barHTML(c) { return `<div class="bar">${['secure', 'grow', 'slow', 'learn'].map(s => c[s] ? `<i class="st-${s}" style="width:${100 * c[s] / c.total}%"></i>` : '').join('')}</div>`; }
+function famListHTML(stu, g, sid, interactive = true) {
+  const st = STRANDS[sid], pos = g.pos[sid];
+  return st.families.map((fam, fi) => {
+    const c = famStats(stu, sid, fi), isCur = pos && pos.fam === fi;
+    const openKey = `${stu.id}|${sid}|${fi}`;
+    const open = interactive && (UI.openFam[openKey] ?? isCur);
+    const chips = interactive ? `<div class="chips">${fam.facts.filter(f => countable(f.key)).map(f => `<button class="st-${statOf(stu, f.key)}" data-act="cyc" data-stu="${stu.id}" data-key="${f.key}" title="${esc(f.show)} — ${STAT_LABEL[statOf(stu, f.key)]}">${esc(f.chip)}</button>`).join('')}</div>` : '';
+    const row = `<div class="famrow ${isCur ? 'cur' : ''}"><span class="lab">${fi + 1}. ${esc(fam.label)}${isCur ? ' ◀' : ''}<small>${esc(fam.eg)}</small></span>${barHTML(c)}<span class="small muted">${c.secure}/${c.total}</span></div>`;
+    return interactive ? `<details class="fam" data-ok="${openKey}" ${open ? 'open' : ''}><summary>${row}</summary>${chips}</details>` : row;
+  }).join('');
+}
+function stagesSecure(stu, sid) { const fams = STRANDS[sid].families; return {done: fams.filter((f, i) => { const c = famStats(stu, sid, i); return c.secure / c.total >= .8; }).length, total: fams.length}; }
+function strandHeadline(stu, sid) {
+  if (STRANDS[sid].map === 'grid') { const c = strandStats(stu, sid); return `${c.secure} of ${c.total} facts secure`; }
+  const s = stagesSecure(stu, sid); return `${s.done} of ${s.total} stages secure`;
+}
+function strandMapHTML(stu, g, sid, interactive = true) {
+  const head = `<h3>${STRANDS[sid].name} <span class="muted small">— ${strandHeadline(stu, sid)}</span></h3>`;
+  if (STRANDS[sid].map === 'grid') return head + gridHTML(stu, g, sid, interactive);
+  return head + famListHTML(stu, g, sid, interactive);
+}
+function mapsHTML(g) {
+  return `<p class="muted">Click any fact to change its colour by hand (useful when you already know what a student knows). Grey → red → amber → light green → green.</p>${legendHTML()}
+    <div class="grid2">${g.students.map(stu => `<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${esc(stu.name)}</h2><button class="btn" data-act="showstu" data-stu="${stu.id}">Show to ${esc(stu.name)} ⤢</button></div>${trendHTML(stu, g)}${strandsOf(g).map(sid => strandMapHTML(stu, g, sid)).join('')}</div>`).join('')}</div>`;
+}
+function trendHTML(stu, g) {
+  const h = stu.hist || []; if (h.length < 1) return '';
+  const first = h[0], last = h[h.length - 1];
+  return `<p class="small muted">${strandsOf(g).map(sid => `${STRANDS[sid].name}: ${first.s[sid] ?? 0} → <b>${last.s[sid] ?? 0}</b> secure`).join(' · ')} <span>(since ${fmtDate(first.d)})</span></p>`;
+}
+function renderOverlay() {
+  const o = UI.overlay; const g = G(UI.gid); const stu = g?.students.find(s => s.id === o.stu);
+  let el = $('#ov'); if (!el) { el = document.createElement('div'); el.id = 'ov'; el.className = 'overlay big'; document.body.appendChild(el); }
+  if (!stu) { el.remove(); UI.overlay = null; return; }
+  el.innerHTML = `<button class="btn close" data-act="closeov">Close ✕ (Esc)</button><h1>${esc(stu.name)}’s facts</h1>${trendHTML(stu, g)}${legendHTML()}<div class="grid2">${strandsOf(g).map(sid => `<div class="panel">${strandMapHTML(stu, g, sid, false)}</div>`).join('')}</div>`;
+}
+
+// ---------- parent report ----------
+function reportTabHTML(g) {
+  if (!UI.reportSid || !g.students.find(s => s.id === UI.reportSid)) UI.reportSid = g.students[0].id;
+  const stu = g.students.find(s => s.id === UI.reportSid);
+  return `<div class="row" style="margin-bottom:12px">${g.students.map(s => `<button class="btn ${s.id === stu.id ? 'primary' : ''}" data-act="rstu" data-stu="${s.id}">${esc(s.name)}</button>`).join('')}<span style="flex:1"></span><button class="btn primary" data-act="printreport">Print / save as PDF</button></div>
+    <label class="fld"><span>Your note to family / whānau (appears on the report)</span><textarea id="rnote" data-act="rnote">${esc(stu.note || '')}</textarea></label>
+    <div class="preview"><div class="sheet report">${reportHTML(g, stu)}</div></div>`;
+}
+function reportHTML(g, stu) {
+  const h = stu.hist || [], first = h[0];
+  const sessCount = g.sessions.length, firstSess = g.sessions[0]?.date;
+  const now = strandsOf(g).map(sid => { const fam = STRANDS[sid].families[g.pos[sid].fam]; const tg = pickTargets(stu, sid, g.pos[sid], 3); return `<li><b>${STRANDS[sid].name}:</b> ${esc(fam.label)} (like ${esc(fam.eg)}). ${tg.length ? 'Target facts this week: ' + tg.map(t => esc(t.show)).join(', ') + '.' : ''}<br><span style="color:#555">${esc(fam.tip)}</span></li>`; }).join('');
+  const maps = strandsOf(g).map(sid => { const grid = STRANDS[sid].map === 'grid'; const was = grid && first && first.s[sid] != null && first.d !== todayStr() ? ` (was ${first.s[sid]} on ${fmtDate(first.d)})` : ''; return `<h2>${STRANDS[sid].name}: ${strandHeadline(stu, sid)}${was}</h2>` + (grid ? gridHTML(stu, g, sid, false) : famListHTML(stu, g, sid, false)); }).join('');
+  return `<h1>Maths facts progress — ${esc(stu.name)}</h1><div class="rsub">${esc(g.name)} · ${fmtLong(todayStr())}</div>
+    <p>${esc(stu.name)} is doing short, regular practice on the number facts that make the rest of maths easier. Each lesson there is a practice sheet and a quick 2–3 minute check-in with me.${sessCount ? ` We’ve had ${sessCount} check-in${sessCount === 1 ? '' : 's'} since ${fmtDate(firstSess)}.` : ''}</p>
+    ${stu.note ? `<p><b>Note:</b> ${esc(stu.note)}</p>` : ''}
+    <h2>Working on now</h2><ul>${now}</ul>
+    ${legendHTML()}${maps}
+    <h2>Helping at home (5 minutes, a few times a week)</h2><ul class="home">
+      <li><b>Study, then ask.</b> Look at the target facts together and say them aloud. Then cover them and ask them in a mixed-up order.</li>
+      <li><b>Mix new with known.</b> Ask a target, then an easy one they know, then the target again.</li>
+      <li><b>If they have to count, just tell them.</b> Say the answer, have them say it back, and ask it again a minute later. No need to time them.</li>
+      <li><b>Short and often beats long.</b> Five minutes in the car or at dinner is plenty.</li></ul>`;
+}
+
+// ---------- settings ----------
+function settingsHTML() {
+  return `<h1>Settings</h1><div class="grid2">
+    <div class="panel"><h2 style="margin-top:0">Backup</h2><p>Everything is saved in <b>this browser on this computer</b>. Clearing browser data, switching browsers, or moving this file to another computer will start you fresh — so back up now and then.</p>
+      <div class="row"><button class="btn primary" data-act="export">Export backup (.json)</button><button class="btn" data-act="import">Import backup…</button></div>
+      <p class="small muted">Last backup: ${S.lastBackup ? fmtLong(S.lastBackup) : 'never'}. Importing replaces what’s here.</p></div>
+    <div class="panel"><h2 style="margin-top:0">Sheets</h2><label class="fld"><span>Questions per part (default)</span><select data-act="perpart">${[10, 12, 16, 20, 24].map(n => `<option ${S.settings.perPart === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label><p class="small muted">16 per part (32 per sheet) is about 5 minutes for most students in this group.</p></div>
+    <div class="panel"><h2 style="margin-top:0">Fact families</h2>${STRAND_ORDER.map(sid => `<p><b>${STRANDS[sid].name}:</b> ${STRANDS[sid].families.map(f => esc(f.label)).join(' → ')}</p>`).join('')}<p class="small muted">Multiplication follows Dylan Kane’s order. To add another strand later (e.g. ×/÷ by 10, 100, 1000), it’s one build function in the code, registered in STRANDS.</p></div>
+    <div class="panel"><h2 style="margin-top:0">Where the routine comes from</h2><ul class="small">
+      <li>Burns et al. (2019), incremental rehearsal vs traditional drill — new facts in small sets, interleaved with known ones.</li>
+      <li><a href="https://pershmail.substack.com/p/a-math-memorization-routine" target="_blank">Pershan, “A Math Memorization Routine”</a> — study, whole-group practice, then individual quizzing.</li>
+      <li><a href="https://pershmail.substack.com/p/flash-cards-dont-always-work-for" target="_blank">Pershan on Hasselbring</a> — counting doesn’t turn into remembering without study first; small target sets.</li>
+      <li><a href="https://fivetwelvethirteen.substack.com/p/incremental-fact-fluency-v2" target="_blank">Kane, “Incremental Fact Fluency v2”</a> — fact-family order, blocked then mixed, bridge sheets, untimed.</li>
+      <li><a href="https://mrbartonmaths.com/minimally-different-mega-practice/" target="_blank">Barton, Minimally Different Mega Practice</a> — the linked “8 + 7 → 28 + 7 → 58 + 7” rows.</li></ul></div>
+    <div class="panel"><h2 style="margin-top:0">Start over</h2><p class="small muted">Deletes every group and all progress in this browser.</p><button class="btn danger" data-act="reset">Delete everything</button></div></div>`;
+}
+
+// ---------- demo ----------
+function makeDemo() {
+  const g = newGroup('Demo 9X', ['Aroha', 'Ben']);
+  g.pos.add = {fam: 4, stage: 'blocked'}; g.pos.mult = {fam: 4, stage: 'blocked'};
+  const r = rngFrom('demo');
+  const d1 = new Date(); d1.setDate(d1.getDate() - 14); const old = d1.toISOString().slice(0, 10);
+  g.students.forEach((stu, si) => {
+    for (const sid of ['add', 'mult']) STRANDS[sid].families.forEach((fam, fi) => fam.facts.forEach(f => {
+      if (!countable(f.key)) return;
+      const cur = g.pos[sid].fam; let p = fi < cur ? .85 : fi === cur ? .3 : .05; p -= si * .1;
+      const x = r(); if (x < p) setManual(stu, f.key, 'secure'); else if (x < p + .15) setManual(stu, f.key, 'grow'); else if (x < p + .3 && fi <= cur + 1) setManual(stu, f.key, r() < .5 ? 'slow' : 'learn');
+    }));
+    stu.hist = [{d: old, s: {add: Math.round(strandStats(stu, 'add').secure * .6), mult: Math.round(strandStats(stu, 'mult').secure * .6)}, t: {}}];
+    snapshot(stu, g);
+  });
+  g.sessions.push({date: old, mode: 'short', n: 12, ok: 8, slow: 2, wrong: 2, dur: 150, note: ''});
+  S.groups.push(g); save();
+}
+function newGroup(name, names) {
+  return {id: uid(), name, students: names.map(n => ({id: uid(), name: n, facts: {}, hist: [], note: ''})), strands: ['add', 'mult'], pos: {add: {fam: 0, stage: 'blocked'}, mult: {fam: 0, stage: 'blocked'}}, sessions: [], sheets: [], created: todayStr()};
+}
+
+// ---------- timer ----------
+function startTimer() {
+  stopTimer();
+  const tick = () => { const el = $('#timer'); if (!el || !SESS) return; const s = Math.floor((Date.now() - SESS.t0) / 1000); el.textContent = `${Math.floor(s / 60)}:${pad(s % 60)}`; el.classList.toggle('over', s > (SESS.mode === 'long' ? 300 : 180)); };
+  tick(); timerHandle = setInterval(tick, 1000);
+}
+function stopTimer() { if (timerHandle) clearInterval(timerHandle); timerHandle = null; }
+
+// ---------- backup ----------
+function exportBackup() {
+  S.lastBackup = todayStr(); save();
+  const blob = new Blob([JSON.stringify(S, null, 1)], {type: 'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `fact-practice-backup-${todayStr()}.json`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000); render();
+}
+$('#importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { try { const d = JSON.parse(rd.result); if (!Array.isArray(d.groups)) throw new Error('No groups in file'); if (!confirm(`Replace everything here with this backup (${d.groups.length} group${d.groups.length === 1 ? '' : 's'})?`)) return; S = {...defaultState(), ...d}; save(); SESS = null; go('home'); } catch (err) { alert('That file doesn’t look like a Fact Practice backup.\n' + err.message); } };
+  rd.readAsText(f); e.target.value = '';
+});
+
+// ---------- events ----------
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const a = el.dataset.act, g = UI.gid ? G(UI.gid) : null;
+  if (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA') return; // handled on change
+  if (a === 'cyc' && el.closest('summary')) e.preventDefault();
+  switch (a) {
+    case 'home': go('home'); break;
+    case 'settings': go('settings'); break;
+    case 'export': exportBackup(); break;
+    case 'import': $('#importFile').click(); break;
+    case 'reset': if (confirm('Delete every group and all progress in this browser?') && confirm('Really? This can’t be undone (unless you have a backup).')) { S = defaultState(); SESS = null; save(); go('home'); } break;
+    case 'demo': makeDemo(); render(); break;
+    case 'open': go('group', {gid: el.dataset.gid, tab: el.dataset.tab, preview: null, logSheet: null}); break;
+    case 'tab': UI.tab = el.dataset.tab; if (UI.tab !== 'log') UI.logSheet = null; render(); break;
+    case 'newgroup': UI.editing = newGroup('', []); UI.editing.id = null; go('edit'); break;
+    case 'editgroup': UI.editing = JSON.parse(JSON.stringify(g)); go('edit'); break;
+    case 'backgroup': go('group'); break;
+    case 'savegroup': saveGroupForm(); break;
+    case 'delgroup': if (confirm(`Delete ${UI.editing.name} and all its progress?`)) { S.groups = S.groups.filter(x => x.id !== UI.editing.id); if (SESS?.gid === UI.editing.id) SESS = null; save(); go('home'); } break;
+    case 'sess': startSession(g, el.dataset.mode); if (el.dataset.mode === 'long') SESS.step = 'ladder'; render(); break;
+    case 'step': if (SESS) { SESS.step = el.dataset.step; SESS.note = $('#sessnote')?.value ?? SESS.note; render(); } break;
+    case 'reveal': SESS.shown = !SESS.shown; render(); break;
+    case 'mark': markResult(el.dataset.res); break;
+    case 'next': nextPrompt(); break;
+    case 'undo': undoResult(); break;
+    case 'lad': SESS.ladderShown[el.dataset.id] = !SESS.ladderShown[el.dataset.id]; render(); break;
+    case 'savesess': saveSession(g); break;
+    case 'endsess': if (SESS.saved || !SESS.results.length || confirm('Discard this session without saving?')) { SESS = null; stopTimer(); render(); } break;
+    case 'prog': progress(g, el.dataset.sid, el.dataset.do); break;
+    case 'makesheets': makeSheets(g); render(); break;
+    case 'printsheets': {
+      const sheets = (UI.preview && UI.preview.gid === g.id) ? UI.preview.sheets : makeSheets(g);
+      sheets.forEach(sh => { if (!g.sheets.find(x => x.id === sh.id)) g.sheets.push(sh); });
+      if (g.sheets.length > 80) g.sheets = g.sheets.slice(-80);
+      save(); render();
+      printHTML(sheets.map(sh => sh.students.map(s => sheetPageHTML(sh, s, g)).join('')).join('') + (UI.withKey ? answerKeyHTML(sheets, g) : ''));
+      break;
+    }
+    case 'logopen': UI.logSheet = el.dataset.id; UI.logMarks = {}; render(); break;
+    case 'logclose': UI.logSheet = null; render(); break;
+    case 'logmark': { const order = ['ok', 'slow', 'wrong', 'skip']; const k = el.dataset.k; const cur = g.sheets.find(s => s.id === UI.logSheet); if (cur?.logged) break; UI.logMarks[k] = order[(order.indexOf(UI.logMarks[k] || 'ok') + 1) % 4]; render(); break; }
+    case 'logsave': saveLog(g); break;
+    case 'cyc': { const stu = g.students.find(s => s.id === el.dataset.stu); const cur = statOf(stu, el.dataset.key); setManual(stu, el.dataset.key, STATS[(STATS.indexOf(cur) + 1) % STATS.length]); save(); render(); break; }
+    case 'showstu': UI.overlay = {stu: el.dataset.stu}; render(); break;
+    case 'closeov': UI.overlay = null; $('#ov')?.remove(); break;
+    case 'rstu': UI.reportSid = el.dataset.stu; render(); break;
+    case 'printreport': { const stu = g.students.find(s => s.id === UI.reportSid); printHTML(`<div class="sheet report">${reportHTML(g, stu)}</div>`); break; }
+  }
+});
+document.addEventListener('change', e => {
+  const el = e.target, a = el.dataset.act, g = UI.gid ? G(UI.gid) : null;
+  if (a === 'stype') { UI.sheetType = el.value; UI.preview = null; render(); }
+  else if (a === 'scount') { UI.sheetCount = +el.value; UI.preview = null; render(); }
+  else if (a === 'perpart') { S.settings.perPart = +el.value; save(); UI.preview = null; render(); }
+  else if (a === 'withkey') { UI.withKey = el.checked; render(); }
+  else if (a === 'rnote' && g) { const stu = g.students.find(s => s.id === UI.reportSid); stu.note = el.value; save(); render(); }
+});
+document.addEventListener('toggle', e => { const d = e.target; if (d.matches && d.matches('details.fam')) UI.openFam[d.dataset.ok] = d.open; }, true);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && UI.overlay) { UI.overlay = null; $('#ov')?.remove(); return; }
+  if (!SESS || UI.view !== 'group' || UI.tab !== 'session' || SESS.step !== 'quick' || SESS.i >= SESS.deck.length && e.key !== 'Backspace') return;
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+  const k = e.key.toLowerCase();
+  if (SESS.correcting) {
+    if (k === 'backspace') { e.preventDefault(); undoResult(); }
+    else if ([' ', 'enter', 'arrowright', '1', '2', '3', 'j', 'k', 'l'].includes(k)) { e.preventDefault(); nextPrompt(); }
+    return;
+  }
+  if (k === ' ') { e.preventDefault(); SESS.shown = !SESS.shown; render(); }
+  else if (k === '1' || k === 'j') markResult('ok');
+  else if (k === '2' || k === 'k') markResult('slow');
+  else if (k === '3' || k === 'l') markResult('wrong');
+  else if (k === 'backspace') { e.preventDefault(); undoResult(); }
+});
+function saveGroupForm() {
+  const g = UI.editing;
+  const name = $('#gname').value.trim(); if (!name) { alert('Give the group a name (e.g. the class code).'); return; }
+  const names = [0, 1, 2].map(i => $(`[data-stu="${i}"]`).value.trim());
+  const students = [];
+  for (let i = 0; i < 3; i++) {
+    const existing = g.students[i];
+    if (names[i]) students.push(existing ? {...existing, name: names[i]} : {id: uid(), name: names[i], facts: {}, hist: [], note: ''});
+    else if (existing && Object.keys(existing.facts).length && !confirm(`Remove ${existing.name} and their progress?`)) students.push(existing);
+  }
+  if (!students.length) { alert('Add at least one student.'); return; }
+  const strands = STRAND_ORDER.filter(sid => $(`[data-strand="${sid}"]`).checked);
+  if (!strands.length) { alert('Switch on at least one strand.'); return; }
+  const pos = {...g.pos};
+  STRAND_ORDER.forEach(sid => { pos[sid] = {fam: +$(`[data-fam="${sid}"]`).value, stage: $(`[data-stage="${sid}"]`).value}; });
+  Object.assign(g, {name, students, strands, pos});
+  if (!g.id) { g.id = uid(); S.groups.push(g); }
+  else { const i = S.groups.findIndex(x => x.id === g.id); S.groups[i] = g; if (SESS?.gid === g.id) SESS = null; }
+  ensurePos(g); save(); go('group', {gid: g.id, tab: 'session'});
+}
+
+render();
+</script>
+</body>
+</html>

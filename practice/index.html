@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Maths Practice</title>
+<style>
+:root{--bg:#f4f2ec;--panel:#fff;--ink:#1c2230;--muted:#646c7a;--line:#dedad0;--accent:#274c77;--accent-ink:#fff;
+--k:#3d7a5a;--n:#2f6f8f;--f:#8a5a9e;--w:#b4682a;--ok:#2f8a53;--warn:#b97a14;--bad:#c2482f;--soft:#eef2f7;--gold:#c99a1d;
+--font:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15181e;--panel:#1f242d;--ink:#eceef2;--muted:#9aa3b2;--line:#343b48;--accent:#7fb0e6;--accent-ink:#0f1620;--soft:#262d39;--k:#7cc79c;--n:#6bb3d6;--f:#c29ad6;--w:#e3a063;--ok:#5cc487;--warn:#e6b455;--bad:#ef8a73}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+main{max-width:760px;margin:0 auto;padding:14px 16px 70px}
+h1{font-size:24px;margin:6px 0 4px}h2{font-size:19px;margin:18px 0 8px}h3{font-size:16px;margin:12px 0 4px}
+p{margin:6px 0}.muted{color:var(--muted)}.small{font-size:14px}.center{text-align:center}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:12px 0}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 16px;cursor:pointer;min-height:44px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.big{font-size:19px;padding:13px 22px}.btn.ghost{background:transparent}.btn.sm{min-height:34px;padding:5px 10px;font-size:14px}
+.btn:disabled{opacity:.45}.btn.danger{color:var(--bad)}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:none;padding:7px 14px;cursor:pointer;min-height:38px}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.strand{border-left:6px solid var(--c)}
+.strand .lvl{color:var(--c);font-weight:700}
+.pbar{height:8px;background:var(--soft);border-radius:99px;overflow:hidden;margin:8px 0}
+.pbar i{display:block;height:100%;background:var(--c,var(--accent))}
+.eg{display:inline-block;background:var(--soft);border-radius:8px;padding:1px 8px;margin-left:4px}
+.chip{display:inline-block;border-radius:99px;padding:1px 9px;font-size:13px;font-weight:600;background:var(--soft)}
+.chip.secure{background:var(--ok);color:#fff}.chip.learning{background:var(--warn);color:#fff}.chip.support{background:var(--bad);color:#fff}.chip.assumed{background:var(--soft);color:var(--muted)}
+.steps{display:flex;gap:6px;margin:6px 0 12px}.steps i{flex:1;height:6px;border-radius:9px;background:var(--line)}.steps i.on{background:var(--accent)}
+.qbig{font-size:38px;font-weight:700;text-align:center;margin:18px 0 10px;line-height:1.3}
+.qbig.wp{font-size:21px;font-weight:500;text-align:left;line-height:1.5}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.82em;line-height:1.15;margin:0 .18em}
+.fr span:first-child{border-bottom:.09em solid currentColor;padding:0 .25em}.fr span:last-child{padding:0 .25em}
+.box{display:inline-block;width:1.3em;height:1.15em;border:.08em solid currentColor;border-radius:.2em;vertical-align:middle;opacity:.65}
+.fr .box{width:1.1em;height:.95em;margin:.1em 0}
+#ans{width:100%;font-size:28px;text-align:center;padding:8px;border:2px solid var(--line);border-radius:12px;background:var(--panel)}
+#ans:focus{outline:none;border-color:var(--accent)}
+.pad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;max-width:420px;margin-left:auto;margin-right:auto}
+.pad button{font-size:22px;padding:10px 0;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;min-height:50px}
+.pad button.go{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.fb{min-height:30px;text-align:center;font-weight:600;margin:8px 0}.fb.ok{color:var(--ok)}.fb.no{color:var(--bad)}.fb.warn{color:var(--warn)}
+.sol{background:var(--soft);border-radius:10px;padding:10px 14px;margin:10px 0}
+.blist{list-style:none;padding:0;margin:8px 0}
+.blist li{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:22px}
+.blist .n{color:var(--muted);font-size:15px;min-width:26px}
+.blist .a{margin-left:auto;font-weight:700;color:var(--accent)}
+.mk{display:flex;gap:6px}.mk button{width:46px;height:42px;border-radius:10px;border:2px solid var(--line);background:var(--panel);font-size:20px;cursor:pointer}
+.mk button.y.on{background:var(--ok);border-color:var(--ok);color:#fff}.mk button.x.on{background:var(--bad);border-color:var(--bad);color:#fff}
+.rate{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.rate button{padding:16px 6px;font-size:17px}
+.tro{display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}.tro .ic{font-size:26px}
+table{border-collapse:collapse;width:100%}td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:15px;vertical-align:top}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin:10px 0}
+.tabs button{border:0;background:none;padding:9px 12px;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);font-weight:600}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--accent)}
+label.f{display:block;margin:8px 0}label.f span{display:block;font-size:14px;color:var(--muted)}
+input[type=text],input[type=password],select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--panel)}
+textarea{min-height:110px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+.tiles{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.tiles button{width:72px;height:72px;font-size:28px;font-weight:700;border-radius:14px;border:2px solid var(--line);background:var(--panel);cursor:pointer}
+.tiles button.on{border-color:var(--accent);background:var(--soft)}
+.ops button{width:60px;height:54px;font-size:26px}
+.target{font-size:54px;font-weight:800;text-align:center;color:var(--accent)}
+.flag{padding:5px 0;border-bottom:1px solid var(--line)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal .card{max-width:420px;width:100%}
+#print{display:none}
+@media print{@page{size:A4;margin:12mm}body>*:not(#print){display:none!important}#print{display:block;color:#000;background:#fff}
+#print .pg{page-break-after:always}#print .pg:last-child{page-break-after:auto}
+#print .pq{display:grid;grid-template-columns:1fr 1fr;gap:14px 30px;font-size:19px;margin-top:14px}#print .pq div{padding-bottom:16px;border-bottom:1px dotted #999}
+#print .pa{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:15px}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div id="print"></div>
+<!-- Optional extra word problems. If packs.js sits next to this file it is loaded; if not, nothing breaks. -->
+<script src="packs.js" onerror="void 0"></script>
+<script>
+'use strict';
+/* ============================================================================
+   MATHS PRACTICE  ·  one file, no server. Progress is saved in this browser.
+   The cog opens the progress screen. Changing levels and the teacher tools
+   need the teacher PIN (default 6767; change it in Tools).
+   ============================================================================ */
+const CONFIG = {
+  pin: '6767',          // default teacher PIN for a fresh device
+  typedN: 5,            // typed quick-check questions per round
+  bookN: 8,             // written (in the book) questions per round
+  passAcc: 0.8,         // round counts as a pass at this accuracy (and not rated "tough")
+  gameSecs: 180,        // length of the reward game
+  links: [              // "stretch" links shown to students working at the top levels
+    ['Transum games and puzzles', 'https://www.transum.org/Software/Game/'],
+    ['Beast Academy: All Ten', 'https://beastacademy.com/all-ten'],
+    ['NRICH problems', 'https://nrich.maths.org/'],
+    ['Corbettmaths 5-a-day', 'https://corbettmaths.com/5-a-day/'],
+  ],
+};
+
+// ---------- helpers ----------
+const $ = (s, e = document) => e.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const gcd = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) [a, b] = [b, a % b]; return a || 1; };
+const nstr = x => String(parseFloat(Number(x).toFixed(6)));
+const F = (n, d) => `{${n}/${d}}`;
+const fs = (n, d) => { const g = gcd(n, d); n /= g; d /= g; return d === 1 ? String(n) : `${n}/${d}`; };
+const pad2 = n => String(n).padStart(2, '0');
+const dstr = (d = new Date()) => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+const today = () => dstr();
+const dOff = n => { const d = new Date(); d.setDate(d.getDate() - n); return dstr(d); };
+const nice = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short'}); };
+const fmt = s => esc(s).replace(/\{(?:(-?\d+) )?([^{}\/ ]+)\/([^{}\/ ]+)\}/g, (_, w, n, d) => `${w || ''}<span class="fr"><span>${n}</span><span>${d}</span></span>`).replace(/\^□/g, '<sup><span class="box"></span></sup>').replace(/□/g, '<span class="box"></span>').replace(/\n/g, '<br>');
+const q = (t, a, o = {}) => ({q: t, a, ...o});
+const SUPS = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+const sup = n => (n < 0 ? '⁻' : '') + String(Math.abs(n)).split('').map(d => SUPS[d]).join('');
+const mmss = x => { x = Math.round(x); return Math.floor(x / 60) + ':' + pad2(x % 60); };
+
+// ---------- answers ----------
+function parseVal(s) {
+  s = String(s).trim().replace(/[−–]/g, '-').replace(/[£%,°]/g, '').replace(/\s*[a-zA-Z]+$/, '').trim(); let m;
+  if ((m = s.match(/^(-?)(\d+)\s+(\d+)\s*\/\s*(\d+)$/))) { const w = +m[2], n = +m[3], d = +m[4]; if (!d) return null; return {n: (m[1] ? -1 : 1) * (w * d + n), d, form: 'mixed', low: gcd(n, d) === 1 && n < d}; }
+  if ((m = s.match(/^(-?\d+)\s*\/\s*(\d+)$/))) { const n = +m[1], d = +m[2]; if (!d) return null; return {n, d, form: 'frac', low: gcd(n, d) === 1}; }
+  if ((m = s.match(/^(-?)(\d*)\.(\d+)$/))) { const d = 10 ** m[3].length, n = (+(m[2] || 0)) * d + +m[3]; return {n: (m[1] ? -1 : 1) * n, d, form: 'dec'}; }
+  if (/^-?\d+$/.test(s)) return {n: +s, d: 1, form: 'int'};
+  return null;
+}
+function check(Q, inp) {
+  const v = parseVal(inp); if (!v) return {bad: true};
+  const t = parseVal(typeof Q.a === 'number' ? nstr(Q.a) : Q.a);
+  if (v.n * t.d !== t.n * v.d) return {ok: false};
+  if (Q.form) {
+    if (v.form === 'dec') return {retry: 'Right value. Write it as a fraction.'};
+    if (Q.form === 'simplest' && v.form !== 'int' && !v.low) return {retry: 'Right value. Now simplify it.'};
+    if (Q.form === 'mixed' && v.form !== 'mixed') return {retry: 'Right value. Write it as a mixed number.'};
+    if (Q.form === 'improper' && v.form !== 'frac') return {retry: 'Right value. Write it as an improper fraction.'};
+  }
+  return {ok: true};
+}
+function ansHTML(Q) {
+  let s;
+  if (Q.kind === 'choice') s = fmt(Q.a);
+  else if (typeof Q.a === 'number') s = (Q.pre === '£' && !Number.isInteger(Q.a) ? Q.a.toFixed(2) : nstr(Q.a)).replace('-', '−');
+  else s = fmt(Q.a.includes('/') ? `{${Q.a}}` : Q.a);
+  return esc(Q.pre || '') + s + esc(Q.suf || '');
+}
+
+// ---------- skills ----------
+const SK = [];
+const sk = (id, st, name, tip, gen, extra = {}) => SK.push({id, st, name, tip, gen, ...extra});
+const tab = list => () => { const n = pick(list), k = ri(2, 12); return pick([q(`${n} × ${k}`, n * k), q(`${k} × ${n}`, n * k), q(`${n * k} ÷ ${n}`, k)]); };
+const ds = (m, p) => p <= 0 ? String(m * 10 ** (-p)) : (m / 10 ** p).toFixed(p);
+const no5 = n => +Array.from({length: n}, () => pick([1, 2, 3, 4, 6, 7, 8, 9])).join('');
+
+/* ---- Strand K: number facts, in the order of Dylan Kane's Incremental Fact Fluency ----
+   Each level is one fact family. The 5 typed questions are that family only (Kane's "blocked" practice);
+   the book questions alternate the new family with earlier families of the same operation (his "mixed" practice).
+   pl = 1 marks the levels the placement check samples, so strong students are not asked every family.
+   x12 and the mixed-tables level are additions for the English 12 x 12 expectation. */
+const fam = (id, name, tip, gen, pl) => sk(id, 'K', name, tip, gen, {op: id[0], pl: !!pl});
+const com = (a, b, op = '+') => Math.random() < .5 ? `${a} ${op} ${b}` : `${b} ${op} ${a}`;
+const addF = (ns, lo = 1) => () => { const n = pick(ns), a = ri(lo, 10); return q(com(a, n), a + n); };
+const subF = (ns, hi) => () => { const n = pick(ns), x = ri(n + 1, hi); return q(`${x} − ${n}`, x - n); };
+const difF = (ns, hi) => () => { const n = pick(ns), x = ri(n + 2, hi); return q(`${x} − ${x - n}`, n); };
+fam('A1', 'Addition: +1', 'Adding 1 gives the next number when you count.', addF([1]));
+fam('A2', 'Addition: +2', 'Count on two. Even stays even, odd stays odd.', addF([2]), 1);
+fam('A3', 'Addition: +0', 'Adding zero changes nothing.', addF([0], 0));
+fam('A4', 'Addition: doubles', 'Doubles are worth knowing by heart. They unlock lots of other facts.', () => { const a = ri(1, 10); return q(`${a} + ${a}`, 2 * a); });
+fam('A5', 'Addition: near doubles', 'Double the smaller number, then add 1. For 7 + 8: double 7 is 14, and one more is 15.', () => { const a = ri(1, 9); return q(com(a, a + 1), 2 * a + 1); }, 1);
+fam('A6', 'Addition: +3 and +4', 'Count on, or split it: +4 is +2 and +2.', addF([3, 4]));
+fam('A7', 'Addition: +5, +6 and +7', 'Go through 10. For 8 + 6: 8 + 2 makes 10, then 4 more is 14.', addF([5, 6, 7], 3), 1);
+fam('S1', 'Subtraction: −1 and −2', 'Count back one or two.', subF([1, 2], 12));
+fam('S2', 'Subtraction: difference of 1 or 2', 'The numbers are close together, so count up from the smaller one. 9 − 7: from 7 up to 9 is 2.', difF([1, 2], 12));
+fam('S3', 'Subtraction: taking all or nothing', 'A number take away itself is 0. A number take away 0 stays the same.', () => { const x = ri(1, 12); return pick([q(`${x} − ${x}`, 0), q(`${x} − 0`, x)]); });
+fam('S4', 'Subtraction: −3 and −4', 'Count back, or think addition: 11 − 4 asks "4 and what makes 11?"', subF([3, 4], 13), 1);
+fam('S5', 'Subtraction: difference of 3 or 4', 'Count up from the smaller number to the bigger one.', difF([3, 4], 13));
+fam('S6', 'Subtraction: −9', 'Take away 10, then add 1 back. 16 − 9: 16 − 10 is 6, add 1 is 7.', subF([9], 18), 1);
+fam('S7', 'Subtraction: −5 and −6', 'Think addition: 13 − 6 asks "6 and what makes 13?"', subF([5, 6], 15));
+fam('S8', 'Subtraction: −7 and −8', 'Go back through 10. 15 − 7: take 5 to reach 10, then 2 more is 8.', subF([7, 8], 17), 1);
+const MT = {2: 'Double it.', 10: 'The digits move one place to the left: 7 becomes 70.', 5: 'Half of ten times. 5 × 8 is half of 80.', 4: 'Double, then double again.', 3: 'Double it, then add one more lot.', 11: 'Up to 9, the digit repeats: 11 × 7 = 77. Then 11 × 10 = 110.', 9: 'Ten lots, take away one lot. 9 × 7 is 70 − 7.', 6: 'Five lots, plus one more lot. 6 × 7 is 35 + 7.', 8: 'Double, double, double.', 7: 'Five lots plus two lots. 7 × 8 is 40 + 16.', 12: 'Ten lots plus two lots. 12 × 7 is 70 + 14.'};
+const GATE_M = [5, 4, 3, 9, 6, 8, 7, 12], GATE_D = [5, 4, 9, 8, 7];
+[2, 10, 5, 0, 4, 3, 11, 9, 6, 8, 7, 12].forEach(n => n === 0
+  ? fam('M01', 'Multiplication: ×0 and ×1', 'Times 1 stays the same. Times 0 is always 0.', () => { const n1 = pick([0, 1]), k = ri(1, 10); return q(com(n1, k, '×'), n1 * k); })
+  : fam('M' + n, 'Multiplication: ×' + n, MT[n], () => { const k = ri(2, n === 12 ? 12 : 10); return q(com(n, k, '×'), n * k); }, GATE_M.includes(n)));
+[2, 10, 5, 0, 4, 3, 11, 9, 6, 8, 7, 12].forEach(n => n === 0
+  ? fam('D01', 'Division: ÷1 and by itself', 'Dividing by 1 changes nothing. A number divided by itself is 1. Zero shared out is still 0.', () => { const k = ri(2, 12); return pick([q(`${k} ÷ 1`, k), q(`${k} ÷ ${k}`, 1), q(`0 ÷ ${k}`, 0)]); })
+  : fam('D' + n, 'Division: ÷' + n, `Ask the multiplication question: ${n * 7} ÷ ${n} is "${n} times what makes ${n * 7}?"`, () => { const k = ri(2, n === 12 ? 12 : 10); return q(`${n * k} ÷ ${n}`, k); }, GATE_D.includes(n)));
+
+/* ---- Strand N: number skills ---- */
+sk('N3', 'N', 'Adding and subtracting through a ten', 'Use the fact you know. 8 + 7 = 15, so 28 + 7 ends in 5 and goes into the next ten: 35.', () => { const u = ri(2, 9), v = ri(11 - u, 9), t = ri(1, 8); return pick([q(`${t}${u} + ${v}`, t * 10 + u + v), q(`${t}${u} + ${v}`, t * 10 + u + v), q(`${t * 10 + u + v} − ${v}`, t * 10 + u)]); },
+  {chain: () => { const u = ri(4, 9), v = ri(11 - u, 9); return [q(`${u} + ${v}`, u + v), q(`1${u} + ${v}`, 10 + u + v), q(`3${u} + ${v}`, 30 + u + v), q(`6${u} + ${v}`, 60 + u + v)]; }});
+sk('N4', 'N', 'Bonds to 100', 'Jump to the next ten, then to 100. From 64: 6 more is 70, then 30 more is 100. So 36.', () => { const a = pick([ri(1, 19) * 5, ri(11, 89)]); return pick([q(`100 − ${a}`, 100 - a), q(`${a} + □ = 100`, 100 - a)]); });
+sk('N5', 'N', 'Add and subtract 2-digit numbers', 'Split the second number. 47 + 36: add 30 to get 77, then add 6 to get 83.', () => { if (Math.random() < .5) { const a = ri(12, 58), b = ri(12, 99 - a); return q(`${a} + ${b}`, a + b); } const a = ri(31, 95), b = ri(12, a - 11); return q(`${a} − ${b}`, a - b); });
+sk('KX', 'K', 'All tables mixed, with division', 'For division, ask the multiplication question: 56 ÷ 7 is "7 times what makes 56?"', tab([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]));
+sk('N11', 'N', 'Multiply and divide by 10, 100, 1000', 'The digits move, the decimal point stays. ×100 moves every digit two places to the left; ÷100 moves them two places to the right.', () => { let m = pick([ri(2, 9), ri(11, 99), ri(101, 999)]); if (m % 10 === 0) m++; const p = pick([0, 0, 1, 2]), op = pick(['×', '÷']); let k = pick([1, 2, 3]); if (op === '÷') k = Math.min(k, 4 - p); return q(`${ds(m, p)} ${op} ${10 ** k}`, parseFloat(ds(m, op === '×' ? p - k : p + k))); },
+  {chain: () => { let m = ri(12, 98); if (m % 10 === 0) m++; return [q(`${ds(m, 1)} × 10`, m), q(`${ds(m, 1)} × 100`, m * 10), q(`${ds(m, 1)} ÷ 10`, m / 100), q(`${m} ÷ 100`, m / 100)]; }});
+sk('N12', 'N', 'Using known facts (30 × 40, 0.3 × 4)', 'Do the fact, then fix the size. 30 × 40 is 3 × 4 = 12, made 10 times bigger twice: 1200.', () => { const a = ri(2, 9), b = ri(2, 9); return pick([q(`${a * 10} × ${b}`, a * b * 10), q(`${a * 10} × ${b * 10}`, a * b * 100), q(`${a * 100} × ${b}`, a * b * 100), q(`${a * b * 10} ÷ ${b}`, a * 10), q(`${a * b * 100} ÷ ${b * 10}`, a * 10), q(`0.${a} × ${b}`, a * b / 10)]); },
+  {chain: () => { const a = ri(2, 9), b = ri(2, 9); return [q(`${a} × ${b}`, a * b), q(`${a * 10} × ${b}`, a * b * 10), q(`${a * 10} × ${b * 10}`, a * b * 100), q(`0.${a} × ${b}`, a * b / 10)]; }});
+sk('N13', 'N', 'Negative numbers: add and subtract', 'Picture the number line. Adding moves right, subtracting moves left. Subtracting a negative is the same as adding.', () => { const a = ri(1, 9), b = ri(1, 9); return pick([q(`−${a} + ${b}`, b - a), q(`${a} − ${a + b}`, -b), q(`−${a} − ${b}`, -a - b), q(`${a} − −${b}`, a + b), q(`−${a} + −${b}`, -a - b), q(`−${a} − −${b}`, b - a)]); });
+sk('N14', 'N', 'Negative numbers: multiply and divide', 'Same signs give a positive answer. Different signs give a negative answer.', () => { const a = ri(2, 9), b = ri(2, 9); return pick([q(`−${a} × ${b}`, -a * b), q(`−${a} × −${b}`, a * b), q(`${a} × −${b}`, -a * b), q(`−${a * b} ÷ ${b}`, -a), q(`${a * b} ÷ −${b}`, -a), q(`−${a * b} ÷ −${b}`, a), q(`(−${a})²`, a * a)]); });
+sk('N15', 'N', 'Order of operations', 'Brackets first, then powers, then multiply and divide, then add and subtract.', () => { const a = ri(2, 9), b = ri(2, 9), c = ri(2, 9), s = ri(2, 5); return pick([q(`${a} + ${b} × ${c}`, a + b * c), q(`(${a} + ${b}) × ${c}`, (a + b) * c), q(`${b + ri(1, 12)} − ${b * c} ÷ ${c}`, 0), q(`${a} × ${s}²`, a * s * s), q(`${a * (b + c)} ÷ (${b} + ${c}) + ${c}`, a + c), q(`${a} × ${b} + ${c} × ${a}`, a * b + c * a)].map(x => { if (x.a === 0) { const X = +x.q.split(' ')[0]; x.a = X - b; } return x; })); },
+  {chain: () => { const a = ri(2, 9), b = ri(2, 9), c = ri(2, 9); return [q(`${a} + ${b} × ${c}`, a + b * c), q(`(${a} + ${b}) × ${c}`, (a + b) * c), q(`${a} × ${c} + ${b}`, a * c + b), q(`${a} × (${c} + ${b})`, a * (c + b))]; }});
+sk('N16', 'N', 'Rounding: 10, 100, 1000 and decimal places', 'Find the digit you are rounding to. Look at the next digit: 5 or more rounds up.', () => { if (Math.random() < .5) { const n = ri(111, 9889), k = pick([10, 100, 1000]); return q(`Round ${n} to the nearest ${k}`, Math.round(n / k) * k); } for (;;) { const m = ri(1001, 9899), p = pick([1, 2]); const a = p === 1 ? Math.round(m / 100) / 10 : Math.round(m / 10) / 100; if (nstr(a).split('.')[1]?.length === p) return q(`Round ${(m / 1000).toFixed(3)} to ${p} decimal place${p > 1 ? 's' : ''}`, a); } });
+sk('N17', 'N', 'Significant figures', 'Start counting at the first digit that is not zero. Keep the size of the number the same.', () => { const k = pick([1, 2]); if (Math.random() < .5) { const n = no5(pick([4, 5])); return q(`Round ${n} to ${k} significant figure${k > 1 ? 's' : ''}`, Number(n.toPrecision(k))); } const x = no5(4) / pick([10000, 100000]); return q(`Round ${nstr(x)} to ${k} significant figure${k > 1 ? 's' : ''}`, Number(x.toPrecision(k))); });
+sk('N18', 'N', 'Squares, cubes and roots', 'Squared means times itself. The square root undoes it: √81 asks "what times itself makes 81?"', () => { const n = ri(2, 12), c = pick([2, 3, 4, 5, 10]); return pick([q(`${ri(2, 15)}²`, 0), q(`√${n * n}`, n), q(`${c}³`, c ** 3), q(`∛${c ** 3}`, c)].map(x => { if (x.a === 0) { const b = parseInt(x.q); x.a = b * b; } return x; })); });
+sk('N19', 'N', 'HCF and LCM', 'HCF: the biggest number that divides into both. LCM: the first number in both times tables.', () => { const g = ri(2, 6), [a, b] = pick([[1, 2], [2, 3], [3, 4], [2, 5], [3, 5], [1, 3], [4, 5]]); return pick([q(`Find the HCF of ${g * a} and ${g * b}`, g), q(`Find the LCM of ${g * a} and ${g * b}`, g * a * b)]); });
+
+/* ---- Written methods: worked in the book, so fewer and longer questions (2 typed, 5 in the book) ---- */
+const WR = {written: true, tn: 2, bn: 5};
+const wm = (a1, a2, b1, b2) => () => { let a = ri(a1, a2), b = ri(b1, b2); if (a % 10 === 0) a++; if (b % 10 === 0) b++; return q(`${a} × ${b}`, a * b); };
+sk('WA', 'N', 'Column addition', 'Line up the place values. Start from the ones and carry when a column makes 10 or more.', () => { const a = ri(234, 4999), b = ri(178, 4999); return q(`${a} + ${b}`, a + b); }, {...WR, pl: false});
+sk('WS', 'N', 'Column subtraction', 'Line up the place values and start from the ones. If the top digit is smaller, exchange from the next column.', () => { const a = ri(1000, 9000), b = ri(123, a - 100); return q(`${a} − ${b}`, a - b); }, WR);
+sk('WM1', 'N', 'Multiply 2 digits by 1 digit', 'Split it up: 37 × 6 is 30 × 6 plus 7 × 6.', wm(13, 98, 3, 9), {...WR, pl: false});
+sk('WM2', 'N', 'Multiply 3 digits by 1 digit', 'Work from the ones, carrying as you go. Estimate first so you know roughly what to expect.', wm(112, 987, 3, 9), WR);
+sk('WD1', 'N', 'Short division', 'Work from the left. Carry any remainder across to the next digit.', () => { const d = ri(3, 9), n = ri(24, 198); return q(`${d * n} ÷ ${d}`, n); }, WR);
+sk('WM3', 'N', 'Multiply 2 digits by 2 digits', 'Two rows. Multiply by the ones digit, then by the tens digit with a zero in the ones place. Add the rows.', wm(12, 98, 12, 89), {...WR, pl: false});
+sk('WM4', 'N', 'Multiply 3 digits by 2 digits', 'Two rows, exactly like 2 digits by 2 digits. Check your answer against an estimate.', wm(112, 987, 12, 89), {...WR, pl: false});
+sk('WD2', 'N', 'Short division with decimal answers', 'If there is a remainder at the end, put in a decimal point, add a zero and keep dividing. 57 ÷ 4 = 14.25.', () => { for (;;) { const d = pick([2, 4, 5, 8]), n = ri(13, 499); if (n % d) return q(`${n} ÷ ${d}`, n / d); } }, {...WR, pl: false});
+sk('WD3', 'N', 'Short division of decimals', 'Divide as normal. The decimal point in the answer goes directly above the one in the question.', () => { const d = ri(3, 9), n = ri(112, 987); return q(`${nstr(d * n / 100)} ÷ ${d}`, n / 100); }, {...WR, pl: false});
+sk('NE', 'N', 'Estimating by rounding', 'Round each number to 1 significant figure, then calculate. 38 × 52 is about 40 × 50 = 2000.', () => { const o = [1, 2, 3, 4, 6, 7, 8, 9], t = [0, 1, 2, 3, 4, 6, 7, 8, 9], r1 = x => Number(x.toPrecision(1)), a = ri(1, 9) * 10 + pick(o), b = ri(1, 9) * 10 + pick(o), c = ri(1, 9) * 100 + pick(t) * 10 + ri(0, 9); return pick([q(`Estimate ${a} × ${b} by rounding each number to 1 significant figure`, r1(a) * r1(b)), q(`Estimate ${c} × ${b} by rounding each number to 1 significant figure`, r1(c) * r1(b))]); });
+/* ---- Powers ---- */
+sk('NX1', 'N', 'Powers', 'The small raised number says how many of the base to multiply together. 2⁵ = 2 × 2 × 2 × 2 × 2 = 32.', () => { const [b, e] = pick([[2, ri(3, 10)], [2, ri(3, 10)], [3, ri(3, 5)], [4, 3], [5, 3], [10, ri(3, 6)], [1, ri(5, 99)], [ri(2, 12), 1]]); return q(`${b}${sup(e)}`, b ** e); });
+sk('NX2', 'N', 'Index laws', 'Same base: multiplying adds the powers, dividing subtracts them, and a power of a power multiplies them.', () => { const b = ri(2, 9), m = ri(2, 9), n = ri(2, 6); return pick([q(`${b}${sup(m)} × ${b}${sup(n)} = ${b}^□`, m + n), q(`${b}${sup(m + n)} ÷ ${b}${sup(n)} = ${b}^□`, m), q(`(${b}${sup(m)})${sup(n)} = ${b}^□`, m * n)]); });
+sk('NX3', 'N', 'Zero and negative powers', 'Anything to the power 0 is 1. A negative power means "one over": 2⁻³ is 1 over 2³, which is 1/8.', () => { const b = ri(2, 10), c = pick([2, 3]); return pick([q(`${b}⁰`, 1), q(`Write ${b}⁻¹ as a fraction`, `1/${b}`), q(`Write ${b}⁻² as a fraction`, `1/${b * b}`), q(`Write ${c}⁻³ as a fraction`, `1/${c ** 3}`)]); });
+sk('NX4', 'N', 'Standard form', 'The power of 10 says how many places the digits move. 3.4 × 10³ = 3400. A negative power makes the number small: 3.4 × 10⁻² = 0.034.', () => { let m = ri(11, 99); if (m % 10 === 0) m++; const e = ri(2, 6), e2 = pick([1, 2, 3]), s_ = ds(m, 1); return pick([q(`Write ${s_} × 10${sup(e)} as an ordinary number`, m * 10 ** (e - 1)), q(`${m * 10 ** (e - 1)} = □ × 10${sup(e)}`, m / 10), q(`Write ${s_} × 10${sup(-e2)} as an ordinary number`, +nstr(m / 10 ** (e2 + 1)))]); });
+sk('NX5', 'N', 'Prime factors', 'Every whole number above 1 is a product of primes. Divide by the primes you can see to find the missing one.', () => { const ps = Array.from({length: ri(3, 4)}, () => pick([2, 2, 2, 3, 3, 5, 7])).sort((a, b) => a - b), n = ps.reduce((a, b) => a * b, 1), h = ri(0, ps.length - 1); return q(`${n} = ${ps.map((p, i) => i === h ? '□' : p).join(' × ')}`, ps[h]); });
+
+/* ---- Strand F: fractions, decimals, percentages ---- */
+const BASE = [[1, 2], [1, 3], [2, 3], [1, 4], [3, 4], [1, 5], [2, 5], [3, 5], [4, 5], [5, 6], [3, 8], [5, 8], [7, 10]];
+const FDP = [[1, 2], [1, 4], [3, 4], [1, 5], [2, 5], [3, 5], [4, 5], [1, 10], [3, 10], [7, 10], [9, 10], [1, 20], [3, 20], [1, 25], [1, 50], [1, 100], [1, 8], [3, 8]];
+sk('F1', 'F', 'Unit fractions of amounts', 'To find one quarter, divide by 4. The bottom number tells you what to divide by.', () => { const d = pick([2, 3, 4, 5, 10]), k = ri(2, 12); return q(`${F(1, d)} of ${d * k}`, k); });
+sk('F2', 'F', 'Equivalent fractions', 'Multiply or divide the top and bottom by the same number.', () => { const [n, d] = pick(BASE), m = ri(2, 6); return pick([q(`${F(n, d)} = ${F('□', d * m)}`, n * m), q(`${F(n, d)} = ${F(n * m, '□')}`, d * m), q(`${F(n * m, d * m)} = ${F('□', d)}`, n)]); });
+sk('F3', 'F', 'Simplifying fractions', 'Divide top and bottom by the same number. Keep going until nothing else divides into both.', () => { const [n, d] = pick(BASE), m = ri(2, 9); return q(`Simplify ${F(n * m, d * m)}`, `${n}/${d}`, {form: 'simplest'}); });
+sk('F4', 'F', 'Fractions of amounts', 'Divide by the bottom, then multiply by the top. For three quarters of 20: 20 ÷ 4 = 5, then 5 × 3 = 15.', () => { const [n, d] = pick(BASE.filter(f => f[0] > 1)), k = ri(2, 10); return q(`${F(n, d)} of ${d * k}`, n * k); },
+  {chain: () => { const [n, d] = pick([[3, 4], [3, 5], [5, 6], [5, 8], [7, 10]]), k = ri(2, 6); return [q(`${F(1, d)} of ${d * k}`, k), q(`${F(2, d)} of ${d * k}`, 2 * k), q(`${F(n, d)} of ${d * k}`, n * k), q(`${F(n, d)} of ${d * k * 2}`, n * k * 2)]; }});
+sk('F5', 'F', 'Tenths and hundredths as decimals', 'The first decimal place is tenths, the second is hundredths. 0.07 is seven hundredths.', () => { const t = ri(1, 9); let h = ri(11, 99); if (h % 10 === 0) h++; return pick([q(`Write 0.${t} as a fraction`, `${t}/10`), q(`Write ${F(t, 10)} as a decimal`, t / 10), q(`Write ${F(h, 100)} as a decimal`, h / 100), q(`Write 0.0${t} as a fraction`, `${t}/100`), q(`Write 0.${h} as a fraction`, `${h}/100`), q(`Write ${F(t, 100)} as a decimal`, t / 100)]); });
+sk('F6', 'F', 'Converting fractions, decimals, percentages', 'Percent means "out of 100". 0.25 is 25 hundredths, so 25%, which simplifies to one quarter.', () => { const [n, d] = pick(FDP), dec = nstr(n / d), pct = nstr(100 * n / d); return pick([q(`Write ${F(n, d)} as a decimal`, n / d), q(`Write ${F(n, d)} as a percentage`, 100 * n / d, {suf: '%'}), q(`Write ${dec} as a percentage`, 100 * n / d, {suf: '%'}), q(`Write ${dec} as a fraction in its simplest form`, `${n}/${d}`, {form: 'simplest'}), q(`Write ${pct}% as a decimal`, n / d), q(`Write ${pct}% as a fraction in its simplest form`, `${n}/${d}`, {form: 'simplest'})]); });
+sk('F7', 'F', 'Percentages of amounts: 50%, 10%, 25%, 1%', '50% is half. 10% is divide by 10. 25% is half and half again. 1% is divide by 100.', () => { const p = pick([50, 10, 25, 1]), A = p === 50 ? ri(2, 60) * 2 : p === 10 ? ri(2, 40) * 10 : p === 25 ? ri(1, 25) * 4 : ri(1, 9) * 100; return q(`${p}% of ${A}`, A * p / 100); });
+sk('F8', 'F', 'Percentages of amounts: building from 10%', 'Find 10% first, then build. 35% is three lots of 10% plus half of 10%.', () => { const p = pick([20, 30, 40, 60, 70, 5, 15, 35, 45, 75, 80, 90]), A = ri(1, 12) * 20; return q(`${p}% of ${A}`, A * p / 100); },
+  {chain: () => { const A = ri(2, 9) * 20; return [q(`10% of ${A}`, A / 10), q(`5% of ${A}`, A / 20), q(`15% of ${A}`, A * .15), q(`35% of ${A}`, A * .35)].map(x => (x.a = +nstr(x.a), x)); }});
+sk('F9', 'F', 'Comparing fractions, decimals, percentages', 'Turn them into the same form first. Decimals are usually easiest to compare.', () => { for (;;) { const a = pick(FDP), b = pick(FDP); if (a[0] * b[1] === b[0] * a[1]) continue; const forms = shuf([0, 1, 2]), sh = (f, k) => k === 0 ? F(f[0], f[1]) : k === 1 ? nstr(f[0] / f[1]) : nstr(100 * f[0] / f[1]) + '%'; const s1 = sh(a, forms[0]), s2 = sh(b, forms[1]); return q(`Which is larger: ${s1} or ${s2}?`, a[0] / a[1] > b[0] / b[1] ? s1 : s2, {kind: 'choice', opts: [s1, s2]}); } });
+sk('F10', 'F', 'Add and subtract fractions: same denominator', 'The denominator stays the same. Just add or subtract the tops.', () => { const d = pick([5, 7, 8, 9, 10, 11, 12]), a = ri(1, d - 2), b = ri(1, d - 1 - a); return pick([q(`${F(a, d)} + ${F(b, d)}`, fs(a + b, d)), q(`${F(a + b, d)} − ${F(a, d)}`, fs(b, d))]); });
+sk('F11', 'F', 'Add and subtract fractions: different denominators', 'Make the denominators the same first, using equivalent fractions. Then add or subtract the tops.', () => { for (;;) { const [d1, d2] = pick([[2, 3], [2, 4], [3, 4], [2, 5], [3, 6], [4, 8], [2, 6], [3, 5], [4, 5], [5, 10], [2, 8], [3, 9], [4, 6]]), n1 = ri(1, d1 - 1), n2 = ri(1, d2 - 1), L = d1 * d2, s = n1 * d2 + n2 * d1, df = n1 * d2 - n2 * d1; const o = []; if (s < L) o.push(q(`${F(n1, d1)} + ${F(n2, d2)}`, fs(s, L))); if (df > 0) o.push(q(`${F(n1, d1)} − ${F(n2, d2)}`, fs(df, L))); if (o.length) return pick(o); } });
+sk('F12', 'F', 'Mixed numbers and improper fractions', 'How many whole ones can you make? Seven thirds is two whole ones (six thirds) and one third left.', () => { for (;;) { const d = ri(2, 9), w = ri(1, 5), n = ri(1, d - 1); if (gcd(n, d) !== 1) continue; return pick([q(`Write ${F(w * d + n, d)} as a mixed number`, `${w} ${n}/${d}`, {form: 'mixed'}), q(`Write {${w} ${n}/${d}} as an improper fraction`, `${w * d + n}/${d}`, {form: 'improper'})]); } });
+sk('F13', 'F', 'Multiplying fractions', 'Multiply the tops, multiply the bottoms, then simplify.', () => { const [a, b] = pick(BASE), [c, d] = pick(BASE), k = ri(2, 6); return pick([q(`${F(a, b)} × ${F(c, d)}`, fs(a * c, b * d), {form: 'simplest'}), q(`${F(a, b)} × ${F(c, d)}`, fs(a * c, b * d), {form: 'simplest'}), q(`${F(a, b)} × ${k}`, fs(a * k, b), {form: 'simplest'})]); });
+sk('F14', 'F', 'Dividing fractions', 'Keep the first fraction, flip the second, and multiply.', () => { const [a, b] = pick(BASE), [c, d] = pick(BASE), k = ri(2, 6); return pick([q(`${F(a, b)} ÷ ${F(c, d)}`, fs(a * d, b * c), {form: 'simplest'}), q(`${F(a, b)} ÷ ${F(c, d)}`, fs(a * d, b * c), {form: 'simplest'}), q(`${F(a, b)} ÷ ${k}`, fs(a, b * k), {form: 'simplest'})]); });
+sk('F15', 'F', 'Adding and subtracting decimals', 'Line up the decimal points. Fill gaps with zeros: 5 − 1.36 is 5.00 − 1.36.', () => { const A = ri(11, 99) * 10, B = ri(101, 899); if (B % 10 === 0) return q(`${nstr(A / 100)} + ${nstr((B + 3) / 100)}`, (A + B + 3) / 100); const n = ri(Math.ceil(B / 100) + 1, 12); return pick([q(`${nstr(A / 100)} + ${nstr(B / 100)}`, (A + B) / 100), q(`${nstr(Math.max(A, B) / 100)} − ${nstr(Math.min(A, B) / 100)}`, Math.abs(A - B) / 100), q(`${n} − ${nstr(B / 100)}`, (n * 100 - B) / 100)]); });
+sk('F16', 'F', 'Multiplying and dividing decimals', 'Do it with whole numbers first, then put the decimal places back. 0.3 × 0.4: 3 × 4 = 12, two decimal places, so 0.12.', () => { const a = ri(2, 9), b = ri(2, 9); return pick([q(`0.${a} × ${b}`, a * b / 10), q(`0.${a} × 0.${b}`, a * b / 100), q(`0.0${a} × ${b}`, a * b / 100), q(`${nstr(a * b / 10)} ÷ ${b}`, a / 10), q(`1.${a} × ${b}`, (10 + a) * b / 10)]); });
+sk('F17', 'F', 'Writing one amount as a percentage of another', 'Write it as a fraction, then make the denominator 100. 12 out of 40 is 6 out of 20, which is 30 out of 100.', () => { const d = pick([10, 20, 25, 50, 5, 4, 40, 200]), n = d === 40 ? 2 * ri(1, 19) : d === 200 ? 2 * ri(1, 99) : ri(1, d - 1); return q(`Write ${n} out of ${d} as a percentage`, 100 * n / d, {suf: '%'}); });
+sk('F18', 'F', 'Percentage increase and decrease', 'Find the percentage, then add it on for an increase or take it off for a decrease.', () => { const A = ri(1, 15) * 20, p = pick([5, 10, 15, 20, 25, 30, 40, 50, 75]); return pick([q(`Increase ${A} by ${p}%`, A + A * p / 100), q(`Decrease ${A} by ${p}%`, A - A * p / 100)]); },
+  {chain: () => { const A = ri(2, 9) * 20; return [q(`10% of ${A}`, A / 10), q(`Increase ${A} by 10%`, A * 1.1), q(`Decrease ${A} by 10%`, A * .9), q(`Increase ${A} by 20%`, A * 1.2)].map(x => (x.a = +nstr(x.a), x)); }});
+sk('F19', 'F', 'Percentage multipliers', 'An increase of 15% means you have 115% of it, which is × 1.15. A decrease of 30% leaves 70%, which is × 0.7.', () => { const p = pick([5, 10, 12, 15, 20, 25, 30, 35, 40, 50, 8, 3]); return pick([q(`Write the multiplier for an increase of ${p}%`, +nstr(1 + p / 100)), q(`Write the multiplier for a decrease of ${p}%`, +nstr(1 - p / 100)), q(`A multiplier of ${nstr(1 + p / 100)} is an increase of what percentage?`, p, {suf: '%'})]); });
+sk('F20', 'F', 'Reverse percentages', 'The new price is not 100%. After a 20% increase, the new price is 120% of the original. Find 1%, then 100%.', () => { const O = ri(2, 20) * 20, p = pick([10, 20, 25, 50]); return pick([q(`After a ${p}% increase, a price is £${O * (100 + p) / 100}. What was the original price?`, O, {pre: '£'}), q(`After a ${p}% decrease, a price is £${O * (100 - p) / 100}. What was the original price?`, O, {pre: '£'})]); });
+
+/* ---- Strand W: word problems (templates with random numbers) ---- */
+const NAMES = ['Aisha', 'Ben', 'Chloe', 'Dev', 'Ella', 'Femi', 'Grace', 'Hamza', 'Isla', 'Jack', 'Kai', 'Leah', 'Maya', 'Noah', 'Olivia', 'Priya', 'Ravi', 'Sam', 'Tia', 'Zara'];
+const nm = () => pick(NAMES);
+const two = () => shuf(NAMES).slice(0, 2);
+const mny = x => '£' + (Number.isInteger(x) ? x : x.toFixed(2));
+const W = (q_, a, steps, o = {}) => ({q: q_, a: +nstr(a), steps, ...o});
+const WP = {
+1: [
+ ['money left after spending (subtraction)', () => { const n = nm(), a = ri(20, 60), b = ri(5, a - 8); return W(`${n} has £${a} and spends £${b} on a game. How much money does ${n} have left?`, a - b, [`${a} − ${b} = ${a - b}`, `£${a - b} left`], {pre: '£'}); }],
+ ['pages left to read (subtraction)', () => { const n = nm(), a = ri(120, 320), b = ri(35, a - 30); return W(`${n}'s book has ${a} pages. ${n} has read ${b} pages. How many pages are left?`, a - b, [`${a} − ${b} = ${a - b} pages`]); }],
+ ['total of three classes (addition)', () => { const a = ri(24, 32), b = ri(24, 32), c = ri(24, 32); return W(`There are ${a} students in 7A, ${b} in 7B and ${c} in 7C. How many students are there altogether?`, a + b + c, [`${a} + ${b} + ${c} = ${a + b + c} students`]); }],
+ ['total distance walked (addition)', () => { const n = nm(), a = ri(250, 650), b = ri(150, 450); return W(`${n} walks ${a} m to school and then ${b} m to the shop. How far does ${n} walk in total?`, a + b, [`${a} + ${b} = ${a + b} m`], {suf: ' m'}); }],
+ ['difference in heights (subtraction)', () => { const [x, y] = two(), a = ri(150, 175), b = ri(125, a - 4); return W(`${x} is ${a} cm tall. ${y} is ${b} cm tall. How much taller is ${x} than ${y}?`, a - b, [`${a} − ${b} = ${a - b} cm`], {suf: ' cm'}); }],
+ ['temperature rising from a negative', () => { const a = ri(2, 8), b = ri(9, 16); return W(`At midnight the temperature was −${a}°C. By midday it had risen by ${b} degrees. What was the temperature at midday?`, b - a, [`−${a} + ${b} = ${b - a}`, `${b - a}°C`], {suf: '°C'}); }],
+],
+2: [
+ ['boxes of items (multiplication)', () => { const a = ri(4, 12), b = pick([6, 8, 12, 24]); return W(`A shop has ${a} boxes of pencils. Each box holds ${b} pencils. How many pencils are there?`, a * b, [`${a} × ${b} = ${a * b} pencils`]); }],
+ ['cost of several tickets (multiplication)', () => { const a = ri(6, 15), b = ri(3, 9); return W(`Tickets cost £${a} each. How much do ${b} tickets cost?`, a * b, [`${b} × ${a} = ${a * b}`, `£${a * b}`], {pre: '£'}); }],
+ ['sharing equally (division)', () => { const b = ri(3, 8), e = ri(4, 12); return W(`${b * e} sweets are shared equally between ${b} friends. How many sweets does each friend get?`, e, [`${b * e} ÷ ${b} = ${e} sweets each`]); }],
+ ['rows of chairs (multiplication)', () => { const a = ri(6, 14), b = ri(8, 15); return W(`The hall is set out with ${a} rows of ${b} chairs. How many chairs are there?`, a * b, [`${a} × ${b} = ${a * b} chairs`]); }],
+ ['hourly pay (multiplication)', () => { const n = nm(), a = ri(9, 14), b = ri(4, 9); return W(`${n} is paid £${a} per hour. How much is ${n} paid for ${b} hours?`, a * b, [`${b} × ${a} = ${a * b}`, `£${a * b}`], {pre: '£'}); }],
+ ['packing into boxes of 6 (division)', () => { const k = ri(7, 25); return W(`A farmer packs ${6 * k} eggs into boxes of 6. How many boxes are filled?`, k, [`${6 * k} ÷ 6 = ${k} boxes`]); }],
+],
+3: [
+ ['buying several items and getting change', () => { const n = nm(), a = ri(2, 5), b = ri(2, 8), cost = a * b, c = [10, 20, 50].find(x => x > cost); return W(`${n} buys ${a} sandwiches at £${b} each and pays with a £${c} note. How much change does ${n} get?`, c - cost, [`Cost: ${a} × ${b} = £${cost}`, `Change: ${c} − ${cost} = £${c - cost}`], {pre: '£'}); }],
+ ['bus passengers getting off and on', () => { const a = ri(30, 50), b = ri(5, 20), c = ri(5, 25); return W(`A bus has ${a} passengers. At the next stop ${b} get off and ${c} get on. How many passengers are on the bus now?`, a - b + c, [`${a} − ${b} = ${a - b}`, `${a - b} + ${c} = ${a - b + c} passengers`]); }],
+ ['saving weekly then spending', () => { const n = nm(), a = ri(4, 12), b = ri(5, 10), c = ri(10, a * b - 5); return W(`${n} saves £${a} a week for ${b} weeks, then spends £${c} on trainers. How much does ${n} have left?`, a * b - c, [`Saved: ${a} × ${b} = £${a * b}`, `Left: ${a * b} − ${c} = £${a * b - c}`], {pre: '£'}); }],
+ ['how many minibuses (round up)', () => { const s = pick([12, 15, 16]), p = s * ri(2, 5) + ri(1, s - 1), n = Math.ceil(p / s); return W(`A minibus holds ${s} people. How many minibuses are needed to take ${p} people on a trip?`, n, [`${p} ÷ ${s} = ${n - 1} remainder ${p - s * (n - 1)}`, `${n - 1} minibuses is not enough, so ${n} are needed`]); }],
+ ['two kinds of packs', () => { const a = ri(3, 8), b = pick([6, 8, 10]), c = ri(2, 6), d = pick([4, 12, 20]); return W(`A teacher buys ${a} packs of ${b} pens and ${c} packs of ${d} pencils. How many items is that altogether?`, a * b + c * d, [`Pens: ${a} × ${b} = ${a * b}`, `Pencils: ${c} × ${d} = ${c * d}`, `${a * b} + ${c * d} = ${a * b + c * d}`]); }],
+ ['cinema tickets for adults and children', () => { const a = ri(8, 12), b = ri(4, 7), m = ri(1, 3), n = ri(2, 5); return W(`Cinema tickets cost £${a} for an adult and £${b} for a child. How much do ${m} adult${m > 1 ? 's' : ''} and ${n} children pay in total?`, m * a + n * b, [`Adults: ${m} × ${a} = £${m * a}`, `Children: ${n} × ${b} = £${n * b}`, `Total: £${m * a + n * b}`], {pre: '£'}); }],
+],
+4: [
+ ['fraction of a group of students', () => { const [n, d] = pick([[1, 4], [3, 4], [2, 5], [3, 5], [2, 3], [5, 8], [3, 10]]), T = d * ri(10, 30); return W(`${F(n, d)} of the ${T} students in Year 8 walk to school. How many students walk to school?`, n * T / d, [`${T} ÷ ${d} = ${T / d}`, `${T / d} × ${n} = ${n * T / d} students`]); }],
+ ['size of a percentage discount', () => { const A = ri(2, 12) * 20, p = pick([10, 20, 25, 30, 5, 15]); return W(`A jacket costs £${A}. In a sale there is ${p}% off. How much money is taken off the price?`, A * p / 100, [`10% of ${A} = £${A / 10}`, `${p}% of ${A} = £${A * p / 100}`], {pre: '£'}); }],
+ ['test score as a percentage', () => { const n_ = nm(), d = pick([20, 25, 40, 50]), n = d === 40 ? 2 * ri(8, 19) : ri(Math.floor(d / 3), d - 1); return W(`${n_} scores ${n} out of ${d} in a test. What is this as a percentage?`, 100 * n / d, [`${F(n, d)} = ${F(100 * n / d, 100)}`, `${100 * n / d}%`], {suf: '%'}); }],
+ ['fraction of a bag of flour', () => { const b = pick([500, 1000, 1500, 2000]), [n, d] = pick([[3, 4], [2, 5], [3, 5], [1, 4], [3, 10]]); return W(`A recipe uses ${F(n, d)} of a ${b} g bag of flour. How many grams of flour is that?`, n * b / d, [`${b} ÷ ${d} = ${b / d}`, `${b / d} × ${n} = ${n * b / d} g`], {suf: ' g'}); }],
+ ['percentage of seats sold', () => { const s = ri(5, 40) * 20, p = pick([35, 45, 60, 65, 70, 85]); return W(`A theatre has ${s} seats. ${p}% of the seats are sold. How many seats are sold?`, s * p / 100, [`10% of ${s} = ${s / 10}`, `5% of ${s} = ${s / 20}`, `${p}% of ${s} = ${s * p / 100} seats`]); }],
+ ['cutting a length (decimals)', () => { const L = ri(18, 36) * 10; let c = ri(45, L - 40); if (c % 10 === 0) c += 5; return W(`A piece of wood is ${nstr(L / 100)} m long. ${nstr(c / 100)} m is cut off. How long is the piece that is left?`, (L - c) / 100, [`${(L / 100).toFixed(2)} − ${(c / 100).toFixed(2)} = ${nstr((L - c) / 100)} m`], {suf: ' m'}); }],
+],
+5: [
+ ['sale price after a percentage discount', () => { const A = ri(2, 12) * 20, p = pick([10, 15, 20, 25, 30, 40]); return W(`A coat costs £${A}. In a sale it is reduced by ${p}%. What is the sale price?`, A - A * p / 100, [`${p}% of ${A} = £${A * p / 100}`, `${A} − ${A * p / 100} = £${A - A * p / 100}`], {pre: '£'}); }],
+ ['fraction are girls, find the boys', () => { const [n, d] = pick([[2, 5], [3, 5], [3, 8], [5, 8], [4, 7], [3, 7]]), T = d * ri(4, 30); return W(`${F(n, d)} of the ${T} students in a club are girls. How many are boys?`, T - n * T / d, [`Girls: ${T} ÷ ${d} × ${n} = ${n * T / d}`, `Boys: ${T} − ${n * T / d} = ${T - n * T / d}`]); }],
+ ['sharing money in a ratio', () => { const [x, y] = two(), [m, n] = pick([[1, 2], [2, 3], [1, 3], [3, 4], [2, 5], [3, 5], [1, 4]]), u = ri(3, 12) * pick([1, 5]); return W(`${x} and ${y} share £${(m + n) * u} in the ratio ${m} : ${n}. How much does ${y} get?`, n * u, [`${m} + ${n} = ${m + n} parts`, `One part: ${(m + n) * u} ÷ ${m + n} = £${u}`, `${y}: ${n} × ${u} = £${n * u}`], {pre: '£'}); }],
+ ['pay rise then weekly pay', () => { const n = nm(), a = pick([10, 12, 15, 20]), p = pick([5, 10, 20]), h = ri(5, 15) * 2, nw = a * (100 + p) / 100; return W(`${n} earns £${a} per hour and gets a ${p}% pay rise. How much does ${n} now earn for ${h} hours of work?`, nw * h, [`${p}% of £${a} = ${mny(a * p / 100)}`, `New rate: ${mny(nw)} per hour`, `${h} × ${nw} = ${mny(nw * h)}`], {pre: '£'}); }],
+ ['two fractions spent, how much left', () => { const n = nm(), A = ri(5, 40) * 12; return W(`${n} has £${A}. ${n} spends ${F(1, 4)} of it on food and ${F(1, 3)} of it on travel. How much is left?`, A - A / 4 - A / 3, [`Food: ${A} ÷ 4 = £${A / 4}`, `Travel: ${A} ÷ 3 = £${A / 3}`, `Left: ${A} − ${A / 4} − ${A / 3} = £${A - A / 4 - A / 3}`], {pre: '£'}); }],
+ ['scaling a recipe', () => { const a = ri(2, 9) * 40, P = pick([6, 10, 14]); return W(`A recipe for 4 people uses ${a} g of rice. How much rice is needed for ${P} people?`, a / 4 * P, [`For 1 person: ${a} ÷ 4 = ${a / 4} g`, `For ${P} people: ${a / 4} × ${P} = ${a / 4 * P} g`], {suf: ' g'}); }],
+ ['same speed, different time', () => { const s = pick([40, 45, 50, 60, 70]), b = ri(2, 3), c = ri(4, 6); return W(`A car travels ${s * b} km in ${b} hours. At the same speed, how far does it travel in ${c} hours?`, s * c, [`Speed: ${s * b} ÷ ${b} = ${s} km per hour`, `${s} × ${c} = ${s * c} km`], {suf: ' km'}); }],
+],
+6: [
+ ['reverse percentage: original price before a sale', () => { const n = nm(), O = ri(2, 15) * 20, p = pick([10, 20, 25, 30, 40]), s = O * (100 - p) / 100; return W(`In a sale all prices are reduced by ${p}%. ${n} pays £${s} for a coat. What was the price of the coat before the sale?`, O, [`£${s} is ${100 - p}% of the original`, `1% = ${s} ÷ ${100 - p} = ${mny(s / (100 - p))}`, `100% = £${O}`], {pre: '£'}); }],
+ ['comparing two offers', () => { const A = ri(3, 12) * 20, p = pick([10, 15, 20, 25]), dA = A * p / 100, d = dA + pick([-6, -4, 4, 6, 8]); return W(`The same bike costs £${A} in two shops. Shop A takes ${p}% off. Shop B takes £${d} off. How much cheaper is the bike in the cheaper shop?`, Math.abs(dA - d), [`Shop A: ${p}% of ${A} = £${dA} off, so £${A - dA}`, `Shop B: ${A} − ${d} = £${A - d}`, `Difference: £${Math.abs(dA - d)} (Shop ${dA > d ? 'A' : 'B'} is cheaper)`], {pre: '£'}); }],
+ ['simple interest over several years', () => { const n = nm(), P = ri(2, 20) * 100, r = pick([2, 3, 4, 5]), y = ri(2, 5); return W(`${n} puts £${P} in a savings account that pays ${r}% simple interest each year. How much is in the account after ${y} years?`, P + P * r / 100 * y, [`Interest each year: ${r}% of ${P} = £${P * r / 100}`, `${y} years: ${y} × ${P * r / 100} = £${P * r / 100 * y}`, `Total: ${P} + ${P * r / 100 * y} = £${P + P * r / 100 * y}`], {pre: '£'}); }],
+ ['fraction, then percentage of the rest', () => { const [n, d] = pick([[1, 4], [2, 5], [1, 3], [3, 5]]), T = d * 20 * ri(1, 4), red = n * T / d, rest = T - red, p = pick([25, 30, 40, 60, 75]), bl = rest * p / 100; return W(`A bag holds ${T} counters. ${F(n, d)} of them are red. ${p}% of the rest are blue. The others are green. How many counters are green?`, rest - bl, [`Red: ${T} ÷ ${d} × ${n} = ${red}`, `Rest: ${T} − ${red} = ${rest}`, `Blue: ${p}% of ${rest} = ${bl}`, `Green: ${rest} − ${bl} = ${rest - bl}`]); }],
+ ['ratio with a known difference', () => { const [x, y] = two(), [m, n] = pick([[1, 3], [2, 5], [3, 5], [2, 7], [3, 7], [1, 4]]), u = ri(2, 9) * pick([1, 5]); return W(`${x} and ${y} share some money in the ratio ${m} : ${n}. ${y} gets £${(n - m) * u} more than ${x}. How much money did they share in total?`, (m + n) * u, [`Difference: ${n} − ${m} = ${n - m} parts = £${(n - m) * u}`, `One part = £${u}`, `Total: ${m + n} parts = £${(m + n) * u}`], {pre: '£'}); }],
+ ['increase then decrease', () => { const A = pick([200, 400, 500, 800, 1000]), p = pick([10, 20, 25]), r = pick([10, 20, 50]), mid = A * (100 + p) / 100, fin = mid * (100 - r) / 100; return W(`A laptop costs £${A}. The price goes up by ${p}%. Later the new price is reduced by ${r}%. What is the final price?`, fin, [`After the increase: ${A} × ${nstr(1 + p / 100)} = ${mny(mid)}`, `After the decrease: ${nstr(mid)} × ${nstr(1 - r / 100)} = ${mny(fin)}`], {pre: '£'}); }],
+]};
+WP[3].push(['long multiplication in context', () => { let r = ri(12, 48); if (r % 10 === 0) r += 3; const s_ = ri(112, 286); return W(`A stadium stand has ${r} rows with ${s_} seats in each row. How many seats are in the stand?`, r * s_, [`${s_} × ${r % 10} = ${s_ * (r % 10)}`, `${s_} × ${r - r % 10} = ${s_ * (r - r % 10)}`, `Total: ${r * s_} seats`]); }]);
+WP[4].push(['sharing a bill equally, decimal answer', () => { for (;;) { const n = pick([4, 5]), t = ri(31, 98); if (t % n) return W(`${n} friends share a restaurant bill of £${t} equally. How much does each person pay?`, t / n, [`${t} ÷ ${n} = ${(t / n).toFixed(2)}`, `£${(t / n).toFixed(2)} each`], {pre: '£'}); } }]);
+WP[5].push(['repeated doubling (powers of 2)', () => { const n = ri(5, 10); return W(`A type of bacteria doubles in number every hour. There are 3 bacteria to begin with. How many are there after ${n} hours?`, 3 * 2 ** n, [`Doubling ${n} times is × 2${sup(n)} = × ${2 ** n}`, `3 × ${2 ** n} = ${3 * 2 ** n}`]); }]);
+// Which practice areas (track ids, see GROUPS) each template leans on, in the same order as the templates above.
+// After a good round in an area, the app offers word problems that use it.
+const WTAGS = {
+  1: [['S', 'NM'], ['S', 'NW'], ['A', 'NM'], ['A', 'NW'], ['S', 'NM'], ['NN']],
+  2: [['M'], ['M'], ['D'], ['M'], ['M'], ['D']],
+  3: [['M', 'S'], ['A', 'S', 'NM'], ['M', 'S'], ['D', 'NW'], ['M', 'A'], ['M', 'A'], ['NW']],
+  4: [['FF'], ['FP'], ['FP', 'FE'], ['FF'], ['FP'], ['FD'], ['NW', 'FD']],
+  5: [['FP'], ['FF'], ['D', 'M'], ['FP', 'FD'], ['FF'], ['D', 'M'], ['D', 'M'], ['NX']],
+  6: [['FP'], ['FP'], ['FP'], ['FF', 'FP'], ['D', 'M'], ['FP']],
+};
+for (const l in WP) WP[l].forEach((t, i) => { t[2] = WTAGS[l][i] || []; });
+const linkFns = t => Object.values(WP).flat().filter(x => x[2].includes(t)).map(x => x[1]);
+const WNAMES = ['One step: add or subtract', 'One step: multiply or divide', 'Two steps with whole numbers', 'Fractions, decimals and percentages in context', 'Several steps: percentages, fractions and ratio', 'GCSE-style problems'];
+const WTIP = 'Read it twice. Decide what it is asking for. Write each calculation in your book, then the answer with its units.';
+WNAMES.forEach((n, i) => sk('W' + (i + 1), 'W', n, WTIP, () => pick(WP[i + 1])[1](), {wl: i + 1}));
+
+const BY = Object.fromEntries(SK.map(s => [s.id, s]));
+const famIds = op => SK.filter(s => s.op === op).map(s => s.id);
+/* The home screen shows one card per GROUP. Each group holds one or more TRACKS (areas), and each track is an ordered list of levels.
+   To add a level: write its sk(...) line above and put its id in a track here. To add an area: add a track. Never rename ids.
+   seq: true means the tracks are meant to be done in order (addition first); otherwise the app suggests the least-done area. */
+const GROUPS = [
+  {id: 'K', name: 'Number facts', short: 'Facts', col: '--k', seq: true, tracks: [['A', 'Addition facts', famIds('A')], ['S', 'Subtraction facts', famIds('S')], ['M', 'Multiplication facts', famIds('M')], ['D', 'Division facts', [...famIds('D'), 'KX']]]},
+  {id: 'N', name: 'Number skills', short: 'Skills', col: '--n', tracks: [
+    ['NM', 'Mental methods', ['N3', 'N4', 'N5', 'N12']],
+    ['NP', 'Place value, rounding and estimating', ['N11', 'N16', 'N17', 'NE']],
+    ['NW', 'Written methods', ['WA', 'WS', 'WM1', 'WM2', 'WD1', 'WM3', 'WM4', 'WD2', 'WD3']],
+    ['NN', 'Negative numbers and order of operations', ['N13', 'N14', 'N15']],
+    ['NX', 'Powers, roots, factors and primes', ['N18', 'N19', 'NX5', 'NX1', 'NX2', 'NX3', 'NX4']]]},
+  {id: 'F', name: 'Fractions, decimals, percentages', short: 'FDP', col: '--f', tracks: [
+    ['FF', 'Fractions', ['F1', 'F2', 'F3', 'F4', 'F10', 'F11', 'F12', 'F13', 'F14']],
+    ['FD', 'Decimals', ['F5', 'F15', 'F16']],
+    ['FE', 'Fraction, decimal, percentage equivalence', ['F6', 'F9']],
+    ['FP', 'Percentages', ['F7', 'F8', 'F17', 'F18', 'F19', 'F20']]]},
+  {id: 'W', name: 'Word problems', short: 'Problems', col: '--w', tracks: [['W', 'Word problems', ['W1', 'W2', 'W3', 'W4', 'W5', 'W6']]]},
+];
+const STR = {}, L = {};
+GROUPS.forEach(g => { g.t = g.tracks.map(x => x[0]); g.tracks.forEach(([t, name, ids]) => { STR[t] = {name, col: g.col, g}; L[t] = ids.map((id, i) => { const s_ = BY[id]; s_.st = t; s_.idx = i; return s_; }); }); });
+SK.forEach(s_ => { if (!STR[s_.st]) console.error('Skill not placed in a track: ' + s_.id); });
+GROUPS[0].t.forEach(t => L[t].forEach(k => { const e = L[t].filter(x => x.op && x.idx < k.idx); k.old = k.op && e.length ? () => pick(e).gen() : null; }));
+const isFacts = k => STR[k.st].g.id === 'K';
+const UNITS = ['£', 'p', 'cm', 'm', 'km', 'g', 'kg', '%', '°C', 'ml', 'minutes'];
+SK.forEach(s => { s.eg = s.st === 'W' ? '' : s.gen().q; });
+
+// ---------- state ----------
+const KEY = 'mathsPractice.v1';
+const fresh = () => ({v: 1, name: '', mode: 'class', pin: CONFIG.pin, placed: false, start: {}, expected: {}, maxPos: {}, totalT: null, timeAw: 0, skills: {}, days: {}, trophies: [], log: [], tokens: 0, best: 0, sessions: 0, wpSeen: [], packs: [], set: {games: true, links: true}, celebrated: '', cls: {}});
+let S; try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = fresh(); }
+if (S.pin === '1234') S.pin = CONFIG.pin;                                   // first draft's default
+for (const st in L) { S.start[st] ??= 0; S.expected[st] ??= 1; }
+if (S.totalT === null) S.totalT = Object.values(S.days).reduce((a, d) => a + d.t, 0);
+Object.values(S.cls).forEach(P => { for (const st in L) { P.pos[st] ??= 0; P.st[st] ??= 0; P.ex[st] ??= 0; } });
+let storageOK = true;
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { storageOK = false; } }
+const ss = id => S.skills[id] || (S.skills[id] = {st: 'new', passes: [], rounds: 0, fails: 0, wob: 0});
+const day = () => S.days[today()] || (S.days[today()] = {t: 0, g: 0, q: 0, c: 0, s: 0});
+function status(k) { const s = S.skills[k.id]; if (s?.support) return 'support'; if (s?.st === 'secure') return 'secure'; if (k.idx < S.start[k.st]) return 'assumed'; return s?.rounds ? 'learning' : 'new'; }
+const done = k => ['secure', 'assumed'].includes(status(k));
+function pos(st) { const i = L[st].findIndex(k => !done(k)); return i < 0 ? L[st].length : i; }
+const rec = st => L[st][Math.min(pos(st), L[st].length - 1)];
+const frac = st => pos(st) / L[st].length;
+function recTrack(g) { const open = g.t.filter(t => pos(t) < L[t].length); if (!open.length) return g.t[g.t.length - 1]; return g.seq ? open[0] : open.reduce((a, b) => frac(b) < frac(a) ? b : a); }
+const gGot = (g, P) => g.t.reduce((a, t) => a + (P ? P.pos[t] || 0 : pos(t)), 0), gTot = g => g.t.reduce((a, t) => a + L[t].length, 0);
+for (const st in L) S.maxPos[st] ??= pos(st);
+const syncMax = () => { for (const st in L) S.maxPos[st] = Math.max(S.maxPos[st], pos(st)); };
+const STLAB = {secure: 'Secure', learning: 'Learning', support: 'Needs support', assumed: 'Below start', new: 'Not started'};
+function trophy(ic, text) { const t = {d: today(), ic, text}; S.trophies.push(t); return t; }
+function flags() {
+  const f = [];
+  SK.forEach(k => { const s = S.skills[k.id]; if (!s) return; if (s.wob >= 2) f.push(['Wobbly on review', k]); if (s.fails >= 2) f.push(['Stuck (two low rounds)', k]); if (s.fast) f.push(['Secured in one easy round, worth a spot check', k]); if (s.support) f.push(['Marked as needs support', k]); });
+  const cut = dOff(14); [...new Set(S.log.filter(l => l.above && l.d >= cut).map(l => l.id))].forEach(id => f.push(['Chose work above their level', BY[id]]));
+  return f;
+}
+
+// ---------- word problem packs ----------
+const packs = () => [...(Array.isArray(window.MP_PACKS) ? window.MP_PACKS : []), ...S.packs].filter(p => p && p.q && typeof p.a === 'number' && p.level >= 1 && p.level <= 6);
+function wpSet(level) {
+  const items = shuf(WP[level]).slice(0, 3).map(t => t[1]());
+  const extra = packs().filter(p => p.level === level && !S.wpSeen.includes(p.id));
+  if (extra.length) { const p = pick(extra); S.wpSeen.push(p.id); items[2] = {q: p.q, a: p.a, pre: p.pre || '', suf: p.suf || '', steps: p.steps || []}; }
+  return items;
+}
+
+// ---------- view + asking ----------
+let V = {view: 'home'};
+function ask(Q, o) { V.ask = {q: Q, left: o.tries || 1, steps: !!o.steps, label: o.label || '', quiet: !!o.quiet, skip: !!o.skip, hint: o.hint || '', onDone: o.onDone, state: 'open', fb: '', cls: '', first: null, val: ''};
+  const u = (Q.pre || Q.suf || '').trim();      // word problems with units: the student picks the unit separately from the number
+  if (o.steps && u) { const opts = shuf(UNITS.filter(x => x !== u)).slice(0, 3).concat(u); V.ask.units = UNITS.concat(UNITS.includes(u) ? [] : [u]).filter(x => opts.includes(x)); V.ask.cu = u; V.ask.unit = null; }
+}
+function guard(msg, fn, pin = true) { V.modal = {msg, pin: pin && !V.unlocked, fn, err: ''}; render(); }
+function runQ(items, onEach, onEnd) { let i = 0; const step = () => { if (i >= items.length) { V.ask = null; return onEnd(); } const it = items[i++]; ask(it.q, {...it, onDone: (first, fin) => { onEach(it, first, fin, items); step(); }}); render(); }; step(); }
+function submitAns(val) {
+  const A = V.ask; if (!A || A.state !== 'open') return;
+  let r = A.q.kind === 'choice' ? {ok: val === A.q.a} : check(A.q, val);
+  A.val = val;
+  if (r.bad) { A.fb = 'Type a number. Use / for a fraction.'; A.cls = 'warn'; return render(); }
+  if (A.units && A.unit === null) { A.fb = 'Choose the units as well.'; A.cls = 'warn'; return render(); }
+  if (r.retry) { A.fb = r.retry; A.cls = 'warn'; return render(); }
+  const unitWrong = r.ok && A.units && A.unit !== A.cu;
+  if (unitWrong) r = {ok: false};
+  if (A.first === null) A.first = r.ok;
+  if (r.ok) { A.state = 'right'; A.fb = '✓ Correct'; A.cls = 'ok'; if (A.steps) return render(); render(); setTimeout(() => { if (V.ask === A) nextAsk(); }, 600); }
+  else { A.left--; if (A.left > 0) { A.fb = unitWrong ? 'The number is right. Check the units.' : 'Not yet. Check your working and try again.'; A.cls = 'no'; if (!unitWrong) A.val = ''; render(); } else { A.state = 'wrong'; if (A.quiet) return nextAsk(); render(); } }
+}
+function skipAns() { const A = V.ask; if (!A) return; A.first = false; A.state = 'wrong'; nextAsk(); }
+function nextAsk() { const A = V.ask; if (!A) return; A.onDone(A.first === true, A.state === 'right'); }
+function askHTML() {
+  const A = V.ask, Q = A.q, wp = !!Q.steps;
+  let h = `${A.label ? `<div class="muted small center">${esc(A.label)}</div>` : ''}<div class="qbig ${wp ? 'wp' : ''}">${fmt(Q.q)}</div>${A.hint && A.state === 'open' ? `<p class="muted small center">${esc(A.hint)}</p>` : ''}`;
+  if (A.state === 'open') {
+    h += `<div class="fb ${A.cls}">${esc(A.fb)}</div>`;
+    if (Q.kind === 'choice') h += `<div class="row" style="justify-content:center">${Q.opts.map((o, i) => `<button class="btn big" data-act="choice" data-i="${i}">${fmt(o)}</button>`).join('')}</div>`;
+    else h += `<div style="max-width:420px;margin:0 auto"><input id="ans" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your answer" value="${esc(A.val)}"></div>
+      ${A.units ? `<div class="row" style="justify-content:center;margin-top:10px"><span class="muted small">Units</span>${A.units.map(u => `<button class="btn sm ${A.unit === u ? 'pri' : ''}" data-act="unit" data-u="${esc(u)}">${esc(u)}</button>`).join('')}</div>` : ''}
+      <div class="pad">${['7', '8', '9', '⌫', '4', '5', '6', '−', '1', '2', '3', '/', '0', '.', 'space'].map(k => `<button data-act="key" data-k="${k}">${k === 'space' ? '␣' : k}</button>`).join('')}<button class="go" data-act="submit">Check</button></div>`;
+    if (A.skip) h += `<p class="center"><button class="btn ghost sm" data-act="skip">I haven't learned this yet</button></p>`;
+  } else {
+    h += `<div class="fb ${A.state === 'right' ? 'ok' : 'no'}">${A.state === 'right' ? '✓ Correct' : 'The answer is ' + ansHTML(Q)}</div>`;
+    if (A.steps && Q.steps?.length) h += `<div class="sol"><b>Worked solution</b><br>${Q.steps.map(fmt).join('<br>')}<br><b>Answer: ${ansHTML(Q)}</b></div><p class="muted small">Compare this with the working in your book. Fix anything that is different.</p>`;
+    if (A.state === 'wrong' || A.steps) h += `<p class="center"><button class="btn pri big" data-act="next">Next</button></p>`;
+  }
+  return h;
+}
+
+// ---------- practice session ----------
+const PH = ['warm', 'learn', 'typed', 'book', 'mark', 'rate', 'done'];
+function distinct(k, n, from = []) { const out = from.slice(), seen = new Set(out.map(x => x.q)); for (let t = 0; out.length < n && t < 200; t++) { const x = k.gen(); if (!seen.has(x.q)) { seen.add(x.q); out.push(x); } } return out; }
+function startSkill(k) {
+  const above = k.idx > pos(k.st);
+  V = {view: 'sess', sk: k, sc: {c: 0, n: 0}, above, t0: Date.now()};
+  if (k.st === 'W') { V.phase = 'learn'; return render(); }
+  const pool = SK.filter(x => x.st !== 'W' && !x.written && x.id !== k.id && done(x) && x.idx >= S.start[x.st] - 5);
+  if (pool.length >= 2) {
+    V.phase = 'warm';
+    const w = shuf(pool).sort((a, b) => (S.skills[b.id]?.wob || 0) - (S.skills[a.id]?.wob || 0)).slice(0, 3);
+    runQ(w.map(x => ({q: x.gen(), label: 'Warm-up: ' + x.name, rid: x.id})), (it, first) => { const s = ss(it.rid); s.wob = first ? Math.max(0, s.wob - 1) : s.wob + 1; const d = day(); d.q++; if (first) d.c++; save(); }, () => { V.phase = 'learn'; render(); });
+  } else { V.phase = 'learn'; render(); }
+}
+function startLinked(k) {      // bonus word problems that use the area just practised; they don't change any level
+  const fns = shuf(linkFns(k.st));
+  V = {view: 'sess', sk: {id: 'WL-' + k.st, name: 'Word problems using ' + STR[k.st].name.toLowerCase(), st: 'W', bonus: true, tip: WTIP, items: [0, 1, 2].map(i => fns[i % fns.length]())}, sc: {c: 0, n: 0}, above: false, t0: Date.now(), phase: 'learn'};
+  render();
+}
+function startTyped() {
+  const k = V.sk;
+  V.phase = 'typed';
+  if (k.st === 'W') return runQ((k.items || wpSet(k.wl)).map((x, i) => ({q: x, tries: 2, steps: true, label: `Problem ${i + 1} of 3`, hint: 'Work it out in your book first, then type your final answer.'})), (it, first, fin) => { V.sc.n++; V.sc.c += first ? 1 : fin ? .5 : 0; }, () => { V.phase = 'rate'; render(); });
+  const tn = k.tn || CONFIG.typedN, bn = k.bn || CONFIG.bookN;
+  runQ(distinct(k, tn).map(x => ({q: x, label: 'Quick check', hint: k.written ? 'Do the working in your book, then type the answer.' : ''})), (it, first, fin, items) => { if (it.again) return; V.sc.n++; if (first) V.sc.c++; else if (!k.written) items.push({q: it.q, again: true, label: 'Try this one again'}); },
+    () => {
+      V.phase = 'book'; const ch = k.chain ? k.chain() : []; V.chainN = ch.length; V.mixed = !!k.old;
+      if (k.old) { const nw = distinct(k, bn / 2), od = distinct({gen: k.old}, bn / 2); V.book = nw.flatMap((x, i) => od[i] ? [x, od[i]] : [x]); }
+      else V.book = distinct(k, bn, ch);
+      V.marks = V.book.map(() => null); render();
+    });
+}
+function finishRound(rate) {
+  const k = V.sk, d = today(), secs = Math.round((Date.now() - V.t0) / 1000);      // time from opening the round to finishing it
+  if (V.book) { V.sc.n += V.book.length; V.sc.c += V.marks.filter(m => m === true).length; }
+  const acc = V.sc.n ? V.sc.c / V.sc.n : 0, pass = acc >= CONFIG.passAcc && rate !== 'hard', R = {acc, pass, tro: [], secured: false, stepBack: false, secs};
+  if (!k.bonus) {
+    const s = ss(k.id), was = status(k);
+    s.rounds++; s.last = {acc, rate, d};
+    if (pass) {
+      if (!s.passes.includes(d)) s.passes.push(d);
+      if (s.hadFail) { R.tro.push(trophy('🌱', 'Bounced back on ' + k.name)); s.hadFail = false; }
+      s.fails = 0;
+      const fast = acc >= .9 && rate === 'easy';
+      if (was !== 'secure' && (s.passes.length >= 2 || fast)) { s.st = 'secure'; s.wob = 0; s.fast = fast && s.passes.length < 2; R.secured = true; s.support = false; }
+    } else if (acc < .5) { s.fails++; s.hadFail = true; if (s.fails >= 2 && k.idx > 0) R.stepBack = true; }
+    else s.fails = 0;
+    // Trophies are milestones: a new highest level, finishing an area, and a first perfect round on a skill.
+    const np = pos(k.st), n = L[k.st].length;
+    if (np > S.maxPos[k.st]) {
+      S.maxPos[k.st] = np;
+      R.tro.push(np >= n ? trophy('🏆', 'Finished ' + STR[k.st].name) : trophy('🏅', `Reached level ${np + 1} in ${STR[k.st].name}`));
+      if (np - 1 > S.expected[k.st]) R.tro.push(trophy('⭐', 'Beyond expected level: ' + L[k.st][np - 1].name));
+    }
+    if (acc === 1 && !s.perfect) { s.perfect = true; R.tro.push(trophy('🎯', 'First perfect round: ' + k.name)); }
+  }
+  const dd = day(); dd.s++; dd.q += V.sc.n; dd.c += V.sc.c; S.sessions++;
+  if ([5, 10, 20, 30, 50, 75, 100, 150, 200].includes(S.sessions)) R.tro.push(trophy('💪', S.sessions + ' practice rounds completed'));
+  const wk = Object.keys(S.days).filter(x => x >= dOff(6) && S.days[x].s > 0).length;
+  if (wk >= 3 && !S.trophies.some(t => t.ic === '🔥' && t.d >= dOff(6))) R.tro.push(trophy('🔥', 'Practised on 3 days this week'));
+  S.log.push({d, id: k.id, nm: k.bonus ? k.name : undefined, sc: +V.sc.c.toFixed(1), n: V.sc.n, rate, pass, above: V.above, secs});
+  if (S.log.length > 400) S.log = S.log.slice(-400);
+  if (S.set.games) S.tokens = Math.min(3, S.tokens + 1);
+  V.res = R; V.phase = 'done'; V.rate = rate; save(); render();
+}
+
+// ---------- speed rounds: typed only, number facts only, timed ----------
+// Speed matters where the goal is recall from memory. Nothing written in a book is ever timed.
+let spTimer = null;
+function startSpeed(k, n) { V = {view: 'speed', sk: k, n, i: 0, err: 0, t0: null, val: '', cur: null, flash: false}; render(); }
+function speedNext() { let x; do { x = V.sk.gen(); } while (V.cur && x.q === V.cur.q); V.cur = x; V.val = ''; }
+function speedGo() {
+  V.t0 = Date.now(); speedNext(); render(); clearInterval(spTimer);
+  spTimer = setInterval(() => { if (V.view !== 'speed') return clearInterval(spTimer); const el = $('#st'); if (el) el.textContent = ((Date.now() - V.t0) / 1000).toFixed(1) + ' s'; }, 100);
+}
+function speedKey(c) {
+  if (V.view !== 'speed' || !V.t0) return;
+  V.val = c === '⌫' ? V.val.slice(0, -1) : V.val + c; V.flash = false;
+  const tgt = nstr(V.cur.a);
+  if (V.val.length >= tgt.length) {            // moves on by itself when right; a wrong entry clears and counts as a slip
+    if (V.val === tgt) { V.i++; if (V.i >= V.n) return speedEnd(); speedNext(); }
+    else { V.err++; V.val = ''; V.flash = true; }
+  }
+  render();
+}
+function speedEnd() {
+  clearInterval(spTimer);
+  const secs = (Date.now() - V.t0) / 1000, k = V.sk, s = ss(k.id), n = V.n, err = V.err, tro = [];
+  s.speed ??= {}; const prev = s.speed[n], best = !prev || secs < prev.t;
+  if (best) s.speed[n] = {t: +secs.toFixed(1), err, d: today()};
+  if (n === 30) {                                // under a minute allows 1 slip; under 30 seconds allows none
+    if (secs < 60 && err <= 1 && !s.sp60) { s.sp60 = true; tro.push(trophy('⚡', '30 in under a minute: ' + k.name)); }
+    if (secs < 30 && err === 0 && !s.sp30) { s.sp30 = true; tro.push(trophy('🚀', '30 in under 30 seconds: ' + k.name)); }
+  }
+  const dd = day(); dd.q += n; dd.c += n;
+  S.log.push({d: today(), id: k.id, speed: true, sc: n, n, rate: err + ' slip' + (err === 1 ? '' : 's'), pass: false, above: false, secs: +secs.toFixed(1)});
+  V = {view: 'speeddone', sk: k, n, secs, err, best, prev, tro}; save(); render();
+}
+const speedRow = k => { const sp = S.skills[k.id]?.speed, b = sp && Object.keys(sp).map(n => `${n} in ${sp[n].t} s`).join(', '); return `<div class="row" style="margin:6px 0"><span class="small">⚡ Speed round, typed only:</span>${[10, 20, 30].map(n => `<button class="btn sm" data-act="speed" data-id="${k.id}" data-n="${n}">${n}</button>`).join('')}${b ? `<span class="muted small">Best: ${b}</span>` : ''}</div>`; };
+function speedHTML() {
+  const k = V.sk;
+  if (!V.t0) return head('Speed round') + `<div class="card"><h2 style="margin-top:0">${esc(k.name)}</h2><p><b>${V.n} questions</b>, typed. The clock starts when you press Go.</p><p class="muted small">Type each answer. It moves on by itself when you are right. A wrong answer clears and counts as a slip.</p><p class="muted small">Trophies for 30 questions: under 1 minute with no more than 1 slip ⚡, and under 30 seconds with no slips 🚀.</p><button class="btn pri big" data-act="sgo">Go</button></div>`;
+  return `<div class="top"><button class="btn sm ghost" data-act="home" aria-label="Stop">✕</button><b>${esc(k.name)}</b><span class="sp"></span><span>${V.i + 1} of ${V.n}</span><span id="st" class="chip">${((Date.now() - V.t0) / 1000).toFixed(1)} s</span></div>
+  <div class="qbig">${fmt(V.cur.q)}</div><div id="sv" style="max-width:420px;margin:0 auto;font-size:28px;text-align:center;padding:8px;min-height:56px;border:2px solid var(${V.flash ? '--bad' : '--line'});border-radius:12px;background:var(--panel)">${esc(V.val)}</div>
+  <div class="pad" style="grid-template-columns:repeat(3,1fr)">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0'].map(c => `<button data-act="skey" data-k="${c}">${c}</button>`).join('')}</div>`;
+}
+function speedDoneHTML() {
+  const k = V.sk;
+  return head('Speed round') + `<div class="card center"><div style="font-size:44px">⚡</div><h2>${V.n} questions in ${V.secs.toFixed(1)} seconds</h2><p>${V.err} slip${V.err === 1 ? '' : 's'}. ${V.best ? (V.prev ? `A new best. It was ${V.prev.t} s.` : 'That is your first time for this one.') : `Your best is ${V.prev.t} s.`}</p></div>
+  ${V.tro.length ? `<div class="card"><b>New trophies</b>${V.tro.map(t => `<div class="tro"><span class="ic">${t.ic}</span><span>${esc(t.text)}</span></div>`).join('')}</div>` : ''}
+  <div class="card">${speedRow(k)}<p><button class="btn" data-act="go" data-id="${k.id}">A full round of ${esc(k.name)}</button></p></div><p class="center"><button class="btn big" data-act="home">Finish</button></p>`;
+}
+
+// ---------- placement ----------
+function startPlacement() {
+  const order = Object.keys(L).filter(t => t !== 'W');
+  V = {view: 'place', si: 0, i: 0, miss: 0, firstMiss: null, asked: 0};
+  const step = () => {
+    const st = order[V.si], list = L[st].filter(k => k.pl !== false), k = list[V.i];
+    ask(k.gen(), {label: `Finding your level: ${STR[st].name}`, quiet: true, skip: true, onDone: first => {
+      V.asked++; const d = day(); d.q++; if (first) d.c++;
+      if (!first) { V.miss++; if (V.firstMiss === null) V.firstMiss = V.i; }
+      V.i++;
+      if (V.miss >= 2 || V.i >= list.length) {
+        const fm = V.firstMiss;      // start just after the last sampled level they got right
+        S.start[st] = Math.min(L[st].length - 1, fm === 0 ? 0 : list[(fm === null ? list.length : fm) - 1].idx + 1);
+        V.si++; V.i = 0; V.miss = 0; V.firstMiss = null;
+        if (V.si < order.length) return step();
+        const fsum = GROUPS[2].t.reduce((a, t) => a + S.start[t], 0); S.start.W = fsum >= 15 ? 4 : fsum >= 10 ? 3 : fsum >= 6 ? 2 : S.start.M >= 3 ? 1 : 0;
+        for (const s2 in L) { S.expected[s2] = Math.min(L[s2].length - 1, S.start[s2] + 1); S.maxPos[s2] = pos(s2); }
+        S.placed = true; V.ask = null; V.view = 'placed'; save(); return render();
+      }
+      step();
+    }});
+    render();
+  };
+  step();
+}
+
+// ---------- game: make the target ----------
+function puzzle(hard) {
+  const ops = hard ? '+-*/' : '+-*';
+  for (let k = 0; k < 800; k++) {
+    const t = Array.from({length: hard ? 4 : 3}, () => ri(1, 9)); let a = t.slice(), ok = true;
+    while (a.length > 1 && ok) { a = shuf(a); const x = a.pop(), y = a.pop(), o = pick([...ops]); const r = o === '+' ? x + y : o === '-' ? x - y : o === '*' ? x * y : x / y; if (r <= 0 || !Number.isInteger(r) || r > 200) ok = false; else a.push(r); }
+    if (ok && a[0] >= (hard ? 10 : 6) && a[0] <= (hard ? 60 : 30) && !t.includes(a[0])) return {tiles: t, target: a[0]};
+  }
+  return {tiles: [2, 3, 4], target: 14};
+}
+let gTimer = null;
+function gNew() { const P = puzzle(V.g.hard); Object.assign(V.g, {t: P.tiles.slice(), orig: P.tiles.slice(), target: P.target, sel: null, op: null, hist: [], msg: ''}); }
+function startGame() {
+  if (S.tokens < 1) return;
+  V = {view: 'game', g: {hard: pos('M') > 5, solved: 0, end: Date.now() + CONFIG.gameSecs * 1000}}; gNew(); render();
+  clearInterval(gTimer);
+  gTimer = setInterval(() => { if (V.view !== 'game') return clearInterval(gTimer); const left = Math.max(0, Math.ceil((V.g.end - Date.now()) / 1000)); const el = $('#gt'); if (el) el.textContent = Math.floor(left / 60) + ':' + pad2(left % 60); if (left <= 0) { clearInterval(gTimer); S.tokens--; S.best = Math.max(S.best, V.g.solved); const n = V.g.solved; V = {view: 'gameover', n}; save(); render(); } }, 500);
+}
+function gTap(i) {
+  const g = V.g; g.msg = '';
+  if (g.sel === null || g.op === null) { g.sel = g.sel === i ? null : i; return render(); }
+  if (i === g.sel) return;
+  const a = g.t[g.sel], b = g.t[i], r = g.op === '+' ? a + b : g.op === '−' ? a - b : g.op === '×' ? a * b : a / b;
+  if (r < 0 || !Number.isInteger(r)) { g.msg = 'That does not give a whole number, 0 or more.'; return render(); }
+  g.hist.push(g.t.slice()); const t = g.t.slice(); t[i] = r; t.splice(g.sel, 1); g.t = t; g.sel = t.indexOf(r); g.op = null;
+  if (t.length === 1) { if (r === g.target) { g.solved++; g.msg = 'Solved!'; render(); return setTimeout(() => { if (V.view === 'game') { gNew(); render(); } }, 700); } g.msg = `That makes ${r}, not ${g.target}. Undo or reset.`; }
+  render();
+}
+
+// ---------- time tracking ----------
+let lastAct = Date.now();
+['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, () => { lastAct = Date.now(); }, true));
+setInterval(() => {
+  if (document.visibilityState !== 'visible') return;
+  const slow = V.view === 'sess' && (['book', 'mark'].includes(V.phase) || V.sk?.st === 'W');   // writing in a book means long gaps between taps
+  if (Date.now() - lastAct > (slow ? 300000 : 60000)) return;
+  if (V.view === 'game') day().g += 5; else if (['sess', 'place', 'speed'].includes(V.view)) { day().t += 5; S.totalT += 5; } else return;
+  if (Math.random() < .2) save();
+}, 5000);
+
+// ---------- snapshot / progress code ----------
+function snap() {
+  const days = {}; Object.keys(S.days).filter(d => d >= dOff(27)).forEach(d => { const x = S.days[d]; days[d] = [x.t, x.q, +x.c.toFixed(1), x.s, x.g]; });
+  return {n: S.name, d: today(), pos: Object.fromEntries(Object.keys(L).map(st => [st, pos(st)])), st: S.start, ex: S.expected, days, tr: S.trophies.slice(-30).map(t => [t.d, t.ic, t.text]), fl: flags().map(f => f[0] + ': ' + f[1].name), ses: S.sessions, cel: S.celebrated};
+}
+const enc = o => 'MP1:' + btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+const dec = s => { s = s.trim(); if (!s.startsWith('MP1:')) throw new Error('not a progress code'); return JSON.parse(decodeURIComponent(escape(atob(s.slice(4).replace(/\s/g, ''))))); };
+const sumDays = (days, n, i) => Object.keys(days).filter(d => d >= dOff(n - 1)).reduce((a, d) => a + days[d][i], 0);
+function overviewHTML(P) {
+  const ds_ = Object.keys(P.days).sort().reverse().slice(0, 14);
+  return `<div class="row"><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Active practice, last 7 days</div><b style="font-size:24px">${Math.round(sumDays(P.days, 7, 0) / 60)} min</b></div><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Rounds, last 7 days</div><b style="font-size:24px">${sumDays(P.days, 7, 3)}</b></div><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Last 28 days</div><b style="font-size:24px">${Math.round(sumDays(P.days, 28, 0) / 60)} min</b></div></div>
+  <h3>Levels</h3><table><tr><th>Strand</th><th>Working at</th><th>Started at</th><th>Expected</th></tr>${Object.keys(L).map(st => `<tr><td>${STR[st].name}</td><td><b>${Math.min(P.pos[st] + 1, L[st].length)}</b> of ${L[st].length}: ${esc(L[st][Math.min(P.pos[st], L[st].length - 1)].name)}${P.pos[st] >= L[st].length ? ' (all secure)' : ''}</td><td>${P.st[st] + 1}</td><td>${P.ex[st] + 1}</td></tr>`).join('')}</table>
+  <h3>Things to look at</h3>${P.fl.length ? P.fl.map(f => `<div class="flag">${esc(f)}</div>`).join('') : '<p class="muted">Nothing flagged.</p>'}
+  <h3>Trophies since last celebrated${P.cel ? ' (' + nice(P.cel) + ')' : ''}</h3>${P.tr.filter(t => !P.cel || t[0] > P.cel).map(t => `<div class="tro"><span class="ic">${t[1]}</span><span>${esc(t[2])}<br><span class="muted small">${nice(t[0])}</span></span></div>`).join('') || '<p class="muted">None yet.</p>'}
+  <h3>Daily record</h3>${ds_.length ? `<table><tr><th>Day</th><th>Active</th><th>Rounds</th><th>Questions</th><th>Correct</th><th>Game</th></tr>${ds_.map(d => { const x = P.days[d]; return `<tr><td>${nice(d)}</td><td>${Math.round(x[0] / 60)} min</td><td>${x[3]}</td><td>${x[1]}</td><td>${x[1] ? Math.round(100 * x[2] / x[1]) + '%' : ''}</td><td>${Math.round(x[4] / 60)} min</td></tr>`; }).join('')}</table>` : '<p class="muted">No practice recorded yet.</p>'}`;
+}
+
+// ---------- screens ----------
+function render() {
+  const app = $('#app');
+  const views = {home: homeHTML, welcome: welcomeHTML, placed: placedHTML, place: () => head('Finding your level') + askHTML() + `<p class="center muted small">Question ${V.asked + 1}. It stops when it finds your level.</p>`, sess: sessHTML, ladder: ladderHTML, me: meHTML, teacher: teacherHTML, game: gameHTML, group: groupHTML, speed: speedHTML, speeddone: speedDoneHTML, gameover: () => head('Time is up') + `<div class="card center"><div style="font-size:48px">🎯</div><h2>${V.n} solved</h2><p class="muted">Your best is ${S.best}.</p><button class="btn pri big" data-act="home">Back to practice</button></div>`};
+  if (!S.name && V.view === 'home') V.view = 'welcome';
+  const m = V.modal;
+  app.innerHTML = (views[V.view] || homeHTML)() + (m ? `<div class="modal"><div class="card"><p><b>${esc(m.msg)}</b></p>${m.pin ? `<label class="f"><span>Teacher PIN</span><input type="password" id="mpin" inputmode="numeric" autocomplete="off"></label>` : ''}<div class="fb no">${esc(m.err)}</div><div class="row"><button class="btn pri" data-act="myes">${m.pin ? 'Confirm' : 'Yes'}</button><button class="btn" data-act="mno">Cancel</button></div></div></div>` : '');
+  const a = $('#mpin') || $('#ans'); if (a) { a.focus(); try { a.setSelectionRange(a.value.length, a.value.length); } catch (e) {} }
+}
+const head = (t, back = true) => `<div class="top">${back ? '<button class="btn sm ghost" data-act="home" aria-label="Close">✕</button>' : ''}<h1 style="margin:0">${esc(t)}</h1></div>`;
+function welcomeHTML() {
+  return `<h1>Maths Practice</h1><div class="card"><p>Short practice at your level. Have your <b>exercise book and a pen</b> ready: most of the work is written down.</p><label class="f"><span>Your first name</span><input type="text" id="nm" maxlength="24" autocomplete="off"></label><button class="btn pri big" data-act="setname">Start</button></div>${storageOK ? '' : '<p class="fb warn">This browser is not saving progress. Ask your teacher.</p>'}`;
+}
+function placedHTML() {
+  return head('Your starting levels', false) + `<div class="card">${Object.keys(L).map(st => `<p><b style="color:var(${STR[st].col})">${STR[st].name}</b><br>Level ${S.start[st] + 1} of ${L[st].length}: ${esc(L[st][S.start[st]].name)}</p>`).join('')}<p class="muted small">These are a starting point. You can pick any level, and your teacher can change them.</p><button class="btn pri big" data-act="home">Let's go</button></div>`;
+}
+function homeHTML() {
+  const d = S.days[today()], newT = S.trophies.filter(t => !S.celebrated || t.d > S.celebrated).length;
+  const wob = SK.filter(k => (S.skills[k.id]?.wob || 0) >= 2);
+  let h = `<div class="top"><h1 style="margin:0">Hi ${esc(S.name)}</h1><span class="sp"></span><button class="btn sm" data-act="me">🏆 ${S.trophies.length}</button><button class="btn sm" data-act="prog" aria-label="Progress and options">⚙</button></div>
+  <div class="row"><div class="seg" role="group" aria-label="Where are you working"><button class="${S.mode === 'class' ? 'on' : ''}" data-act="mode" data-m="class">In class</button><button class="${S.mode === 'home' ? 'on' : ''}" data-act="mode" data-m="home">At home</button></div><span class="muted small">${d ? `Today: ${Math.round(d.t / 60)} min, ${d.s} round${d.s === 1 ? '' : 's'}` : 'Nothing yet today'}</span></div>`;
+  if (!S.placed) h += `<div class="card"><b>Find your level</b><p class="muted small">A quick check, about 5 minutes. It stops as soon as it finds where to start.</p><div class="row"><button class="btn pri" data-act="place">Start the check</button><button class="btn ghost" data-act="skipplace">Skip, I'll choose</button></div></div>`;
+  for (const g of GROUPS) {
+    const t = recTrack(g), k = rec(t), tot = gTot(g), got = gGot(g), multi = g.t.length > 1, all = got >= tot;
+    h += `<div class="card strand" style="--c:var(${g.col})"><div class="row"><b>${g.name}</b><span class="sp"></span><span class="lvl">${multi ? `${got} of ${tot} levels` : `Level ${Math.min(got + 1, tot)} of ${tot}`}</span></div><div class="pbar"><i style="width:${Math.round(100 * got / tot)}%"></i></div>
+    <p>${all ? 'Every level is secure. Keep it fresh:' : 'Next up:'} ${multi ? `<span class="muted">${STR[t].name}:</span> ` : ''}<b>${esc(k.name)}</b>${k.eg ? `<span class="eg">${fmt(k.eg)}</span>` : ''}</p>
+    <div class="row"><button class="btn pri" data-act="go" data-id="${k.id}">Practise</button>${multi ? `<button class="btn" data-act="group" data-g="${g.id}">Choose an area</button>` : `<button class="btn" data-act="ladder" data-st="${t}">All levels</button>`}</div></div>`;
+  }
+  if (wob.length) h += `<div class="card"><b>Worth another look</b><p class="muted small">These slipped in your warm-ups.</p>${wob.map(k => `<div class="row" style="margin:6px 0"><span>${esc(k.name)}</span><span class="sp"></span><button class="btn sm" data-act="go" data-id="${k.id}">Practise</button></div>`).join('')}</div>`;
+  if (S.set.games && S.tokens > 0) h += `<div class="card"><div class="row"><span>🎯 <b>Target game</b> earned (${S.tokens})</span><span class="sp"></span><button class="btn" data-act="game">Play 3 minutes</button></div></div>`;
+  if (newT) h += `<p class="muted small center">${newT} new troph${newT === 1 ? 'y' : 'ies'} to show your teacher.</p>`;
+  return h;
+}
+function groupHTML() {
+  const g = GROUPS.find(x => x.id === V.g), r = recTrack(g);
+  let h = head(g.name) + `<p class="muted small">${g.seq ? 'Each area has its own trophy. If you are still building your facts, start with addition and work down the list.' : 'Pick any area. The app suggests the one you have done least of.'}</p>`;
+  g.t.forEach(t => {
+    const p = pos(t), n = L[t].length, k = rec(t), fin = p >= n;
+    h += `<div class="card strand" style="--c:var(${g.col})"><div class="row"><b>${STR[t].name}</b>${t === r && !fin ? '<span class="chip learning">Suggested</span>' : ''}<span class="sp"></span><span class="lvl">${fin ? '🏆 Trophy earned' : `Level ${p + 1} of ${n}`}</span></div><div class="pbar"><i style="width:${Math.round(100 * p / n)}%"></i></div>
+    <p>${fin ? 'Keep it fresh:' : 'Next up:'} <b>${esc(k.name)}</b>${k.eg ? `<span class="eg">${fmt(k.eg)}</span>` : ''}</p>${fin ? '' : `<p class="muted small">You haven't earned your ${STR[t].name.toLowerCase()} trophy yet.</p>`}
+    <div class="row"><button class="btn ${t === r ? 'pri' : ''}" data-act="go" data-id="${k.id}">Practise</button><button class="btn" data-act="ladder" data-st="${t}">All levels</button></div></div>`;
+  });
+  return h;
+}
+function ladderHTML() {
+  const st = V.st, p = pos(st);
+  return head(STR[st].name) + `<p class="muted small">Pick any level. The app suggests the one marked "next up".</p>` + L[st].map(k => {
+    const s = status(k), r = S.skills[k.id];
+    const uses = k.wl ? [...new Set(WP[k.wl].flatMap(t => t[2]))].map(t => STR[t].name.toLowerCase()).join(', ') : '';
+    return `<div class="card" style="margin:8px 0;${k.idx === p ? `border-color:var(${STR[st].col});border-width:2px` : ''}"><div class="row"><span class="muted small">${k.idx + 1}</span><b>${esc(k.name)}</b><span class="sp"></span><span class="chip ${s}">${k.idx === p ? 'Next up' : STLAB[s]}</span></div>${k.eg ? `<div class="muted" style="margin:4px 0">${fmt(k.eg)}</div>` : ''}${uses ? `<div class="muted small" style="margin:4px 0">Uses: ${esc(uses)}</div>` : ''}<div class="row"><button class="btn sm ${k.idx === p ? 'pri' : ''}" data-act="go" data-id="${k.id}">Practise</button>${r?.last ? `<span class="muted small">Last time ${Math.round(r.last.acc * 100)}%</span>` : ''}</div>${isFacts(k) && (r?.rounds || done(k)) ? speedRow(k) : ''}</div>`;
+  }).join('');
+}
+function sessHTML() {
+  const k = V.sk, wp = k.st === 'W', order = wp ? ['learn', 'typed', 'rate', 'done'] : PH, at = order.indexOf(V.phase);
+  let h = `<div class="top"><button class="btn sm ghost" data-act="quit" aria-label="Stop">✕</button><b>${esc(k.name)}</b></div><div class="steps">${order.slice(0, -1).map((_, i) => `<i class="${i <= at ? 'on' : ''}"></i>`).join('')}</div>`;
+  if (V.ask) return h + askHTML();
+  if (V.phase === 'learn') {
+    const ex = wp ? null : k.gen();
+    h += `<div class="card"><h2 style="margin-top:0">${wp ? 'Before you start' : 'Study this first'}</h2><p>${esc(k.tip)}</p>${ex ? `<div class="sol"><span class="muted small">Example</span><div style="font-size:26px;font-weight:700">${fmt(ex.q)}</div><div style="font-size:22px">Answer: <b>${ansHTML(ex)}</b></div></div>` : ''}
+    <p class="muted small">${wp ? 'There are 3 problems. Do your working in your book, then type the final answer. You get two tries.' : `Next: ${k.tn || CONFIG.typedN} quick questions on screen, then ${k.bn || CONFIG.bookN} in your book.${k.written ? ' Use your book for the working on all of them.' : ''}`}</p><button class="btn pri big" data-act="typed">${wp ? 'Start' : 'Got it, start'}</button></div>`;
+  } else if (V.phase === 'book' || V.phase === 'mark') {
+    const mk = V.phase === 'mark';
+    h += `<div class="card"><h2 style="margin-top:0">${mk ? 'Mark your work' : 'Now in your book'}</h2><p class="muted small">${mk ? 'Tick or cross each one. If it was wrong, write the correct answer next to it.' : 'Write the question number and your answer. Show your working where it helps. No typing for these.'}</p>
+    ${!mk && V.chainN ? `<p class="small" style="color:var(--accent)">Questions 1 to ${V.chainN} change one thing at a time. Think about what changes before you work each one out.</p>` : ''}
+    ${!mk && V.mixed ? `<p class="small" style="color:var(--accent)">These mix the new facts with ones from earlier levels.</p>` : ''}
+    <ul class="blist">${V.book.map((x, i) => `<li><span class="n">${i + 1}</span><span>${fmt(x.q)}</span>${mk ? `<span class="a">${ansHTML(x)}</span><span class="mk"><button class="y ${V.marks[i] === true ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="1" aria-label="Correct">✓</button><button class="x ${V.marks[i] === false ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="0" aria-label="Wrong">✗</button></span>` : ''}</li>`).join('')}</ul>
+    ${mk ? `<button class="btn pri big" data-act="marked" ${V.marks.includes(null) ? 'disabled' : ''}>Done</button>` : `<button class="btn pri big" data-act="tomark">I've finished, show the answers</button>`}</div>`;
+  } else if (V.phase === 'rate') {
+    h += `<div class="card"><h2 style="margin-top:0">How did that feel?</h2><p class="muted small">Be honest. This helps choose what you practise next.</p><div class="rate"><button class="btn" data-act="rate" data-r="hard">😓<br>Tough</button><button class="btn" data-act="rate" data-r="ok">🙂<br>OK</button><button class="btn" data-act="rate" data-r="easy">😎<br>Easy</button></div></div>`;
+  } else if (V.phase === 'done') h += doneHTML();
+  return h;
+}
+function doneHTML() {
+  const k = V.sk, R = V.res, pct = Math.round(R.acc * 100), st = k.st, g = STR[st].g;
+  const msg = k.bonus ? 'Bonus round done. Using a skill in a problem is how it sticks.' : R.secured ? `You've secured this level.` : R.pass ? 'A strong round. One more good round on another day will secure this level.' : R.acc >= .5 ? 'Good effort. This one needs a bit more practice, and that is normal.' : 'Good effort for sticking with it. This is a tough one right now.';
+  let h = `<div class="card center"><div style="font-size:44px">${R.secured ? '🏅' : R.pass ? '👏' : '💪'}</div><h2>Well done, ${esc(S.name)}</h2><p><b>${nstr(V.sc.c)} out of ${V.sc.n}</b> (${pct}%)</p><p>${msg}</p><p class="muted small">Time on this round: ${mmss(R.secs)}</p></div>`;
+  if (R.tro.length) h += `<div class="card"><b>New trophies</b>${R.tro.map(t => `<div class="tro"><span class="ic">${t.ic}</span><span>${esc(t.text)}</span></div>`).join('')}</div>`;
+  const nxt = rec(st), others = GROUPS.filter(x => x.id !== g.id).map(x => rec(recTrack(x))), opts = [];
+  const nonW = Object.keys(L).filter(t => t !== 'W'), top = nonW.reduce((a, t) => a + pos(t), 0) / nonW.reduce((a, t) => a + L[t].length, 0) >= .85;
+  const real = !k.bonus && st !== 'W', link = real && R.pass && linkFns(st).length >= 2, speed = real && isFacts(k);
+  const btn = o => `<p><button class="btn ${o[2] ? 'pri' : ''}" style="width:100%;text-align:left" data-act="${o[3] || 'go'}" data-id="${o[1]}">${esc(o[0])}</button></p>`;
+  if (R.stepBack) opts.push([`Step back to build up: ${L[st][k.idx - 1].name}`, L[st][k.idx - 1].id, true]);
+  if (S.mode === 'class') {
+    if (!k.bonus && !R.pass && !R.stepBack) opts.push(['Another round of this', k.id, true]);
+    if (R.pass && nxt.id !== k.id) opts.push([`Next level: ${nxt.name}`, nxt.id, true]);
+    if (link) opts.push([`Use it: word problems with ${STR[st].name.toLowerCase()}`, k.id, false, 'linked']);
+    others.forEach(o => opts.push([`${STR[o.st].g.name}: ${o.name}`, o.id, false]));
+    h += `<div class="card"><b>Still in class? Choose what's next</b>${opts.map(btn).join('')}${speed ? speedRow(k) : ''}
+    ${S.set.games && S.tokens > 0 ? `<p><button class="btn" style="width:100%;text-align:left" data-act="game">🎯 Target game, 3 minutes (earned)</button></p>` : ''}
+    ${S.set.links && top ? `<p class="muted small">You are working at the top levels. For a stretch, try one of these:</p>${CONFIG.links.map(l => `<p><a href="${esc(l[1])}" target="_blank" rel="noopener">${esc(l[0])}</a></p>`).join('')}` : ''}</div>`;
+  } else {
+    if (link) opts.push([`Use it: word problems with ${STR[st].name.toLowerCase()}`, k.id, false, 'linked']);
+    const one = R.pass || k.bonus ? others[0] : k; opts.push([`One more: ${one.name}`, one.id, false]);
+    h += `<div class="card"><b>That's a solid session.</b><p class="muted small">Little and often works best. Stop here, or do one more.</p>${opts.map(btn).join('')}${speed ? speedRow(k) : ''}</div>`;
+  }
+  return h + `<p class="center"><button class="btn big" data-act="home">Finish</button></p>`;
+}
+function meHTML() {
+  return head('My progress') + `<div class="card"><p>Active practice this week: <b>${Math.round(sumDays(snap().days, 7, 0) / 60)} minutes</b> over <b>${sumDays(snap().days, 7, 3)}</b> rounds.</p></div><div class="card"><b>Trophies (${S.trophies.length})</b>${S.trophies.slice().reverse().slice(0, 40).map(t => `<div class="tro"><span class="ic">${t.ic}</span><span>${esc(t.text)}<br><span class="muted small">${nice(t.d)}</span></span></div>`).join('') || '<p class="muted">Secure a level to earn your first one.</p>'}</div>`;
+}
+function gameHTML() {
+  const g = V.g;
+  return `<div class="top"><button class="btn sm ghost" data-act="home" aria-label="Close">✕</button><b>Target game</b><span class="sp"></span><span>Solved: <b>${g.solved}</b></span><span id="gt" class="chip">3:00</span></div>
+  <div class="card center"><div class="muted small">Use every number to make</div><div class="target">${g.target}</div>
+  <div class="tiles">${g.t.map((v, i) => `<button class="${g.sel === i ? 'on' : ''}" data-act="gt" data-i="${i}">${v}</button>`).join('')}</div>
+  <div class="tiles ops">${(g.hard ? ['+', '−', '×', '÷'] : ['+', '−', '×']).map(o => `<button class="${g.op === o ? 'on' : ''}" data-act="gop" data-o="${o}">${o}</button>`).join('')}</div>
+  <div class="fb ${g.msg === 'Solved!' ? 'ok' : 'warn'}">${esc(g.msg)}</div>
+  <div class="row" style="justify-content:center"><button class="btn sm" data-act="gundo" ${g.hist.length ? '' : 'disabled'}>Undo</button><button class="btn sm" data-act="greset">Reset</button><button class="btn sm ghost" data-act="gskip">Skip</button></div>
+  <p class="muted small">Tap a number, then a sign, then another number.</p></div>`;
+}
+
+// ---------- teacher ----------
+function teacherHTML() {
+  const lk = V.unlocked ? '' : ' 🔒', tabs = [['over', 'Overview'], ['levels', 'Levels'], ['log', 'Log'], ['class', 'Class' + lk], ['tools', 'Tools' + lk]], t = V.tab || 'over';
+  let h = head('Progress: ' + S.name) + `<div class="tabs">${tabs.map(x => `<button class="${t === x[0] ? 'on' : ''}" data-act="ttab" data-t="${x[0]}">${x[1]}</button>`).join('')}</div>`;
+  if (t === 'over') h += overviewHTML(snap()) + `<p class="row"><button class="btn" data-act="celebrate">Mark trophies as celebrated</button><button class="btn" data-act="setexp">Set expected levels to where they are now</button></p><p class="muted small">⭐ trophies are given for securing levels beyond the expected level, so resetting expected every few weeks keeps them meaningful.</p>
+    <h3>Progress code</h3><p class="muted small">A snapshot of this screen that the student can send you. Paste it into the Class tab on your own device.</p><textarea readonly id="code">${esc(enc(snap()))}</textarea><p><button class="btn" data-act="copy" data-el="code">Copy code</button></p>`;
+  if (t === 'levels') h += `<p class="muted small">Anyone can look. Changing anything here asks "are you sure" and needs the teacher PIN. <b>Start here</b> moves the student's level to that skill (use it to roll back, or to jump forward). <b>Needs support</b> puts one skill back into practice without moving anything else.</p>` + Object.keys(L).map(st => `<h2 style="color:var(${STR[st].col})">${STR[st].name}</h2><table>${L[st].map(k => { const s = status(k), r = S.skills[k.id]; return `<tr><td>${k.idx + 1}${k.idx === S.expected[st] ? ' <span title="expected level">◆</span>' : ''}</td><td><b>${esc(k.name)}</b><br><span class="chip ${s}">${STLAB[s]}</span> <span class="muted small">${r?.rounds ? `${r.rounds} round${r.rounds > 1 ? 's' : ''}, last ${Math.round(r.last.acc * 100)}% (${r.last.rate})` : ''}</span></td><td><button class="btn sm" data-act="tstart" data-id="${k.id}">Start here</button> <button class="btn sm" data-act="tsec" data-id="${k.id}">Secure</button> <button class="btn sm" data-act="tsup" data-id="${k.id}">Needs support</button> <button class="btn sm ghost" data-act="texp" data-id="${k.id}">Expected ◆</button></td></tr>`; }).join('')}</table>`).join('');
+  if (t === 'log') h += S.log.length ? `<table><tr><th>Day</th><th>Skill</th><th>Score</th><th>Felt</th><th>Time</th><th></th></tr>${S.log.slice().reverse().slice(0, 60).map(l => `<tr><td>${nice(l.d)}</td><td>${esc(l.nm || BY[l.id]?.name || l.id)}${l.speed ? ' ⚡ speed round' : ''}</td><td>${l.sc}/${l.n}</td><td>${l.rate}</td><td>${l.secs != null ? mmss(l.secs) : l.mins + ' min'}</td><td>${l.pass ? '<span class="chip secure">pass</span>' : ''}${l.above ? ' <span class="chip">above level</span>' : ''}</td></tr>`).join('')}</table>` : '<p class="muted">No rounds yet.</p>';
+  if (t === 'class') {
+    const cs = Object.values(S.cls).sort((a, b) => a.n.localeCompare(b.n));
+    h += `<p class="muted small">For your own device. Paste a student's progress code to add or update them. Nothing is sent anywhere.</p><textarea id="cin" placeholder="MP1:..."></textarea><div class="fb no">${esc(V.err || '')}</div><p><button class="btn pri" data-act="cadd">Add progress code</button></p>
+    ${cs.length ? `<table><tr><th>Student</th><th>Updated</th><th>7 days</th><th>28 days</th><th>Facts</th><th>Skills</th><th>FDP</th><th>WP</th><th>New 🏆</th><th>Flags</th><th></th></tr>${cs.map(P => `<tr><td><b>${esc(P.n)}</b></td><td>${nice(P.d)}</td><td>${Math.round(sumDays(P.days, 7, 0) / 60)} min</td><td>${Math.round(sumDays(P.days, 28, 0) / 60)} min</td>${GROUPS.map(g => `<td>${gGot(g, P)}/${gTot(g)}</td>`).join('')}<td>${P.tr.filter(x => !P.cel || x[0] > P.cel).length}</td><td>${P.fl.length}</td><td><button class="btn sm" data-act="cview" data-n="${esc(P.n)}">View</button> <button class="btn sm ghost danger" data-act="cdel" data-n="${esc(P.n)}">✕</button></td></tr>`).join('')}</table>` : ''}
+    ${V.cv && S.cls[V.cv] ? `<div class="card"><div class="row"><h2 style="margin:0">${esc(V.cv)}</h2><span class="sp"></span><button class="btn sm" data-act="cprint">Print report</button></div>${overviewHTML(S.cls[V.cv])}</div>` : ''}`;
+  }
+  if (t === 'tools') {
+    const lv = V.plv || 3, pk = packs();
+    h += `<div class="card"><b>Print a practice sheet</b><div class="row"><select id="pskill" style="flex:2;min-width:200px">${SK.map(k => `<option value="${k.id}" ${k.id === rec(k.st).id ? '' : ''}>${k.id} ${esc(k.name)}</option>`).join('')}</select><select id="pn" style="flex:1;min-width:90px"><option>20</option><option>30</option><option>12</option></select><button class="btn" data-act="psheet">Print</button></div></div>
+    <div class="card"><b>More word problems</b><p class="muted small">${pk.length} extra problem${pk.length === 1 ? '' : 's'} loaded (${S.packs.length} saved on this device, the rest from packs.js). Copy the prompt into any AI assistant, then paste its answer below. The prompt includes a log of what students have already seen so it does not repeat.</p>
+    <div class="row"><label>Level <select id="plv" data-act="plv" style="width:auto">${[1, 2, 3, 4, 5, 6].map(i => `<option ${i === lv ? 'selected' : ''}>${i}</option>`).join('')}</select></label><button class="btn" data-act="copy" data-el="prompt">Copy prompt</button></div><textarea readonly id="prompt">${esc(llmPrompt(lv))}</textarea>
+    <label class="f"><span>Paste the JSON it gives you</span><textarea id="pin_"></textarea></label><div class="fb ${V.pok ? 'ok' : 'no'}">${esc(V.err || '')}</div><div class="row"><button class="btn pri" data-act="padd">Add to this device</button><button class="btn" data-act="copy" data-el="pfile">Copy packs.js for all students</button><button class="btn ghost danger sm" data-act="pclear">Clear saved problems</button></div><textarea readonly id="pfile" style="display:none">${esc('window.MP_PACKS = ' + JSON.stringify(pk, null, 1) + ';')}</textarea></div>
+    <div class="card"><b>Settings</b><label class="f"><span>Student name</span><input type="text" id="sname" value="${esc(S.name)}"></label><label class="f"><span>Teacher PIN</span><input type="text" id="spin" value="${esc(S.pin)}" inputmode="numeric"></label>
+    <p><label><input type="checkbox" id="sg" ${S.set.games ? 'checked' : ''}> Target game as a reward (one 3-minute game per finished round)</label></p><p><label><input type="checkbox" id="sl" ${S.set.links ? 'checked' : ''}> Show stretch links at the top levels</label></p>
+    <div class="row"><button class="btn pri" data-act="ssave">Save settings</button><button class="btn" data-act="place">Redo the level check</button><button class="btn danger" data-act="wipe">Erase this student's data</button></div></div>`;
+  }
+  return h;
+}
+function llmPrompt(lv) {
+  const seen = [...WP[lv].map(t => 'built in: ' + t[0]), ...packs().filter(p => p.level === lv).map(p => `${p.id}: ${p.q.slice(0, 90)}`)];
+  return `You are helping a maths teacher in England write word problems for Year 7 to 9 students working towards GCSE.
+
+Write 9 new word problems at Level ${lv} of 6: "${WNAMES[lv - 1]}".
+Level guide: ${WNAMES.map((n, i) => `${i + 1} = ${n}`).join('; ')}.
+
+Rules:
+- UK contexts, pounds and metric units, varied names.
+- Short sentences, reading age about 10.
+- Exactly one numerical final answer each, a whole number or at most 2 decimal places. Check every answer.
+- Vary the structure and context. Do not repeat anything in the log below.
+- Fractions in text are written like {3/4}.
+
+Return only a JSON array. Each item:
+{"id":"short-unique-id","level":${lv},"q":"the question","a":12.5,"pre":"£","suf":"","steps":["first line of working","second line","..."]}
+"pre" goes before the answer (e.g. "£"), "suf" after it (e.g. " kg", "%"). Use "" when not needed. Make each id unique and start it with "L${lv}-${today()}-".
+
+Log of problems these students have already seen:
+${seen.map(s => '- ' + s).join('\n')}`;
+}
+function printSheet(k, n) {
+  const qs = distinct(k, n);
+  $('#print').innerHTML = `<div class="pg"><h2>${esc(k.name)}</h2><p>Name: ______________________ &nbsp; Date: ____________</p><p><i>${esc(k.tip)}</i></p><div class="pq">${qs.map((x, i) => `<div><b>${i + 1}.</b> &nbsp; ${fmt(x.q)}</div>`).join('')}</div></div><div class="pg"><h2>Answers: ${esc(k.name)}</h2><div class="pa">${qs.map((x, i) => `<span><b>${i + 1}.</b> ${ansHTML(x)}</span>`).join('')}</div></div>`;
+  setTimeout(() => window.print(), 60);
+}
+
+// ---------- events ----------
+function copyEl(id) { const el = $('#' + id); if (!el) return; const t = el.value; (navigator.clipboard?.writeText(t) || Promise.reject()).catch(() => { el.style.display = ''; el.select(); try { document.execCommand('copy'); } catch (e) {} }); }
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const a = el.dataset.act, k = el.dataset.id ? BY[el.dataset.id] : null;
+  switch (a) {
+    case 'home': clearInterval(gTimer); clearInterval(spTimer); V = {view: 'home'}; save(); render(); break;
+    case 'setname': { const n = $('#nm').value.trim(); if (n) { S.name = n; save(); V = {view: 'home'}; render(); } break; }
+    case 'mode': S.mode = el.dataset.m; save(); render(); break;
+    case 'place': startPlacement(); break;
+    case 'skipplace': S.placed = true; save(); render(); break;
+    case 'go': startSkill(k); break;
+    case 'ladder': V = {view: 'ladder', st: el.dataset.st}; render(); window.scrollTo(0, 0); break;
+    case 'group': V = {view: 'group', g: el.dataset.g}; render(); window.scrollTo(0, 0); break;
+    case 'linked': startLinked(k); window.scrollTo(0, 0); break;
+    case 'speed': startSpeed(k, +el.dataset.n); window.scrollTo(0, 0); break;
+    case 'sgo': speedGo(); break;
+    case 'skey': speedKey(el.dataset.k); break;
+    case 'me': V = {view: 'me'}; render(); break;
+    case 'prog': V = {view: 'teacher', tab: 'over'}; render(); break;
+    case 'myes': { const m = V.modal; if (m.pin && $('#mpin').value !== S.pin) { m.err = 'That PIN is not right.'; return render(); } if (m.pin) V.unlocked = true; V.modal = null; m.fn(); save(); render(); break; }
+    case 'mno': V.modal = null; render(); break;
+    case 'unit': V.ask.val = $('#ans').value; V.ask.unit = el.dataset.u; render(); break;
+    // The cross stops the round and goes back to the home screen. Nothing from an unfinished round is saved.
+    case 'quit': if (V.phase === 'done' || (V.phase === 'learn' && !V.sc.n)) { V = {view: 'home'}; render(); } else guard('Stop this round? It will not be saved.', () => { V = {view: 'home'}; }, false); break;
+    case 'typed': startTyped(); break;
+    case 'key': { const i = $('#ans'); if (!i) break; const c = el.dataset.k; i.value = c === '⌫' ? i.value.slice(0, -1) : i.value + (c === 'space' ? ' ' : c); i.focus(); break; }
+    case 'submit': submitAns($('#ans').value); break;
+    case 'choice': submitAns(V.ask.q.opts[+el.dataset.i]); break;
+    case 'skip': skipAns(); break;
+    case 'next': nextAsk(); break;
+    case 'tomark': V.phase = 'mark'; render(); window.scrollTo(0, 0); break;
+    case 'mark': V.marks[+el.dataset.i] = el.dataset.v === '1'; render(); break;
+    case 'marked': V.phase = 'rate'; render(); window.scrollTo(0, 0); break;
+    case 'rate': finishRound(el.dataset.r); window.scrollTo(0, 0); break;
+    case 'game': startGame(); break;
+    case 'gt': gTap(+el.dataset.i); break;
+    case 'gop': if (V.g.sel !== null) { V.g.op = el.dataset.o; render(); } break;
+    case 'gundo': if (V.g.hist.length) { V.g.t = V.g.hist.pop(); V.g.sel = null; V.g.op = null; V.g.msg = ''; render(); } break;
+    case 'greset': V.g.t = V.g.orig.slice(); V.g.hist = []; V.g.sel = null; V.g.op = null; V.g.msg = ''; render(); break;
+    case 'gskip': gNew(); render(); break;
+    case 'ttab': { const t = el.dataset.t; V.err = ''; if (['class', 'tools'].includes(t) && !V.unlocked) guard('Teacher tools', () => { V.tab = t; }); else { V.tab = t; render(); } break; }
+    case 'celebrate': guard('Mark all trophies so far as celebrated?', () => { S.celebrated = today(); }); break;
+    case 'setexp': guard('Set the expected levels to where ' + S.name + ' is working now?', () => { for (const st in L) S.expected[st] = Math.min(L[st].length - 1, pos(st)); }); break;
+    case 'tstart': guard(`Are you sure? This moves ${S.name} to start at "${k.name}".`, () => { S.start[k.st] = k.idx; L[k.st].slice(k.idx).forEach(x => { const s = S.skills[x.id]; if (s) { s.st = 'new'; s.passes = []; s.fast = false; } }); L[k.st].slice(0, k.idx).forEach(x => { const s = S.skills[x.id]; if (s) s.support = false; }); syncMax(); }); break;
+    case 'tsec': guard(`Are you sure? This marks "${k.name}" as secure.`, () => { const s = ss(k.id); s.st = 'secure'; s.support = false; s.fails = 0; s.wob = 0; s.fast = false; syncMax(); }); break;
+    case 'tsup': guard(`Are you sure? This puts "${k.name}" back into practice.`, () => { const s = ss(k.id); s.support = true; s.st = 'new'; s.passes = []; s.fast = false; }); break;
+    case 'texp': guard(`Set the expected level to "${k.name}"?`, () => { S.expected[k.st] = k.idx; }); break;
+    case 'copy': copyEl(el.dataset.el); el.textContent = 'Copied'; break;
+    case 'cadd': try { const P = dec($('#cin').value); if (!P.n || !P.pos) throw 0; for (const st in L) { P.pos[st] ??= 0; P.st[st] ??= 0; P.ex[st] ??= 0; } S.cls[P.n] = P; V.err = ''; V.cv = P.n; save(); } catch (x) { V.err = 'That does not look like a progress code.'; } render(); break;
+    case 'cview': V.cv = el.dataset.n; render(); break;
+    case 'cdel': { const n = el.dataset.n; guard('Remove ' + n + ' from the class list?', () => { delete S.cls[n]; }); break; }
+    case 'cprint': $('#print').innerHTML = `<div class="pg"><h2>Maths practice report: ${esc(V.cv)}</h2>${overviewHTML(S.cls[V.cv])}</div>`; setTimeout(() => window.print(), 60); break;
+    case 'psheet': printSheet(BY[$('#pskill').value], +$('#pn').value); break;
+    case 'padd': try { const arr = JSON.parse($('#pin_').value.replace(/^[^\[]*/, '').replace(/[^\]]*$/, '')); const good = arr.filter(p => p && p.id && p.q && typeof p.a === 'number' && p.level >= 1 && p.level <= 6 && !packs().some(x => x.id === p.id)); if (!good.length) throw 0; S.packs.push(...good); V.err = `Added ${good.length} problem${good.length > 1 ? 's' : ''}.`; V.pok = true; save(); } catch (x) { V.err = 'Could not read that. It needs to be the JSON list from the prompt.'; V.pok = false; } render(); break;
+    case 'pclear': guard('Remove the extra problems saved on this device?', () => { S.packs = []; }); break;
+    case 'ssave': S.name = $('#sname').value.trim() || S.name; S.pin = $('#spin').value.trim() || S.pin; S.set.games = $('#sg').checked; S.set.links = $('#sl').checked; save(); render(); break;
+    case 'wipe': guard('Erase all progress for ' + S.name + ' on this device? This cannot be undone.', () => { const cls = S.cls, pin = S.pin; S = fresh(); S.cls = cls; S.pin = pin; for (const st in L) { S.start[st] = 0; S.expected[st] = 1; S.maxPos[st] = 0; } S.totalT = 0; V = {view: 'home'}; }); break;
+  }
+});
+document.addEventListener('change', e => { if (e.target.id === 'plv') { V.plv = +e.target.value; render(); } });
+document.addEventListener('keydown', e => {
+  if (V.view === 'speed' && !V.modal) { if (!V.t0) { if (e.key === 'Enter') speedGo(); } else if (/^\d$/.test(e.key)) speedKey(e.key); else if (e.key === 'Backspace') speedKey('⌫'); return; }
+  if (e.key !== 'Enter') return;
+  if (V.modal) { e.preventDefault(); return $('[data-act=myes]')?.click(); }
+  if (V.ask?.state === 'open' && $('#ans')) { e.preventDefault(); submitAns($('#ans').value); }
+  else if (V.ask && V.ask.state !== 'open') { e.preventDefault(); nextAsk(); }
+  else if (V.view === 'welcome') $('[data-act=setname]')?.click();
+});
+addEventListener('pagehide', save);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save(); });
+render();
+</script>
+</body>
+</html>
