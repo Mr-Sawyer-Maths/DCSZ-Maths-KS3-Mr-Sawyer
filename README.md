@@ -1,7 +1,7 @@
 # DCSZ-Maths-KS3-Mr-Sawyer
 
 Resources and challenges for KS3 maths, served by GitHub Pages at
-https://noxioussawyer.github.io/DCSZ-Maths-KS3-Mr-Sawyer/
+https://mr-sawyer-maths.github.io/DCSZ-Maths-KS3-Mr-Sawyer/ (repo: Mr-Sawyer-Maths/DCSZ-Maths-KS3-Mr-Sawyer)
 
 | Folder | What it is | Who it's for |
 |---|---|---|
@@ -14,6 +14,6 @@ https://noxioussawyer.github.io/DCSZ-Maths-KS3-Mr-Sawyer/
 
 All progress is saved in each person's own browser. The one exception is the Maths Challenges board in `challenges/data.js`: it holds the names on the board (first names or nicknames only) and which challenges they have finished.
 
-**Keep these addresses the same.** Progress is tied to the web address, so moving the site to another GitHub account or host would start everyone fresh. Changing what's inside the files is fine.
+**Keep these addresses the same.** Progress is tied to the web address, so moving the site to another GitHub account, organisation or host, or renaming this repo, would start everyone fresh. Changing what's inside the files is fine.
 
 Design notes and plans are kept in the Claude project "Student Retrieval Tracker": `maths-practice-principles.md`, `maths-practice-number-map.md` and `side-quests-notes.md` (Maths Challenges).
