@@ -1,6 +1,6 @@
 /* Maths Challenges content. Publish next to index.html. It holds no student information. The Teacher tab writes this file: Setup and publish > Copy data.js. */
 window.SQ_DATA = {
- "rev": 200,
+ "rev": 210,
  "published": "2026-11-13",
  "settings": {
   "title": "Maths Challenges",
@@ -96,6 +96,7 @@ window.SQ_DATA = {
   }
  ],
  "spotlight": [],
+ "today": {"daily": ["all-ten"], "games": ["sprouts", "dots-boxes", "nim-21", "teeko", "ultimate-ttt", "hex", "one-oh-one"]},
  "rungs": [
   {
    "n": 0,
@@ -206,7 +207,7 @@ window.SQ_DATA = {
  "quests": [
   {"id":"t-bidmas","title":"Transum: order of operations","dir":"level","topic":"number","pts":1,"url":"https://transum.org/Go/Bounce.asp?to=bidmas","src":"Transum","blurb":"Self-marking questions on the order of operations. Work up through the levels.","how":"Show me a trophy from Level 3 or higher (the top level if there are fewer)."},
   {"id":"t-negative","title":"Transum: negative numbers","dir":"level","topic":"number","pts":1,"url":"https://transum.org/Go/Bounce.asp?to=negative","src":"Transum","blurb":"Calculations with negative numbers. Work up through the levels.","how":"Show me a trophy from Level 3 or higher (the top level if there are fewer)."},
-  {"id":"all-ten","title":"All Ten","dir":"level","topic":"number","pts":1,"url":"https://beastacademy.com/all-ten","src":"Beast Academy","blurb":"Four digits, new every day. Use all four each time to make every number from 1 to 10.","how":"Show me a finished board. Keep a streak going.","record":{"label":"Days in a row","best":"high"}},
+  {"id":"all-ten","title":"All Ten","dir":"level","topic":"number","pts":1,"url":"https://beastacademy.com/all-ten","src":"Beast Academy","blurb":"Four digits, new every day. Use all four each time to make every number from 1 to 10.","how":"Finish today's board."},
   {"id":"nerdle","title":"Nerdle","dir":"level","topic":"number","pts":1,"url":"https://nerdlegame.com/","src":"Nerdle","blurb":"Find the hidden calculation in six tries. A new one every day.","how":"Show me a solved Nerdle. Three tries or fewer earns a shout-out."},
   {"id":"t-hcf","title":"Transum: HCF and LCM","dir":"level","topic":"factors","pts":1,"url":"https://transum.org/Go/Bounce.asp?to=hcf","src":"Transum","blurb":"Highest common factors and lowest common multiples. Work up through the levels.","how":"Show me a trophy from Level 3 or higher (the top level if there are fewer)."},
   {"id":"t-factor-trees","title":"Transum: factor trees","dir":"level","topic":"factors","pts":1,"url":"https://transum.org/Go/Bounce.asp?to=factortrees","src":"Transum","blurb":"Break numbers down into their prime factors.","how":"Show me the trophy for the hardest level you can manage."},

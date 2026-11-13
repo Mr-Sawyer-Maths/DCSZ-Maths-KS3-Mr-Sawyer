@@ -248,6 +248,7 @@ function normRes(r){
 function fill(d){ // tolerate a hand-edited or older data file, and drop anything about students
   d = Object.assign({rev:0, published:"", topics:[], classes:[], spotlight:[], rungs:[], resources:[], quests:[]}, d);
   ["players","solves","records","reports","matches","shouts","hall","season","demo"].forEach(k => delete d[k]);
+  d.today = d.today || null;
   const s = Object.assign({title:"Maths Challenges", teacher:"your teacher", nudge:true}, d.settings);
   if(s.pin != null){ s.pinHash = hash(String(s.pin)); delete s.pin; }
   if(!s.pinHash) s.pinHash = hash("6767");
@@ -257,18 +258,20 @@ function fill(d){ // tolerate a hand-edited or older data file, and drop anythin
   d.classes.forEach(c => { c.open = c.open || DEFAULT_OPEN.slice(); c.now = c.now || ""; });
   d.resources = d.resources.map(normRes);
   d.quests = d.quests.map(q => norm(q, d.topics));
+  d.today = Object.assign({daily:["all-ten"]}, d.today);
+  if(!Array.isArray(d.today.games)) d.today.games = d.quests.filter(q => q.dir === "play").map(q => q.id);
   return d;
 }
 
 /* ---------- data ---------- */
 const PUB = window.SQ_DATA ? fill(clone(window.SQ_DATA)) : null;
-let me = Object.assign({cls:"", clsName:"", q:{}, rung:0}, store.get(KEY_ME, {}));
+let me = Object.assign({cls:"", clsName:"", q:{}, rung:0, days:{}}, store.get(KEY_ME, {}));
 let T = PUB ? store.get(KEY_T, null) : null; // the teacher's working copy of the content; used only while the Teacher tab is unlocked
 if(T) T = fill(T);
 let unlocked = false, checking = false;      // Teacher tab unlocked; teacher checking a student's progress on this device
 const ui = {view:"quests", dir:"all", q:"", todo:false, claiming:null, tsub:"classes", edit:null, flash:"", code:"", restore:false};
 
-function saveMe(){ if(!store.set(KEY_ME, me)) ui.flash = "This browser isn't saving progress. Ask your teacher."; }
+function saveMe(){ const cut = iso(new Date(Date.now() - 400 * 864e5)); Object.keys(me.days).forEach(k => { if(k < cut) delete me.days[k]; }); if(!store.set(KEY_ME, me)) ui.flash = "This browser isn't saving progress. Ask your teacher."; }
 function saveT(){ T.rev = (T.rev||0) + 1; store.set(KEY_T, T); }
 const D = () => (unlocked && T) ? T : PUB;
 const S = () => D().settings;
@@ -295,7 +298,8 @@ function rungOpen(n){ if(me.cls === "*") return true; if(me.rung) return n <= me
 function topRung(){ let t = 0; ladder().forEach(r => { if(rungDone(r.n)) t = Math.max(t, r.n); }); return t; }
 
 function picks(){ // this week: pinned first, then an automatic choice that changes each Monday and leans to the class's current topic
-  const vis = questList(), c = myClass(), now = c ? c.now : "";
+  const ts = todaySet().map(o => o.q.id), c = myClass(), now = c ? c.now : "";
+  const vis = questList().filter(q => !OPEN_ENDED.includes(q.dir) && !ts.includes(q.id));
   const pinned = D().spotlight.map(id => vis.find(x => x.id === id)).filter(Boolean);
   const out = pinned.slice(0, PICKS);
   if(out.length < PICKS){
@@ -307,6 +311,26 @@ function picks(){ // this week: pinned first, then an automatic choice that chan
   }
   return {list:out, auto:pinned.length === 0};
 }
+const OPEN_ENDED = ["create", "report"]; // suggested last: never in Today, This week or Surprise me
+function dayIndex(){ const d = new Date(); return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(1970,0,1)) / 864e5); }
+function weekIndex(){ return Math.floor((dayIndex() - 4) / 7); } // weeks start on Monday
+function todaySet(){ // the three things to do first: daily puzzle(s), the game of the week, and a quick win
+  const td = D().today, out = [];
+  td.daily.map(item).filter(q => q && !q.hidden).forEach(q => out.push({slot:"Daily puzzle", q}));
+  const games = td.games.map(item).filter(q => q && !q.hidden);
+  if(games.length) out.push({slot:"Game of the week", q:games[((weekIndex() % games.length) + games.length) % games.length]});
+  const used = out.map(o => o.q.id), c = myClass(), now = c ? c.now : "";
+  const narrow = (pool, f) => { const p = pool.filter(f); return p.length ? p : pool; };
+  let pool = questList().filter(q => q.dir === "level" && q.topic !== "any" && !used.includes(q.id));
+  if(!pool.length) pool = questList().filter(q => q.pts === 1 && (q.dir === "puzzle" || q.dir === "explore") && !used.includes(q.id));
+  const kept = pool.find(q => doneToday(q.id)); // finished today: keep it on screen until tomorrow
+  pool = narrow(narrow(pool, q => !done(q.id) || doneToday(q.id)), q => now && q.topic === now);
+  if(kept) out.push({slot:"Quick win", q:kept}); else if(pool.length) out.push({slot:"Quick win", q:pool[dayIndex() % pool.length]});
+  return out;
+}
+const doneToday = id => (me.days[today()] || []).includes(id);
+function logDay(id){ const t = today(); me.days[t] = me.days[t] || []; if(!me.days[t].includes(id)) me.days[t].push(id); }
+function streak(){ let n = 0; const d = new Date(); if(!(me.days[iso(d)] || []).length) d.setDate(d.getDate() - 1); while((me.days[iso(d)] || []).length){ n++; d.setDate(d.getDate() - 1); } return n; }
 function totals(){
   const t = {pts:0, n:0, dirs:{}, reports:0};
   D().quests.forEach(q => { if(done(q.id)){ t.pts += q.pts; t.n++; t.dirs[q.dir] = (t.dirs[q.dir] || 0) + 1; if(q.dir === "report") t.reports++; } });
@@ -346,6 +370,16 @@ function cardHTML(it, pick){
     (mineLine ? '<div class="social">' + mineLine + "</div>" : "") +
     '<div class="acts">' + acts + "</div></article>";
 }
+function todayCard(o){
+  const q = o.q, dt = doneToday(q.id);
+  return '<article class="card pick k-' + q.dir + '"><div class="top"><span class="kind">' + o.slot + "</span>" + (o.slot === "Quick win" && q.topic !== "any" ? '<span class="tag">' + esc(topicName(q.topic)) + "</span>" : "") + '<span class="pts">' + DIRS[q.dir].n + "</span></div><h3>" + esc(q.title) + '</h3><p class="blurb">' + esc(q.blurb) + "</p>" +
+    (q.how ? '<p class="how"><b>To finish:</b> ' + esc(q.how) + "</p>" : "") +
+    '<div class="acts">' + (q.url ? '<a class="btn primary" href="' + esc(q.url) + '" target="_blank" rel="noopener">Open ↗</a>' : "") + (dt ? '<span class="status ok">Done today ✓</span>' : '<button class="btn gold" data-act="today" data-id="' + q.id + '">Done today</button>') + "</div></article>";
+}
+function todayHTML(){
+  const set = todaySet(), n = set.filter(o => doneToday(o.q.id)).length, st = streak();
+  return '<section class="week"><div class="head"><h2>Today</h2><span class="muted small">' + (n === set.length && set.length ? "All done for today. Nice work." : n + " of " + set.length + " done") + (st > 1 ? " · " + st + " days in a row" : "") + '</span></div><div class="grid">' + set.map(todayCard).join("") + "</div></section>";
+}
 function filtered(){
   const q = ui.q.trim().toLowerCase();
   return questList().filter(it =>
@@ -378,7 +412,8 @@ function viewQuests(){
   if(!c && !star) h += '<div class="note plain">' + (wasSet ? "<p><b>A new school year has started.</b> Choose your class again.</p>" : "") + classPicker() + '<p class="small muted" style="margin-top:6px">Until you choose, you only see the quests that are open to everyone.</p></div>';
   else h += '<div class="classline"><b>' + (star ? "Everything (teacher view)" : esc(c.name)) + "</b>" + (c && c.now ? '<span class="muted">Now doing: ' + esc(topicName(c.now)) + "</span>" : "") + '<button class="btn quiet" data-act="pickcls" data-id="">Change class</button></div>';
   const pk = picks(), lk = locked();
-  h += '<section class="week"><div class="head"><h2>This week</h2><span class="muted small">' + (pk.auto ? "Three fresh picks every Monday" : "Picked by " + esc(S().teacher)) + '</span></div><div class="grid">' + pk.list.map(it => cardHTML(it, true)).join("") + "</div></section>";
+  h += todayHTML();
+  h += '<section class="week"><div class="head"><h2>More to try this week</h2><span class="muted small">' + (pk.auto ? "Three fresh picks every Monday" : "Picked by " + esc(S().teacher)) + '</span></div><div class="grid">' + pk.list.map(it => cardHTML(it, true)).join("") + "</div></section>";
   h += '<section class="sect stack"><div class="head"><h2>All quests</h2></div><div class="filters">';
   h += '<button class="chip" data-act="dir" data-k="all" aria-pressed="' + (ui.dir === "all") + '">All</button>';
   QUEST_DIRS.forEach(k => { h += '<button class="chip k-' + k + '" data-act="dir" data-k="' + k + '" aria-pressed="' + (ui.dir === k) + '"><span class="dot"></span>' + DIRS[k].n + "</button>"; });
@@ -413,7 +448,7 @@ function viewMine(){
   const list = b.quests.filter(q => myState(q.id) === "try"), reps = b.quests.filter(q => q.dir === "report" && mine(q.id) && mine(q.id).st && !done(q.id));
   const bests = b.quests.filter(q => q.record && mine(q.id) && mine(q.id).v != null);
   let h = '<div class="stack"><section class="stack"><h2>My progress</h2><p class="muted small">Saved on this device only. Show ' + T_ + " or a friend how you are doing." + (c ? " Class: " + esc(c.name) + "." : "") + "</p>";
-  h += '<div class="sum"><div class="tile"><div class="big">' + t.pts + '</div><div class="lab">Points</div></div><div class="tile"><div class="big">' + t.n + '</div><div class="lab">Quests done</div></div><div class="tile"><div class="big">' + (top || "–") + '</div><div class="lab">Highest rung</div></div><div class="tile"><div class="big">' + Object.keys(t.dirs).length + " / " + DIR_ORDER.length + '</div><div class="lab">Directions tried</div></div></div>';
+  h += '<div class="sum"><div class="tile"><div class="big">' + t.pts + '</div><div class="lab">Points</div></div><div class="tile"><div class="big">' + t.n + '</div><div class="lab">Quests done</div></div><div class="tile"><div class="big">' + streak() + '</div><div class="lab">Days in a row</div></div><div class="tile"><div class="big">' + (top || "–") + '</div><div class="lab">Highest rung</div></div><div class="tile"><div class="big">' + Object.keys(t.dirs).length + " / " + DIR_ORDER.length + '</div><div class="lab">Directions tried</div></div></div>';
   h += '<div class="dirs">' + DIR_ORDER.map(k => '<span class="k-' + k + (t.dirs[k] ? "" : " off") + '">' + DIRS[k].n + (t.dirs[k] ? " " + t.dirs[k] : "") + "</span>").join("") + "</div></section>";
   if(bests.length) h += '<section class="panel"><h2>Personal bests</h2><ul class="list">' + bests.map(q => "<li><b>" + esc(q.title) + ":</b> " + esc(mine(q.id).v) + ' <span class="muted small">' + esc(q.record.label) + "</span></li>").join("") + "</ul></section>";
   if(reps.length) h += '<section class="panel"><h2>My report</h2><ul class="list">' + reps.map(q => "<li><b>" + esc(q.title) + '</b> <span class="status wait">' + STAGES[mine(q.id).st] + "</span></li>").join("") + "</ul></section>";
@@ -475,10 +510,12 @@ function tQuests(){
       '<div class="row full"><button class="btn primary">Save quest</button><button type="button" class="btn quiet" data-act="edit" data-id="">Cancel</button></div></form>';
   } else h += '<p class="lede">Found something good? Add it here. It gets a New tag for two weeks.</p><div><button class="btn primary" data-act="edit" data-id="new">Add a quest</button></div>';
   h += '</section><section class="panel"><h2>Import quests or resources</h2><p class="lede">Paste lines written for you (for example by Claude from a list of links), one per line. Anything with an id you already have is replaced.</p><form data-form="import" class="stack"><textarea id="imp" aria-label="Lines to import" placeholder=\'{"id":"...","title":"...","dir":"puzzle","topic":"any","pts":2, ...}\'></textarea><div class="row"><button class="btn primary">Import</button></div></form></section>';
-  h += '<section class="panel"><h2>All quests</h2><p class="lede">Pin a quest to make it one of the weekly picks for every class it is open to. With nothing pinned, three are picked automatically each Monday.</p><div class="tw"><table><thead><tr><th>Quest</th><th>Direction</th><th>Topic</th><th class="num">Pts</th><th></th></tr></thead><tbody>';
+  const ts = todaySet();
+  h += '<section class="panel"><h2>Today</h2><p class="lede">The first thing students see. <b>Daily puzzle:</b> every quest marked Daily (All Ten by default). <b>Game of the week:</b> the next game in the rota each Monday. <b>Quick win:</b> a Level up quest from the class\'s open topics, changing daily, favouring the topic they are doing now and ones not yet done. Open-ended quests (Create and Report) are never suggested here, in "More to try this week" or by Surprise me; students find them in the full list. Mark quests in the table below.</p><p class="small">Right now, for the class you are viewing: ' + ts.map(o => "<b>" + o.slot + ":</b> " + esc(o.q.title)).join(" · ") + "</p><p class=\"small muted\">Game rota order: " + T.today.games.map(id => esc((item(id) || {title:id}).title)).join(", ") + "</p></section>";
+  h += '<section class="panel"><h2>All quests</h2><p class="lede">Pin a quest to make it one of "More to try this week" for every class it is open to. With nothing pinned, three are picked automatically each Monday.</p><div class="tw"><table><thead><tr><th>Quest</th><th>Direction</th><th>Topic</th><th class="num">Pts</th><th></th></tr></thead><tbody>';
   T.topics.forEach(t => T.quests.filter(q => q.topic === t.id).forEach(it => {
     const pin = pinned.includes(it.id);
-    h += "<tr><td>" + esc(it.title) + (it.hidden ? ' <span class="tag hid">Hidden</span>' : "") + (it.dir === "compete" ? ' <span class="muted small">' + (it.rung ? "rung " + it.rung : "team") + "</span>" : "") + '</td><td class="small">' + DIRS[it.dir].n + '</td><td class="small">' + esc(t.name) + '</td><td class="num">' + it.pts + '</td><td style="white-space:nowrap"><button class="btn quiet' + (pin ? " on" : "") + '" data-act="pin" data-id="' + it.id + '">' + (pin ? "Pinned" : "Pin") + '</button><button class="btn quiet" data-act="hide" data-id="' + it.id + '">' + (it.hidden ? "Show" : "Hide") + '</button><button class="btn quiet" data-act="edit" data-id="' + it.id + '">Edit</button></td></tr>';
+    h += "<tr><td>" + esc(it.title) + (it.hidden ? ' <span class="tag hid">Hidden</span>' : "") + (it.dir === "compete" ? ' <span class="muted small">' + (it.rung ? "rung " + it.rung : "team") + "</span>" : "") + '</td><td class="small">' + DIRS[it.dir].n + '</td><td class="small">' + esc(t.name) + '</td><td class="num">' + it.pts + '</td><td style="white-space:nowrap">' + (it.dir === "compete" ? "" : '<button class="btn quiet' + (T.today.daily.includes(it.id) ? " on" : "") + '" data-act="tdaily" data-id="' + it.id + '">Daily</button>') + (it.dir === "play" ? '<button class="btn quiet' + (T.today.games.includes(it.id) ? " on" : "") + '" data-act="tgame" data-id="' + it.id + '">Game rota</button>' : "") + '<button class="btn quiet' + (pin ? " on" : "") + '" data-act="pin" data-id="' + it.id + '">' + (pin ? "Pinned" : "Pin") + '</button><button class="btn quiet" data-act="hide" data-id="' + it.id + '">' + (it.hidden ? "Show" : "Hide") + '</button><button class="btn quiet" data-act="edit" data-id="' + it.id + '">Edit</button></td></tr>';
   }));
   return h + "</tbody></table></div></section>";
 }
@@ -541,11 +578,12 @@ document.addEventListener("click", ev => {
     case "dir": ui.dir = el.dataset.k; break;
     case "toggle": ui[el.dataset.f] = !ui[el.dataset.f]; break;
     case "pickcls": me.cls = id; me.clsName = id && id !== "*" && cls(id) ? cls(id).name : ""; saveMe(); break;
-    case "surprise": { ui.q = ""; const pool = filtered().filter(it => !myState(it.id)); if(pool.length) ui.q = pool[Math.floor(Math.random()*pool.length)].title; break; }
+    case "surprise": { ui.q = ""; const pool = filtered().filter(it => !myState(it.id) && !OPEN_ENDED.includes(it.dir)); if(pool.length) ui.q = pool[Math.floor(Math.random()*pool.length)].title; break; }
+    case "today": { const c = mine(id); logDay(id); if(!c || c.s !== "done") me.q[id] = Object.assign(c || {}, {s:"done", d:today()}); saveMe(); break; }
     case "try": { const c = mine(id); if(c && c.s === "try") delete me.q[id]; else me.q[id] = {s:"try", d:today()}; saveMe(); break; }
-    case "done": { if(item(id).record) ui.claiming = id; else { me.q[id] = Object.assign(mine(id) || {}, {s:"done", d:today()}); saveMe(); } break; }
+    case "done": { if(item(id).record) ui.claiming = id; else { me.q[id] = Object.assign(mine(id) || {}, {s:"done", d:today()}); logDay(id); saveMe(); } break; }
     case "claim": { const it = item(id), raw = el.closest(".card").querySelector("input[type=number]").value, c = mine(id) || {}, v = raw === "" ? null : +raw;
-      me.q[id] = Object.assign(c, {s:"done", d:c.s === "done" ? c.d : today(), v: v == null ? (c.v == null ? null : c.v) : better(it, c.v, v)}); ui.claiming = null; saveMe(); break; }
+      me.q[id] = Object.assign(c, {s:"done", d:c.s === "done" ? c.d : today(), v: v == null ? (c.v == null ? null : c.v) : better(it, c.v, v)}); logDay(id); ui.claiming = null; saveMe(); break; }
     case "cancelclaim": ui.claiming = null; break;
     case "undo": delete me.q[id]; saveMe(); break;
     case "chk": { const c = mine(id); if(checking && c){ if(c.chk) delete c.chk; else c.chk = today(); saveMe(); } break; }
@@ -558,6 +596,8 @@ document.addEventListener("click", ev => {
     case "tsub": ui.tsub = el.dataset.k; ui.edit = null; break;
     case "locktab": unlocked = false; if(me.cls === "*") me.cls = ""; break;
     case "edit": ui.edit = id || null; break;
+    case "tdaily": { const a = T.today.daily, i = a.indexOf(id); if(i >= 0) a.splice(i,1); else a.push(id); saveT(); break; }
+    case "tgame": { const a = T.today.games, i = a.indexOf(id); if(i >= 0) a.splice(i,1); else a.push(id); saveT(); break; }
     case "pin": { const i = T.spotlight.indexOf(id); if(i >= 0) T.spotlight.splice(i,1); else T.spotlight.push(id); saveT(); break; }
     case "hide": { const it = item(id); if(it.hidden) delete it.hidden; else it.hidden = true; saveT(); break; }
     case "delclass": T.classes = T.classes.filter(c => c.id !== id); saveT(); break;
@@ -572,7 +612,7 @@ document.addEventListener("submit", ev => {
   const f = ev.target.dataset.form, v = id => ($("#" + id).value || "").trim();
   if(f === "pin"){ if(hash(v("pin")) === PUB.settings.pinHash || (T && hash(v("pin")) === T.settings.pinHash)){ unlocked = true; if(!T){ T = clone(PUB); store.set(KEY_T, T); } } else ui.flash = "That PIN isn't right."; }
   if(f === "checkpin"){ if(hash(v("cpin")) === PUB.settings.pinHash) checking = true; else ui.flash = "That PIN isn't right."; }
-  if(f === "restore"){ const o = readBackup(v("codein")); if(o){ me = Object.assign({cls:"", clsName:"", q:{}, rung:0}, o); saveMe(); ui.restore = false; ui.flash = "Progress restored."; } else ui.flash = "That doesn't look like a backup code. It should start with MC1."; }
+  if(f === "restore"){ const o = readBackup(v("codein")); if(o){ me = Object.assign({cls:"", clsName:"", q:{}, rung:0, days:{}}, o); saveMe(); ui.restore = false; ui.flash = "Progress restored."; } else ui.flash = "That doesn't look like a backup code. It should start with MC1."; }
   if(f === "addclass"){ const n = v("nc"); let id = slug(n), k = 2; while(cls(id)) id = slug(n) + "-" + k++; T.classes.push({id, name:n, open:DEFAULT_OPEN.slice(), now:""}); saveT(); }
   if(f === "addtopic"){ const n = v("nt"); let id = slug(n), k = 2; while(T.topics.some(t => t.id === id)) id = slug(n) + "-" + k++; T.topics.push({id, name:n}); saveT(); }
   if(f === "addres"){ const n = v("r_name"); let id = slug(n), k = 2; while(T.resources.some(r => r.id === id)) id = slug(n) + "-" + k++; T.resources.push(normRes({id, name:n, url:v("r_url"), kind:v("r_kind"), status:v("r_status"), note:v("r_note")})); saveT(); }
@@ -605,7 +645,7 @@ document.addEventListener("input", ev => { if(ev.target.id === "q"){ ui.q = ev.t
 document.addEventListener("change", ev => {
   const t = ev.target, ds = t.dataset;
   if(ds.rstage){ const sg = +t.value, c = mine(ds.rstage) || {};
-    if(sg === 3) me.q[ds.rstage] = Object.assign(c, {s:"done", d:c.s === "done" ? c.d : today(), st:3});
+    if(sg === 3){ me.q[ds.rstage] = Object.assign(c, {s:"done", d:c.s === "done" ? c.d : today(), st:3}); logDay(ds.rstage); }
     else if(sg === 0) delete me.q[ds.rstage];
     else me.q[ds.rstage] = Object.assign(c, {s:"try", st:sg}, c.s === "done" ? {d:today()} : {});
     saveMe(); render(); }
