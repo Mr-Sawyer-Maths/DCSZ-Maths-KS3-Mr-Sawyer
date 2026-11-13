@@ -34,6 +34,7 @@ p{margin:6px 0}.muted{color:var(--muted)}.small{font-size:14px}.center{text-alig
 .eg{display:inline-block;background:var(--soft);border-radius:8px;padding:1px 8px;margin-left:4px}
 .chip{display:inline-block;border-radius:99px;padding:1px 9px;font-size:13px;font-weight:600;background:var(--soft)}
 .chip.secure{background:var(--ok);color:#fff}.chip.learning{background:var(--warn);color:#fff}.chip.support{background:var(--bad);color:#fff}.chip.assumed{background:var(--soft);color:var(--muted)}
+.chip.timer{font-variant-numeric:tabular-nums;min-width:56px;text-align:center}.chip.timer.over{background:var(--warn);color:#fff}
 .steps{display:flex;gap:6px;margin:6px 0 12px}.steps i{flex:1;height:6px;border-radius:9px;background:var(--line)}.steps i.on{background:var(--accent)}
 .qbig{font-size:38px;font-weight:700;text-align:center;margin:18px 0 10px;line-height:1.3}
 .qbig.wp{font-size:21px;font-weight:500;text-align:left;line-height:1.5}
@@ -96,6 +97,9 @@ const CONFIG = {
   bookN: 8,             // written (in the book) questions per round
   passAcc: 0.8,         // round counts as a pass at this accuracy (and not rated "tough")
   gameSecs: 180,        // length of the reward game
+  autoSecs: 3,          // number facts: an answer counts as automatic within this many seconds (answers up to 2 digits)
+  autoShare: 0.8,       // share of typed facts that must be automatic for a round to count towards securing the level
+  checkLongSecs: 120,   // after this long, the level check offers "These questions take me too long"
   links: [              // "stretch" links shown to students working at the top levels
     ['Transum games and puzzles', 'https://www.transum.org/Software/Game/'],
     ['Beast Academy: All Ten', 'https://beastacademy.com/all-ten'],
@@ -389,7 +393,8 @@ const STLAB = {secure: 'Secure', learning: 'Learning', support: 'Needs support',
 function trophy(ic, text) { const t = {d: today(), ic, text}; S.trophies.push(t); return t; }
 function flags() {
   const f = [];
-  SK.forEach(k => { const s = S.skills[k.id]; if (!s) return; if (s.wob >= 2) f.push(['Wobbly on review', k]); if (s.fails >= 2) f.push(['Stuck (two low rounds)', k]); if (s.fast) f.push(['Secured in one easy round, worth a spot check', k]); if (s.support) f.push(['Marked as needs support', k]); });
+  SK.forEach(k => { const s = S.skills[k.id]; if (!s) return; if (s.wob >= 2) f.push(['Wobbly on review', k]); if (s.fails >= 2) f.push(['Stuck (two low rounds)', k]); if (s.fast) f.push(['Secured in one easy round, worth a spot check', k]); if (s.auto && s.auto.f / s.auto.n < CONFIG.autoShare && s.last?.acc >= CONFIG.passAcc) f.push(['Accurate but not automatic yet', k]); if (s.support) f.push(['Marked as needs support', k]); });
+  if (S.placeStopped) f.push(['Stopped the level check early (it took too long), so check these levels', {name: 'level check on ' + nice(S.placeStopped)}]);
   const cut = dOff(14); [...new Set(S.log.filter(l => l.above && l.d >= cut).map(l => l.id))].forEach(id => f.push(['Chose work above their level', BY[id]]));
   return f;
 }
@@ -403,14 +408,24 @@ function wpSet(level) {
   return items;
 }
 
+// ---------- automatic recall (number facts, typed only) ----------
+// The goal grows with the size of the numbers: 3 s up to 2 digits, 4.5 s for 3 digits, 6 s (double) for 4 or more.
+function autoLimit(Q) { const d = Math.max(1, ...(`${Q.q} ${Q.a}`.match(/\d+/g) || ['0']).map(x => x.length)); return CONFIG.autoSecs * (d <= 2 ? 1 : d === 3 ? 1.5 : 2); }
+const secsTxt = ms => (ms / 1000).toFixed(1) + ' s';
+setInterval(() => {
+  const A = V.ask, el = $('#qt');
+  if (A && A.lim && el && A.ms == null) { const ms = Date.now() - A.t0; el.textContent = secsTxt(ms); el.classList.toggle('over', ms > A.lim * 1000); }
+  if (V.view === 'place' && !V.longShown && V.t0 && Date.now() - V.t0 > CONFIG.checkLongSecs * 1000) { V.longShown = true; if (V.ask && $('#ans')) V.ask.val = $('#ans').value; render(); }
+}, 100);
+
 // ---------- view + asking ----------
 let V = {view: 'home'};
-function ask(Q, o) { V.ask = {q: Q, left: o.tries || 1, steps: !!o.steps, label: o.label || '', quiet: !!o.quiet, skip: !!o.skip, hint: o.hint || '', onDone: o.onDone, state: 'open', fb: '', cls: '', first: null, val: ''};
+function ask(Q, o) { V.ask = {q: Q, left: o.tries || 1, steps: !!o.steps, label: o.label || '', quiet: !!o.quiet, skip: !!o.skip, hint: o.hint || '', onDone: o.onDone, state: 'open', fb: '', cls: '', first: null, val: '', t0: Date.now(), ms: null, lim: o.timed ? autoLimit(Q) : 0, auto: false};
   const u = (Q.pre || Q.suf || '').trim();      // word problems with units: the student picks the unit separately from the number
   if (o.steps && u) { const opts = shuf(UNITS.filter(x => x !== u)).slice(0, 3).concat(u); V.ask.units = UNITS.concat(UNITS.includes(u) ? [] : [u]).filter(x => opts.includes(x)); V.ask.cu = u; V.ask.unit = null; }
 }
 function guard(msg, fn, pin = true) { V.modal = {msg, pin: pin && !V.unlocked, fn, err: ''}; render(); }
-function runQ(items, onEach, onEnd) { let i = 0; const step = () => { if (i >= items.length) { V.ask = null; return onEnd(); } const it = items[i++]; ask(it.q, {...it, onDone: (first, fin) => { onEach(it, first, fin, items); step(); }}); render(); }; step(); }
+function runQ(items, onEach, onEnd) { let i = 0; const step = () => { if (i >= items.length) { V.ask = null; return onEnd(); } const it = items[i++]; ask(it.q, {...it, onDone: (first, fin, auto) => { onEach(it, first, fin, items, auto); step(); }}); render(); }; step(); }
 function submitAns(val) {
   const A = V.ask; if (!A || A.state !== 'open') return;
   let r = A.q.kind === 'choice' ? {ok: val === A.q.a} : check(A.q, val);
@@ -420,15 +435,19 @@ function submitAns(val) {
   if (r.retry) { A.fb = r.retry; A.cls = 'warn'; return render(); }
   const unitWrong = r.ok && A.units && A.unit !== A.cu;
   if (unitWrong) r = {ok: false};
-  if (A.first === null) A.first = r.ok;
-  if (r.ok) { A.state = 'right'; A.fb = '✓ Correct'; A.cls = 'ok'; if (A.steps) return render(); render(); setTimeout(() => { if (V.ask === A) nextAsk(); }, 600); }
+  if (A.first === null) { A.first = r.ok; A.ms = Date.now() - A.t0; A.auto = r.ok && A.ms <= A.lim * 1000; }
+  if (r.ok) {
+    A.state = 'right'; A.cls = 'ok';
+    A.fb = !A.lim || A.left < (A.q.tries || 1) ? '✓ Correct' : A.auto ? `✓ Correct · ${secsTxt(A.ms)}, automatic` : `✓ Correct · ${secsTxt(A.ms)}. Aim for under ${A.lim} s.`;
+    if (A.steps) return render(); render(); setTimeout(() => { if (V.ask === A) nextAsk(); }, A.lim && !A.auto ? 1300 : 700);
+  }
   else { A.left--; if (A.left > 0) { A.fb = unitWrong ? 'The number is right. Check the units.' : 'Not yet. Check your working and try again.'; A.cls = 'no'; if (!unitWrong) A.val = ''; render(); } else { A.state = 'wrong'; if (A.quiet) return nextAsk(); render(); } }
 }
 function skipAns() { const A = V.ask; if (!A) return; A.first = false; A.state = 'wrong'; nextAsk(); }
-function nextAsk() { const A = V.ask; if (!A) return; A.onDone(A.first === true, A.state === 'right'); }
+function nextAsk() { const A = V.ask; if (!A) return; A.onDone(A.first === true, A.state === 'right', A.auto); }
 function askHTML() {
   const A = V.ask, Q = A.q, wp = !!Q.steps;
-  let h = `${A.label ? `<div class="muted small center">${esc(A.label)}</div>` : ''}<div class="qbig ${wp ? 'wp' : ''}">${fmt(Q.q)}</div>${A.hint && A.state === 'open' ? `<p class="muted small center">${esc(A.hint)}</p>` : ''}`;
+  let h = `${A.label ? `<div class="muted small center">${esc(A.label)}</div>` : ''}<div class="qbig ${wp ? 'wp' : ''}">${fmt(Q.q)}</div>${A.hint && A.state === 'open' ? `<p class="muted small center">${esc(A.hint)}</p>` : ''}${A.lim && A.state === 'open' ? `<p class="center small"><span id="qt" class="chip timer">${secsTxt(Date.now() - A.t0)}</span> <span class="muted">Automatic goal: under ${A.lim} s</span></p>` : ''}`;
   if (A.state === 'open') {
     h += `<div class="fb ${A.cls}">${esc(A.fb)}</div>`;
     if (Q.kind === 'choice') h += `<div class="row" style="justify-content:center">${Q.opts.map((o, i) => `<button class="btn big" data-act="choice" data-i="${i}">${fmt(o)}</button>`).join('')}</div>`;
@@ -455,7 +474,7 @@ function startSkill(k) {
   if (pool.length >= 2) {
     V.phase = 'warm';
     const w = shuf(pool).sort((a, b) => (S.skills[b.id]?.wob || 0) - (S.skills[a.id]?.wob || 0)).slice(0, 3);
-    runQ(w.map(x => ({q: x.gen(), label: 'Warm-up: ' + x.name, rid: x.id})), (it, first) => { const s = ss(it.rid); s.wob = first ? Math.max(0, s.wob - 1) : s.wob + 1; const d = day(); d.q++; if (first) d.c++; save(); }, () => { V.phase = 'learn'; render(); });
+    runQ(w.map(x => ({q: x.gen(), label: 'Warm-up: ' + x.name, rid: x.id, timed: isFacts(x)})), (it, first, fin, items, auto) => { const s = ss(it.rid), good = first && (!it.timed || auto); s.wob = good ? Math.max(0, s.wob - 1) : s.wob + 1; const d = day(); d.q++; if (first) d.c++; save(); }, () => { V.phase = 'learn'; render(); });
   } else { V.phase = 'learn'; render(); }
 }
 function startLinked(k) {      // bonus word problems that use the area just practised; they don't change any level
@@ -468,7 +487,11 @@ function startTyped() {
   V.phase = 'typed';
   if (k.st === 'W') return runQ((k.items || wpSet(k.wl)).map((x, i) => ({q: x, tries: 2, steps: true, label: `Problem ${i + 1} of 3`, hint: 'Work it out in your book first, then type your final answer.'})), (it, first, fin) => { V.sc.n++; V.sc.c += first ? 1 : fin ? .5 : 0; }, () => { V.phase = 'rate'; render(); });
   const tn = k.tn || CONFIG.typedN, bn = k.bn || CONFIG.bookN;
-  runQ(distinct(k, tn).map(x => ({q: x, label: 'Quick check', hint: k.written ? 'Do the working in your book, then type the answer.' : ''})), (it, first, fin, items) => { if (it.again) return; V.sc.n++; if (first) V.sc.c++; else if (!k.written) items.push({q: it.q, again: true, label: 'Try this one again'}); },
+  const tm = isFacts(k); V.auto = {f: 0, n: 0, ms: 0};
+  runQ(distinct(k, tn).map(x => ({q: x, label: 'Quick check', timed: tm, hint: k.written ? 'Do the working in your book, then type the answer.' : ''})), (it, first, fin, items, auto) => {
+    if (it.again) return; V.sc.n++; if (first) V.sc.c++; else if (!k.written) items.push({q: it.q, again: true, label: 'Try this one again', timed: tm});
+    if (tm) { V.auto.n++; if (auto) V.auto.f++; V.auto.ms += V.ask?.ms || 0; }
+  },
     () => {
       V.phase = 'book'; const ch = k.chain ? k.chain() : []; V.chainN = ch.length; V.mixed = !!k.old;
       if (k.old) { const nw = distinct(k, bn / 2), od = distinct({gen: k.old}, bn / 2); V.book = nw.flatMap((x, i) => od[i] ? [x, od[i]] : [x]); }
@@ -479,10 +502,14 @@ function startTyped() {
 function finishRound(rate) {
   const k = V.sk, d = today(), secs = Math.round((Date.now() - V.t0) / 1000);      // time from opening the round to finishing it
   if (V.book) { V.sc.n += V.book.length; V.sc.c += V.marks.filter(m => m === true).length; }
-  const acc = V.sc.n ? V.sc.c / V.sc.n : 0, pass = acc >= CONFIG.passAcc && rate !== 'hard', R = {acc, pass, tro: [], secured: false, stepBack: false, secs};
+  const acc = V.sc.n ? V.sc.c / V.sc.n : 0, au = V.auto?.n ? V.auto : null;
+  // On a facts level, accurate is not enough: most typed answers must also be automatic for the round to count towards securing it.
+  const accurate = acc >= CONFIG.passAcc && rate !== 'hard', fluent = !au || au.f / au.n >= CONFIG.autoShare, pass = accurate && fluent;
+  const R = {acc, pass, slow: accurate && !fluent, au, tro: [], secured: false, stepBack: false, secs};
   if (!k.bonus) {
     const s = ss(k.id), was = status(k);
     s.rounds++; s.last = {acc, rate, d};
+    if (au) s.auto = {f: au.f, n: au.n, avg: Math.round(au.ms / au.n), d};
     if (pass) {
       if (!s.passes.includes(d)) s.passes.push(d);
       if (s.hadFail) { R.tro.push(trophy('🌱', 'Bounced back on ' + k.name)); s.hadFail = false; }
@@ -498,13 +525,13 @@ function finishRound(rate) {
       R.tro.push(np >= n ? trophy('🏆', 'Finished ' + STR[k.st].name) : trophy('🏅', `Reached level ${np + 1} in ${STR[k.st].name}`));
       if (np - 1 > S.expected[k.st]) R.tro.push(trophy('⭐', 'Beyond expected level: ' + L[k.st][np - 1].name));
     }
-    if (acc === 1 && !s.perfect) { s.perfect = true; R.tro.push(trophy('🎯', 'First perfect round: ' + k.name)); }
+    if (acc === 1 && fluent && !s.perfect) { s.perfect = true; R.tro.push(trophy('🎯', 'First perfect round: ' + k.name)); }
   }
   const dd = day(); dd.s++; dd.q += V.sc.n; dd.c += V.sc.c; S.sessions++;
   if ([5, 10, 20, 30, 50, 75, 100, 150, 200].includes(S.sessions)) R.tro.push(trophy('💪', S.sessions + ' practice rounds completed'));
   const wk = Object.keys(S.days).filter(x => x >= dOff(6) && S.days[x].s > 0).length;
   if (wk >= 3 && !S.trophies.some(t => t.ic === '🔥' && t.d >= dOff(6))) R.tro.push(trophy('🔥', 'Practised on 3 days this week'));
-  S.log.push({d, id: k.id, nm: k.bonus ? k.name : undefined, sc: +V.sc.c.toFixed(1), n: V.sc.n, rate, pass, above: V.above, secs});
+  S.log.push({d, id: k.id, nm: k.bonus ? k.name : undefined, sc: +V.sc.c.toFixed(1), n: V.sc.n, rate, pass, above: V.above, secs, au: au ? `${au.f}/${au.n}` : undefined});
   if (S.log.length > 400) S.log = S.log.slice(-400);
   if (S.set.games) S.tokens = Math.min(3, S.tokens + 1);
   V.res = R; V.phase = 'done'; V.rate = rate; save(); render();
@@ -558,29 +585,48 @@ function speedDoneHTML() {
 }
 
 // ---------- placement ----------
+const PL_ORDER = () => Object.keys(L).filter(t => t !== 'W');
+function placeIntro() { V = {view: 'placeintro'}; render(); }
 function startPlacement() {
-  const order = Object.keys(L).filter(t => t !== 'W');
-  V = {view: 'place', si: 0, i: 0, miss: 0, firstMiss: null, asked: 0};
-  const step = () => {
-    const st = order[V.si], list = L[st].filter(k => k.pl !== false), k = list[V.i];
-    ask(k.gen(), {label: `Finding your level: ${STR[st].name}`, quiet: true, skip: true, onDone: first => {
-      V.asked++; const d = day(); d.q++; if (first) d.c++;
-      if (!first) { V.miss++; if (V.firstMiss === null) V.firstMiss = V.i; }
-      V.i++;
-      if (V.miss >= 2 || V.i >= list.length) {
-        const fm = V.firstMiss;      // start just after the last sampled level they got right
-        S.start[st] = Math.min(L[st].length - 1, fm === 0 ? 0 : list[(fm === null ? list.length : fm) - 1].idx + 1);
-        V.si++; V.i = 0; V.miss = 0; V.firstMiss = null;
-        if (V.si < order.length) return step();
-        const fsum = GROUPS[2].t.reduce((a, t) => a + S.start[t], 0); S.start.W = fsum >= 15 ? 4 : fsum >= 10 ? 3 : fsum >= 6 ? 2 : S.start.M >= 3 ? 1 : 0;
-        for (const s2 in L) { S.expected[s2] = Math.min(L[s2].length - 1, S.start[s2] + 1); S.maxPos[s2] = pos(s2); }
-        S.placed = true; V.ask = null; V.view = 'placed'; save(); return render();
-      }
-      step();
-    }});
-    render();
-  };
-  step();
+  V = {view: 'place', si: 0, i: 0, miss: 0, firstMiss: null, asked: 0, t0: Date.now(), longShown: false};
+  delete S.placeStopped;
+  placeStep();
+}
+function placeStep() {
+  const order = PL_ORDER(), st = order[V.si], list = L[st].filter(k => k.pl !== false), k = list[V.i], timed = STR[st].g.id === 'K';
+  ask(k.gen(), {label: `Finding your level: ${STR[st].name}`, quiet: true, skip: true, timed, onDone: (first, fin, auto) => {
+    V.asked++; const d = day(); d.q++; if (first) d.c++;
+    const known = first && (!timed || auto);     // a fact answered correctly but slowly isn't automatic yet, so it counts like a miss
+    if (timed && first && !auto) ss(k.id).place = 'correct but slow';
+    if (!known) { V.miss++; if (V.firstMiss === null) V.firstMiss = V.i; }
+    V.i++;
+    if (V.miss >= 2 || V.i >= list.length) { setStart(st, list, V.firstMiss); V.si++; V.i = 0; V.miss = 0; V.firstMiss = null; if (V.si < order.length) return placeStep(); return endPlacement(); }
+    placeStep();
+  }});
+  render();
+}
+function setStart(st, list, fm) { S.start[st] = Math.min(L[st].length - 1, fm === 0 ? 0 : list[(fm === null ? list.length : fm) - 1].idx + 1); }
+function endPlacement(stopped) {
+  if (stopped) {      // "These questions take me too long": this area starts at the level being asked, the rest at the start
+    const order = PL_ORDER(), st = order[V.si], list = L[st].filter(k => k.pl !== false);
+    setStart(st, list, V.firstMiss !== null ? V.firstMiss : V.i);
+    order.slice(V.si + 1).forEach(t => { S.start[t] = 0; });
+    S.placeStopped = today();
+  }
+  const fsum = GROUPS[2].t.reduce((a, t) => a + S.start[t], 0); S.start.W = fsum >= 15 ? 4 : fsum >= 10 ? 3 : fsum >= 6 ? 2 : S.start.M >= 3 ? 1 : 0;
+  for (const s2 in L) { S.expected[s2] = Math.min(L[s2].length - 1, S.start[s2] + 1); S.maxPos[s2] = pos(s2); }
+  S.placed = true; V.ask = null; V.view = 'placed'; V.stopped = !!stopped; save(); render();
+}
+function placeIntroHTML() {
+  return head('Finding your level') + `<div class="card"><p>This check finds where you should start in each area. Have your book closed: answer from memory.</p>
+  <p><b>Number facts are timed.</b> We are checking whether each answer is <b>automatic</b>: you know it straight away, in under ${CONFIG.autoSecs} seconds, without counting. Bigger numbers get a little longer. A clock shows how you are doing.</p>
+  <p>If you would have to count or work it out, tap <b>"I haven't learned this yet"</b>. That is useful information, not a fail.</p>
+  <p class="muted small">Each area stops as soon as it finds your level. If the check is taking too long, a button appears after ${Math.round(CONFIG.checkLongSecs / 60)} minutes so you can stop and start practising. Your teacher can move your levels later.</p>
+  <button class="btn pri big" data-act="placego">Start the check</button></div>`;
+}
+function placeHTML() {
+  return head('Finding your level') + askHTML() + `<p class="center muted small">Question ${V.asked + 1}. It stops when it finds your level.</p>` +
+    (V.longShown ? `<p class="center"><button class="btn" data-act="toolong">These questions take me too long</button></p>` : '');
 }
 
 // ---------- game: make the target ----------
@@ -643,7 +689,7 @@ function overviewHTML(P) {
 // ---------- screens ----------
 function render() {
   const app = $('#app');
-  const views = {home: homeHTML, welcome: welcomeHTML, placed: placedHTML, place: () => head('Finding your level') + askHTML() + `<p class="center muted small">Question ${V.asked + 1}. It stops when it finds your level.</p>`, sess: sessHTML, ladder: ladderHTML, me: meHTML, teacher: teacherHTML, game: gameHTML, group: groupHTML, speed: speedHTML, speeddone: speedDoneHTML, gameover: () => head('Time is up') + `<div class="card center"><div style="font-size:48px">🎯</div><h2>${V.n} solved</h2><p class="muted">Your best is ${S.best}.</p><button class="btn pri big" data-act="home">Back to practice</button></div>`};
+  const views = {home: homeHTML, welcome: welcomeHTML, placed: placedHTML, place: placeHTML, placeintro: placeIntroHTML, sess: sessHTML, ladder: ladderHTML, me: meHTML, teacher: teacherHTML, game: gameHTML, group: groupHTML, speed: speedHTML, speeddone: speedDoneHTML, gameover: () => head('Time is up') + `<div class="card center"><div style="font-size:48px">🎯</div><h2>${V.n} solved</h2><p class="muted">Your best is ${S.best}.</p><button class="btn pri big" data-act="home">Back to practice</button></div>`};
   if (!S.name && V.view === 'home') V.view = 'welcome';
   const m = V.modal;
   app.innerHTML = (views[V.view] || homeHTML)() + (m ? `<div class="modal"><div class="card"><p><b>${esc(m.msg)}</b></p>${m.pin ? `<label class="f"><span>Teacher PIN</span><input type="password" id="mpin" inputmode="numeric" autocomplete="off"></label>` : ''}<div class="fb no">${esc(m.err)}</div><div class="row"><button class="btn pri" data-act="myes">${m.pin ? 'Confirm' : 'Yes'}</button><button class="btn" data-act="mno">Cancel</button></div></div></div>` : '');
@@ -654,14 +700,14 @@ function welcomeHTML() {
   return `<h1>Maths Practice</h1><div class="card"><p>Short practice at your level. Have your <b>exercise book and a pen</b> ready: most of the work is written down.</p><label class="f"><span>Your first name</span><input type="text" id="nm" maxlength="24" autocomplete="off"></label><button class="btn pri big" data-act="setname">Start</button></div>${storageOK ? '' : '<p class="fb warn">This browser is not saving progress. Ask your teacher.</p>'}`;
 }
 function placedHTML() {
-  return head('Your starting levels', false) + `<div class="card">${Object.keys(L).map(st => `<p><b style="color:var(${STR[st].col})">${STR[st].name}</b><br>Level ${S.start[st] + 1} of ${L[st].length}: ${esc(L[st][S.start[st]].name)}</p>`).join('')}<p class="muted small">These are a starting point. You can pick any level, and your teacher can change them.</p><button class="btn pri big" data-act="home">Let's go</button></div>`;
+  return head('Your starting levels', false) + `<div class="card">${Object.keys(L).map(st => `<p><b style="color:var(${STR[st].col})">${STR[st].name}</b><br>Level ${S.start[st] + 1} of ${L[st].length}: ${esc(L[st][S.start[st]].name)}</p>`).join('')}${V.stopped ? '<p class="small">You stopped the check early, so some areas start at level 1. That is fine: they will move up quickly if they are easy.</p>' : ''}<p class="muted small">These are a starting point. You can pick any level, and your teacher can change them.</p><button class="btn pri big" data-act="home">Let's go</button></div>`;
 }
 function homeHTML() {
   const d = S.days[today()], newT = S.trophies.filter(t => !S.celebrated || t.d > S.celebrated).length;
   const wob = SK.filter(k => (S.skills[k.id]?.wob || 0) >= 2);
   let h = `<div class="top"><h1 style="margin:0">Hi ${esc(S.name)}</h1><span class="sp"></span><button class="btn sm" data-act="me">🏆 ${S.trophies.length}</button><button class="btn sm" data-act="prog" aria-label="Progress and options">⚙</button></div>
   <div class="row"><div class="seg" role="group" aria-label="Where are you working"><button class="${S.mode === 'class' ? 'on' : ''}" data-act="mode" data-m="class">In class</button><button class="${S.mode === 'home' ? 'on' : ''}" data-act="mode" data-m="home">At home</button></div><span class="muted small">${d ? `Today: ${Math.round(d.t / 60)} min, ${d.s} round${d.s === 1 ? '' : 's'}` : 'Nothing yet today'}</span></div>`;
-  if (!S.placed) h += `<div class="card"><b>Find your level</b><p class="muted small">A quick check, about 5 minutes. It stops as soon as it finds where to start.</p><div class="row"><button class="btn pri" data-act="place">Start the check</button><button class="btn ghost" data-act="skipplace">Skip, I'll choose</button></div></div>`;
+  if (!S.placed) h += `<div class="card"><b>Find your level</b><p class="muted small">A check of what you already know. It stops in each area as soon as it finds where you should start.</p><div class="row"><button class="btn pri" data-act="place">Start the check</button><button class="btn ghost" data-act="skipplace">Skip, I'll choose</button></div></div>`;
   for (const g of GROUPS) {
     const t = recTrack(g), k = rec(t), tot = gTot(g), got = gGot(g), multi = g.t.length > 1, all = got >= tot;
     h += `<div class="card strand" style="--c:var(${g.col})"><div class="row"><b>${g.name}</b><span class="sp"></span><span class="lvl">${multi ? `${got} of ${tot} levels` : `Level ${Math.min(got + 1, tot)} of ${tot}`}</span></div><div class="pbar"><i style="width:${Math.round(100 * got / tot)}%"></i></div>
@@ -699,7 +745,7 @@ function sessHTML() {
   if (V.phase === 'learn') {
     const ex = wp ? null : k.gen();
     h += `<div class="card"><h2 style="margin-top:0">${wp ? 'Before you start' : 'Study this first'}</h2><p>${esc(k.tip)}</p>${ex ? `<div class="sol"><span class="muted small">Example</span><div style="font-size:26px;font-weight:700">${fmt(ex.q)}</div><div style="font-size:22px">Answer: <b>${ansHTML(ex)}</b></div></div>` : ''}
-    <p class="muted small">${wp ? 'There are 3 problems. Do your working in your book, then type the final answer. You get two tries.' : `Next: ${k.tn || CONFIG.typedN} quick questions on screen, then ${k.bn || CONFIG.bookN} in your book.${k.written ? ' Use your book for the working on all of them.' : ''}`}</p><button class="btn pri big" data-act="typed">${wp ? 'Start' : 'Got it, start'}</button></div>`;
+    <p class="muted small">${wp ? 'There are 3 problems. Do your working in your book, then type the final answer. You get two tries.' : `Next: ${k.tn || CONFIG.typedN} quick questions on screen, then ${k.bn || CONFIG.bookN} in your book.${k.written ? ' Use your book for the working on all of them.' : ''}${isFacts(k) ? ` The on-screen questions are timed: the goal is to know each one straight away, in under ${CONFIG.autoSecs} seconds, without counting. The book questions are not timed.` : ''}`}</p><button class="btn pri big" data-act="typed">${wp ? 'Start' : 'Got it, start'}</button></div>`;
   } else if (V.phase === 'book' || V.phase === 'mark') {
     const mk = V.phase === 'mark';
     h += `<div class="card"><h2 style="margin-top:0">${mk ? 'Mark your work' : 'Now in your book'}</h2><p class="muted small">${mk ? 'Tick or cross each one. If it was wrong, write the correct answer next to it.' : 'Write the question number and your answer. Show your working where it helps. No typing for these.'}</p>
@@ -714,8 +760,8 @@ function sessHTML() {
 }
 function doneHTML() {
   const k = V.sk, R = V.res, pct = Math.round(R.acc * 100), st = k.st, g = STR[st].g;
-  const msg = k.bonus ? 'Bonus round done. Using a skill in a problem is how it sticks.' : R.secured ? `You've secured this level.` : R.pass ? 'A strong round. One more good round on another day will secure this level.' : R.acc >= .5 ? 'Good effort. This one needs a bit more practice, and that is normal.' : 'Good effort for sticking with it. This is a tough one right now.';
-  let h = `<div class="card center"><div style="font-size:44px">${R.secured ? '🏅' : R.pass ? '👏' : '💪'}</div><h2>Well done, ${esc(S.name)}</h2><p><b>${nstr(V.sc.c)} out of ${V.sc.n}</b> (${pct}%)</p><p>${msg}</p><p class="muted small">Time on this round: ${mmss(R.secs)}</p></div>`;
+  const msg = k.bonus ? 'Bonus round done. Using a skill in a problem is how it sticks.' : R.slow ? 'Accurate, well done. Some answers took longer than the goal, so they are not automatic yet. Practise this level again, or try a speed round. This round did not count towards securing it.' : R.secured ? `You've secured this level.` : R.pass ? 'A strong round. One more good round on another day will secure this level.' : R.acc >= .5 ? 'Good effort. This one needs a bit more practice, and that is normal.' : 'Good effort for sticking with it. This is a tough one right now.';
+  let h = `<div class="card center"><div style="font-size:44px">${R.secured ? '🏅' : R.pass ? '👏' : '💪'}</div><h2>Well done, ${esc(S.name)}</h2><p><b>${nstr(V.sc.c)} out of ${V.sc.n}</b> (${pct}%)</p><p>${msg}</p>${R.au ? `<p class="small">Automatic answers: <b>${R.au.f} of ${R.au.n}</b> within the goal (average ${secsTxt(R.au.ms / R.au.n)})</p>` : ''}<p class="muted small">Time on this round: ${mmss(R.secs)}</p></div>`;
   if (R.tro.length) h += `<div class="card"><b>New trophies</b>${R.tro.map(t => `<div class="tro"><span class="ic">${t.ic}</span><span>${esc(t.text)}</span></div>`).join('')}</div>`;
   const nxt = rec(st), others = GROUPS.filter(x => x.id !== g.id).map(x => rec(recTrack(x))), opts = [];
   const nonW = Object.keys(L).filter(t => t !== 'W'), top = nonW.reduce((a, t) => a + pos(t), 0) / nonW.reduce((a, t) => a + L[t].length, 0) >= .85;
@@ -723,7 +769,7 @@ function doneHTML() {
   const btn = o => `<p><button class="btn ${o[2] ? 'pri' : ''}" style="width:100%;text-align:left" data-act="${o[3] || 'go'}" data-id="${o[1]}">${esc(o[0])}</button></p>`;
   if (R.stepBack) opts.push([`Step back to build up: ${L[st][k.idx - 1].name}`, L[st][k.idx - 1].id, true]);
   if (S.mode === 'class') {
-    if (!k.bonus && !R.pass && !R.stepBack) opts.push(['Another round of this', k.id, true]);
+    if (!k.bonus && !R.pass && !R.stepBack) opts.push([R.slow ? 'Another round of this, aiming for automatic' : 'Another round of this', k.id, true]);
     if (R.pass && nxt.id !== k.id) opts.push([`Next level: ${nxt.name}`, nxt.id, true]);
     if (link) opts.push([`Use it: word problems with ${STR[st].name.toLowerCase()}`, k.id, false, 'linked']);
     others.forEach(o => opts.push([`${STR[o.st].g.name}: ${o.name}`, o.id, false]));
@@ -757,8 +803,8 @@ function teacherHTML() {
   let h = head('Progress: ' + S.name) + `<div class="tabs">${tabs.map(x => `<button class="${t === x[0] ? 'on' : ''}" data-act="ttab" data-t="${x[0]}">${x[1]}</button>`).join('')}</div>`;
   if (t === 'over') h += overviewHTML(snap()) + `<p class="row"><button class="btn" data-act="celebrate">Mark trophies as celebrated</button><button class="btn" data-act="setexp">Set expected levels to where they are now</button></p><p class="muted small">⭐ trophies are given for securing levels beyond the expected level, so resetting expected every few weeks keeps them meaningful.</p>
     <h3>Progress code</h3><p class="muted small">A snapshot of this screen that the student can send you. Paste it into the Class tab on your own device.</p><textarea readonly id="code">${esc(enc(snap()))}</textarea><p><button class="btn" data-act="copy" data-el="code">Copy code</button></p>`;
-  if (t === 'levels') h += `<p class="muted small">Anyone can look. Changing anything here asks "are you sure" and needs the teacher PIN. <b>Start here</b> moves the student's level to that skill (use it to roll back, or to jump forward). <b>Needs support</b> puts one skill back into practice without moving anything else.</p>` + Object.keys(L).map(st => `<h2 style="color:var(${STR[st].col})">${STR[st].name}</h2><table>${L[st].map(k => { const s = status(k), r = S.skills[k.id]; return `<tr><td>${k.idx + 1}${k.idx === S.expected[st] ? ' <span title="expected level">◆</span>' : ''}</td><td><b>${esc(k.name)}</b><br><span class="chip ${s}">${STLAB[s]}</span> <span class="muted small">${r?.rounds ? `${r.rounds} round${r.rounds > 1 ? 's' : ''}, last ${Math.round(r.last.acc * 100)}% (${r.last.rate})` : ''}</span></td><td><button class="btn sm" data-act="tstart" data-id="${k.id}">Start here</button> <button class="btn sm" data-act="tsec" data-id="${k.id}">Secure</button> <button class="btn sm" data-act="tsup" data-id="${k.id}">Needs support</button> <button class="btn sm ghost" data-act="texp" data-id="${k.id}">Expected ◆</button></td></tr>`; }).join('')}</table>`).join('');
-  if (t === 'log') h += S.log.length ? `<table><tr><th>Day</th><th>Skill</th><th>Score</th><th>Felt</th><th>Time</th><th></th></tr>${S.log.slice().reverse().slice(0, 60).map(l => `<tr><td>${nice(l.d)}</td><td>${esc(l.nm || BY[l.id]?.name || l.id)}${l.speed ? ' ⚡ speed round' : ''}</td><td>${l.sc}/${l.n}</td><td>${l.rate}</td><td>${l.secs != null ? mmss(l.secs) : l.mins + ' min'}</td><td>${l.pass ? '<span class="chip secure">pass</span>' : ''}${l.above ? ' <span class="chip">above level</span>' : ''}</td></tr>`).join('')}</table>` : '<p class="muted">No rounds yet.</p>';
+  if (t === 'levels') h += `<p class="muted small">Anyone can look. Changing anything here asks "are you sure" and needs the teacher PIN. <b>Start here</b> moves the student's level to that skill (use it to roll back, or to jump forward). <b>Needs support</b> puts one skill back into practice without moving anything else.</p>` + Object.keys(L).map(st => `<h2 style="color:var(${STR[st].col})">${STR[st].name}</h2><table>${L[st].map(k => { const s = status(k), r = S.skills[k.id]; return `<tr><td>${k.idx + 1}${k.idx === S.expected[st] ? ' <span title="expected level">◆</span>' : ''}</td><td><b>${esc(k.name)}</b><br><span class="chip ${s}">${STLAB[s]}</span> <span class="muted small">${r?.rounds ? `${r.rounds} round${r.rounds > 1 ? 's' : ''}, last ${Math.round(r.last.acc * 100)}% (${r.last.rate})` : ''}${r?.auto ? ` · automatic ${r.auto.f}/${r.auto.n}, average ${secsTxt(r.auto.avg)}` : ''}${r?.place ? ` · level check: ${esc(r.place)}` : ''}</span></td><td><button class="btn sm" data-act="tstart" data-id="${k.id}">Start here</button> <button class="btn sm" data-act="tsec" data-id="${k.id}">Secure</button> <button class="btn sm" data-act="tsup" data-id="${k.id}">Needs support</button> <button class="btn sm ghost" data-act="texp" data-id="${k.id}">Expected ◆</button></td></tr>`; }).join('')}</table>`).join('');
+  if (t === 'log') h += S.log.length ? `<table><tr><th>Day</th><th>Skill</th><th>Score</th><th>Felt</th><th>Time</th><th></th></tr>${S.log.slice().reverse().slice(0, 60).map(l => `<tr><td>${nice(l.d)}</td><td>${esc(l.nm || BY[l.id]?.name || l.id)}${l.speed ? ' ⚡ speed round' : ''}</td><td>${l.sc}/${l.n}${l.au ? `<br><span class="muted small">${l.au} automatic</span>` : ''}</td><td>${l.rate}</td><td>${l.secs != null ? mmss(l.secs) : l.mins + ' min'}</td><td>${l.pass ? '<span class="chip secure">pass</span>' : ''}${l.above ? ' <span class="chip">above level</span>' : ''}</td></tr>`).join('')}</table>` : '<p class="muted">No rounds yet.</p>';
   if (t === 'class') {
     const cs = Object.values(S.cls).sort((a, b) => a.n.localeCompare(b.n));
     h += `<p class="muted small">For your own device. Paste a student's progress code to add or update them. Nothing is sent anywhere.</p><textarea id="cin" placeholder="MP1:..."></textarea><div class="fb no">${esc(V.err || '')}</div><p><button class="btn pri" data-act="cadd">Add progress code</button></p>
@@ -813,7 +859,9 @@ document.addEventListener('click', e => {
     case 'home': clearInterval(gTimer); clearInterval(spTimer); V = {view: 'home'}; save(); render(); break;
     case 'setname': { const n = $('#nm').value.trim(); if (n) { S.name = n; save(); V = {view: 'home'}; render(); } break; }
     case 'mode': S.mode = el.dataset.m; save(); render(); break;
-    case 'place': startPlacement(); break;
+    case 'place': placeIntro(); break;
+    case 'placego': startPlacement(); break;
+    case 'toolong': if (V.ask && $('#ans')) V.ask.val = $('#ans').value; guard('Stop the check here and start practising? Your teacher can move your levels later.', () => endPlacement(true), false); break;
     case 'skipplace': S.placed = true; save(); render(); break;
     case 'go': startSkill(k); break;
     case 'ladder': V = {view: 'ladder', st: el.dataset.st}; render(); window.scrollTo(0, 0); break;
