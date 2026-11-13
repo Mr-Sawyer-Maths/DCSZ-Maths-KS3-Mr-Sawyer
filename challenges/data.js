@@ -1,12 +1,11 @@
-/* Maths Challenges data. Publish next to index.html. The Teacher tab writes this file: Setup and publish > Copy data.js. */
+/* Maths Challenges content. Publish next to index.html. It holds no student information. The Teacher tab writes this file: Setup and publish > Copy data.js. */
 window.SQ_DATA = {
- "rev": 1,
- "published": "2026-11-12",
+ "rev": 200,
+ "published": "2026-11-13",
  "settings": {
   "title": "Maths Challenges",
   "teacher": "Mr Sawyer",
-  "pin": "6767",
-  "firstBonus": 0,
+  "pinHash": "98432c45",
   "nudge": true
  },
  "topics": [
@@ -70,34 +69,33 @@ window.SQ_DATA = {
  "classes": [
   {
    "id": "y7",
-   "name": "Year 7",
-   "open": [],
+   "name": "Year 7 2026-27",
+   "open": [
+    "number",
+    "factors"
+   ],
    "now": ""
   },
   {
    "id": "y8",
-   "name": "Year 8",
-   "open": [],
+   "name": "Year 8 2026-27",
+   "open": [
+    "number",
+    "factors"
+   ],
    "now": ""
   },
   {
    "id": "y9",
-   "name": "Year 9",
-   "open": [],
+   "name": "Year 9 2026-27",
+   "open": [
+    "number",
+    "factors"
+   ],
    "now": ""
   }
  ],
  "spotlight": [],
- "season": {
-  "name": "Term 4",
-  "start": "2026-11-12"
- },
- "players": [],
- "solves": {},
- "records": {},
- "matches": [],
- "shouts": [],
- "hall": [],
  "rungs": [
   {
    "n": 0,
@@ -131,8 +129,8 @@ window.SQ_DATA = {
   },
   {
    "n": 6,
-   "name": "Papers for older students",
-   "d": "Multiple-choice papers written for Year 9 to 11."
+   "name": "The next contests up",
+   "d": "Multiple-choice contests that follow on from the papers on rungs 3 and 4."
   },
   {
    "n": 7,
@@ -140,11 +138,10 @@ window.SQ_DATA = {
    "d": "Olympiad style. A few problems, and the explanation earns the marks."
   }
  ],
- "reports": {},
  "resources": [
   {"id":"aops-ratings","name":"AoPS competition ratings","url":"https://artofproblemsolving.com/wiki/index.php/AoPS_Wiki:Competition_ratings","kind":"site","status":"using","note":"Compares question difficulty across AMC, MATHCOUNTS and olympiads. Use it to place students."},
   {"id":"nz-maths-olympiad","name":"NZ Maths Olympiad","url":"https://www.mathsolympiad.org.nz/competitions/nzmo/","kind":"papers","status":"using","note":"Round One past problems and official solutions (take-home set of 8 each June)."},
-  {"id":"amc-8","name":"AMC 8","url":"https://artofproblemsolving.com/wiki/index.php/AMC_8_Problems_and_Solutions","kind":"event","status":"using","note":"US middle school competition, 25 questions in 40 minutes. Students who did well should move on to AMC 10 or written solutions."},
+  {"id":"amc-8","name":"AMC 8","url":"https://artofproblemsolving.com/wiki/index.php/AMC_8_Problems_and_Solutions","kind":"event","status":"using","note":"25 questions in 40 minutes. If you have done well in it, move on to AMC 10 or the written solutions on rung 7."},
   {"id":"nz-maths-olympiad-entry","name":"NZ Maths Olympiad (entry)","url":"https://www.mathsolympiad.org.nz/competitions/nzmo/","kind":"event","status":"add","note":"Entry is for NZ intermediate and secondary students only. The past papers are free for anyone."},
   {"id":"nzomo","name":"NZ Online Mathematical Olympiad","url":"https://sites.google.com/view/nzomo/home","kind":"event","status":"add","note":"Proof-based; Junior Division for Years 8–9. Check it still runs and who can enter."},
   {"id":"apsmo","name":"APSMO Maths Olympiad Years 7–8","url":"https://apsmo.edu.au/?p=985","kind":"event","status":"add","note":"School team contest for Australia and NZ (up to Year 9 in NZ). Paid; past papers for members."},
@@ -199,7 +196,7 @@ window.SQ_DATA = {
   {"id":"more-glimpses","name":"More Glimpses","url":"https://fivetwelvethirteen.substack.com/p/glimpses","kind":"site","status":"add","note":"Pascal's triangle, Fibonacci, Egyptian fractions, Number Snakes, Half Fraction Snake: need blurbs."},
   {"id":"ukmt-mentoring-samples","name":"UKMT mentoring samples","url":"https://ukmt.org.uk/enrichment/mentoring","kind":"papers","status":"add","note":"Full in-school sheets are for UK registered schools only; the Pythagoras, Hypatia and Archimedes samples are free."},
   {"id":"graded-junior-problem-sheets","name":"Graded junior problem sheets","kind":"papers","status":"find","note":"A free, school-usable set like the UKMT mentoring sheets, for between rungs 1 and 3."},
-  {"id":"exemplar-written-solutions","name":"Exemplar written solutions","kind":"papers","status":"find","note":"Short model solutions at Year 7–9 level to show what a full solution looks like before rung 7."},
+  {"id":"exemplar-written-solutions","name":"Exemplar written solutions","kind":"papers","status":"find","note":"Short, accessible model solutions to show what a full solution looks like before rung 7."},
   {"id":"report-rubric-and-exemplars","name":"Report rubric and exemplars","kind":"papers","status":"find","note":"A simple rubric and two or three example reports (science fair maths or statistics entries would do)."},
   {"id":"competition-calendar-for-next-year","name":"Competition calendar for next year","kind":"event","status":"find","note":"Dates and fees for Problem Challenge, Otago JMC, AMC, Mathex and Purple Comet, so entries aren't missed."},
   {"id":"level-up-for-thin-topics","name":"Level up for thin topics","kind":"site","status":"find","note":"Self-marking practice for Pythagoras, statistics and transformations (one or none so far)."},
@@ -209,7 +206,7 @@ window.SQ_DATA = {
  "quests": [
   {"id":"t-bidmas","title":"Transum: order of operations","dir":"level","topic":"number","pts":1,"url":"https://transum.org/Go/Bounce.asp?to=bidmas","src":"Transum","blurb":"Self-marking questions on the order of operations. Work up through the levels.","how":"Show me a trophy from Level 3 or higher (the top level if there are fewer)."},
   {"id":"t-negative","title":"Transum: negative numbers","dir":"level","topic":"number","pts":1,"url":"https://transum.org/Go/Bounce.asp?to=negative","src":"Transum","blurb":"Calculations with negative numbers. Work up through the levels.","how":"Show me a trophy from Level 3 or higher (the top level if there are fewer)."},
-  {"id":"all-ten","title":"All Ten","dir":"level","topic":"number","pts":1,"url":"https://beastacademy.com/all-ten","src":"Beast Academy","blurb":"Four digits, new every day. Use all four each time to make every number from 1 to 10.","how":"Show me a finished board. Keep a streak going for the record.","record":{"label":"Days in a row","best":"high"}},
+  {"id":"all-ten","title":"All Ten","dir":"level","topic":"number","pts":1,"url":"https://beastacademy.com/all-ten","src":"Beast Academy","blurb":"Four digits, new every day. Use all four each time to make every number from 1 to 10.","how":"Show me a finished board. Keep a streak going.","record":{"label":"Days in a row","best":"high"}},
   {"id":"nerdle","title":"Nerdle","dir":"level","topic":"number","pts":1,"url":"https://nerdlegame.com/","src":"Nerdle","blurb":"Find the hidden calculation in six tries. A new one every day.","how":"Show me a solved Nerdle. Three tries or fewer earns a shout-out."},
   {"id":"t-hcf","title":"Transum: HCF and LCM","dir":"level","topic":"factors","pts":1,"url":"https://transum.org/Go/Bounce.asp?to=hcf","src":"Transum","blurb":"Highest common factors and lowest common multiples. Work up through the levels.","how":"Show me a trophy from Level 3 or higher (the top level if there are fewer)."},
   {"id":"t-factor-trees","title":"Transum: factor trees","dir":"level","topic":"factors","pts":1,"url":"https://transum.org/Go/Bounce.asp?to=factortrees","src":"Transum","blurb":"Break numbers down into their prime factors.","how":"Show me the trophy for the hardest level you can manage."},
@@ -244,7 +241,7 @@ window.SQ_DATA = {
   {"id":"lockers","title":"The locker problem","dir":"puzzle","topic":"factors","pts":3,"src":"Classic","blurb":"100 lockers, all shut. Student 1 opens every locker. Student 2 shuts every second one. Student 3 changes every third one, and so on up to student 100. Which lockers are open at the end, and why those ones?","how":"Tell me which lockers are open and convince me why."},
   {"id":"rice","title":"Rice on a chessboard","dir":"puzzle","topic":"powers","pts":1,"src":"Classic","blurb":"One grain of rice on the first square of a chessboard, 2 on the second, 4 on the third, doubling every square. How many grains are on the last square? How many altogether? Find a quick way.","how":"Show me the total and the shortcut you found."},
   {"id":"area-mazes","title":"Area mazes","dir":"puzzle","topic":"area","pts":2,"url":"http://inabapuzzle.com/study/menseki_q.pdf","src":"Naoki Inaba","paper":true,"blurb":"Find the missing length or area in each picture. Every one can be solved without fractions or equations, just rectangles. They get hard quickly.","how":"Finish a full page and explain your favourite one to me."},
-  {"id":"euclidea-alpha","title":"Euclidea: Alpha","dir":"puzzle","topic":"angles","pts":3,"url":"https://www.euclidea.xyz/","src":"Euclidea","blurb":"Build geometry with nothing but a straight edge and a compass. The fewer moves you use, the more stars you earn. Finish every level in the first pack.","how":"Show me the finished pack. Total stars go on the records board.","record":{"label":"Total stars","best":"high"}},
+  {"id":"euclidea-alpha","title":"Euclidea: Alpha","dir":"puzzle","topic":"angles","pts":3,"url":"https://www.euclidea.xyz/","src":"Euclidea","blurb":"Build geometry with nothing but a straight edge and a compass. The fewer moves you use, the more stars you earn. Finish every level in the first pack.","how":"Show me the finished pack and your total stars.","record":{"label":"Total stars","best":"high"}},
   {"id":"shikaku","title":"Shikaku","dir":"puzzle","topic":"any","pts":1,"url":"http://inabapuzzle.com/study/shikaku_q.pdf","src":"Naoki Inaba","paper":true,"blurb":"Cut the grid into rectangles so that each rectangle holds exactly one number, and that number is its area.","how":"Show me a finished page."},
   {"id":"skyscrapers","title":"Skyscrapers","dir":"puzzle","topic":"any","pts":2,"url":"https://krazydad.com/skyscraper/","src":"KrazyDad","paper":true,"blurb":"Fill the grid with building heights so each row and column has every height once. The numbers round the edge say how many buildings you can see from there.","how":"Show me a finished 5 by 5."},
   {"id":"four-colours","title":"Four-colour maps","dir":"puzzle","topic":"any","pts":2,"url":"https://erich-friedman.github.io/puzzle/4colors/","src":"Erich Friedman","blurb":"Colour each map with four colours so that no two regions sharing a border match.","how":"Show me three finished maps."},
@@ -267,31 +264,31 @@ window.SQ_DATA = {
   {"id":"bridges","title":"The bridges of Königsberg","dir":"explore","topic":"any","pts":2,"url":"https://mathigon.org/course/graph-theory/bridges","src":"Mathigon","blurb":"Can you walk across all seven bridges exactly once? Try the maps, then find the rule that tells you when a walk like this is possible.","how":"Draw me a map where it is possible and one where it isn't, and say how you can tell."},
   {"id":"josephus","title":"The Josephus problem","dir":"explore","topic":"any","pts":5,"src":"Glimpses","blurb":"41 people stand in a circle. Going round, every second person still standing sits down, until only one is left. Where should you stand? Start with small circles and hunt for the pattern.","how":"Tell me where to stand for 41, and for any size circle."},
   {"id":"evolution-of-trust","title":"The Evolution of Trust","dir":"explore","topic":"any","pts":2,"url":"https://ncase.me/trust/","src":"Nicky Case","blurb":"A half-hour game about why people cooperate and why they cheat. Play it through to the end.","how":"Tell me which strategy wins in the long run, and when it stops winning."},
-  {"id":"sprouts","title":"Sprouts","dir":"play","topic":"any","pts":1,"url":"https://en.wikipedia.org/wiki/Sprouts_(game)","src":"Glimpses","blurb":"Start with three dots. On your turn, join two dots (or a dot to itself) with a line and add a new dot on that line. Lines can't cross and no dot can have more than three lines. The last person able to move wins.","how":"Play someone from the board and tell me the result."},
+  {"id":"sprouts","title":"Sprouts","dir":"play","topic":"any","pts":1,"url":"https://en.wikipedia.org/wiki/Sprouts_(game)","src":"Glimpses","blurb":"Start with three dots. On your turn, join two dots (or a dot to itself) with a line and add a new dot on that line. Lines can't cross and no dot can have more than three lines. The last person able to move wins.","how":"Play a friend and show me the result."},
   {"id":"nim-21","title":"Nim to 21","dir":"play","topic":"any","pts":2,"url":"https://en.wikipedia.org/wiki/Nim","src":"Glimpses","blurb":"Start with 21 counters. Take 1, 2 or 3 on your turn. Whoever takes the last counter wins. Find the strategy that never loses.","how":"Beat me twice in a row. You decide who goes first."},
-  {"id":"teeko","title":"Teeko","dir":"play","topic":"any","pts":1,"url":"https://mathwithbaddrawings.com/wp-content/uploads/2020/05/game-2-teeko.pdf","src":"Math With Bad Drawings","paper":true,"blurb":"Four pieces each on a 5 by 5 board. Get your four in a line or in a square. Invented by a magician.","how":"Play someone from the board and tell me the result."},
-  {"id":"hex","title":"Hex","dir":"play","topic":"any","pts":1,"url":"https://mathateca.nz/downloads/","src":"Mathateca","paper":true,"blurb":"Take turns colouring one hexagon. Join your two sides of the board with an unbroken chain before your opponent joins theirs. It can never end in a draw. Why not?","how":"Play someone from the board and tell me the result."},
+  {"id":"teeko","title":"Teeko","dir":"play","topic":"any","pts":1,"url":"https://mathwithbaddrawings.com/wp-content/uploads/2020/05/game-2-teeko.pdf","src":"Math With Bad Drawings","paper":true,"blurb":"Four pieces each on a 5 by 5 board. Get your four in a line or in a square. Invented by a magician.","how":"Play a friend and show me the result."},
+  {"id":"hex","title":"Hex","dir":"play","topic":"any","pts":1,"url":"https://mathateca.nz/downloads/","src":"Mathateca","paper":true,"blurb":"Take turns colouring one hexagon. Join your two sides of the board with an unbroken chain before your opponent joins theirs. It can never end in a draw. Why not?","how":"Play a friend and show me the result."},
   {"id":"dots-boxes","title":"Dots and boxes","dir":"play","topic":"any","pts":1,"url":"https://en.wikipedia.org/wiki/Dots_and_boxes","src":"Glimpses","blurb":"Take turns drawing one line between two dots. Finish a box and it's yours, and you go again. Most boxes wins. There is far more strategy here than it looks.","how":"Play on a 5 by 5 grid of dots and tell me the result."},
   {"id":"ultimate-ttt","title":"Ultimate noughts and crosses","dir":"play","topic":"any","pts":2,"url":"https://en.wikipedia.org/wiki/Ultimate_tic-tac-toe","src":"Glimpses","blurb":"Nine small boards inside one big one. Where you play decides which board your opponent has to play in next. Win three small boards in a row.","how":"Play a full game and tell me the result."},
-  {"id":"one-oh-one","title":"101 and you're done","dir":"play","topic":"number","pts":1,"url":"https://mathwithbaddrawings.com/wp-content/uploads/2020/10/Game-16-101-Youre-Out.pdf","src":"Math With Bad Drawings","blurb":"Roll a dice six times. Each roll, decide whether it counts as ones or as tens. Closest to 101 without going over wins.","how":"Play best of three against someone from the board."},
-  {"id":"bust-23","title":"23 or bust","dir":"play","topic":"number","pts":1,"url":"https://transum.org/Go/Bounce.asp?to=23bust","src":"Transum","blurb":"A mental arithmetic strategy game for two players, or you against the computer.","how":"Beat the computer three times, then play someone from the board."},
-  {"id":"c-potw","title":"Problem of the Week","dir":"compete","topic":"any","pts":1,"rung":1,"url":"https://cemc.uwaterloo.ca/resources/potw","src":"CEMC (Waterloo)","blurb":"One problem a week from the University of Waterloo, with the solution the week after. Do the Grade 7/8 problem (Problem C). Year 9s can try Problem D.","how":"Show me three weeks of problems, worked in your book."},
+  {"id":"one-oh-one","title":"101 and you're done","dir":"play","topic":"number","pts":1,"url":"https://mathwithbaddrawings.com/wp-content/uploads/2020/10/Game-16-101-Youre-Out.pdf","src":"Math With Bad Drawings","blurb":"Roll a dice six times. Each roll, decide whether it counts as ones or as tens. Closest to 101 without going over wins.","how":"Play best of three against a friend."},
+  {"id":"bust-23","title":"23 or bust","dir":"play","topic":"number","pts":1,"url":"https://transum.org/Go/Bounce.asp?to=23bust","src":"Transum","blurb":"A mental arithmetic strategy game for two players, or you against the computer.","how":"Beat the computer three times, then play a friend."},
+  {"id":"c-potw","title":"Problem of the Week","dir":"compete","topic":"any","pts":1,"rung":1,"url":"https://cemc.uwaterloo.ca/resources/potw","src":"CEMC (Waterloo)","blurb":"One problem a week from the University of Waterloo, with the solution the week after. Start with Problem C; Problem D is the next level up.","how":"Show me three weeks of problems, worked in your book."},
   {"id":"nrich-short","title":"NRICH short problems","dir":"compete","topic":"any","pts":2,"rung":1,"url":"https://nrich.maths.org/11993","src":"NRICH","blurb":"Short problems built from UKMT challenge questions, sorted by topic. Choose a topic we have done and do five.","how":"Show me your five with working, and which was hardest."},
   {"id":"c-psg","title":"Gauss problems on one topic","dir":"compete","topic":"any","pts":2,"rung":1,"url":"https://cemc.uwaterloo.ca/resources/grade-level/grade-7-8","src":"CEMC (Waterloo)","blurb":"Use the CEMC Problem Set Generator to make ten past Gauss problems on a topic we have already done. Answers are on the generated set.","how":"Show me the set, your answers and the one that beat you."},
   {"id":"parallelograms","title":"Parallelograms","dir":"compete","topic":"any","pts":2,"rung":1,"url":"https://parallel.org.uk/parallelograms?latest=1","src":"Parallel (Simon Singh)","blurb":"A fresh set of puzzles, videos and odd bits of maths every week.","how":"Show me your finished Parallelogram.","hidden":true},
-  {"id":"c-gauss7-ab","title":"Gauss Grade 7: Parts A and B","dir":"compete","topic":"any","pts":2,"rung":2,"url":"https://cemc.uwaterloo.ca/resources/past-contests","src":"CEMC (Waterloo)","blurb":"Canada's contest for Years 7 and 8. Pick any year's Grade 7 paper and do questions 1 to 20 with no time limit. Mark it with the solutions.","how":"Bring me the marked paper.","record":{"label":"Correct out of 20","best":"high"},"pass":12},
-  {"id":"c-jmc-15","title":"Junior Maths Challenge: first 15","dir":"compete","topic":"any","pts":2,"rung":2,"url":"https://ukmt.org.uk/competition-papers","src":"UKMT","blurb":"The UK paper for Years 7 and 8. Choose the Junior Mathematical Challenge on the papers page and do questions 1 to 15 with no time limit.","how":"Bring me the marked questions.","record":{"label":"Correct out of 15","best":"high"},"pass":10},
+  {"id":"c-gauss7-ab","title":"Gauss 7: Parts A and B","dir":"compete","topic":"any","pts":2,"rung":2,"url":"https://cemc.uwaterloo.ca/resources/past-contests","src":"CEMC (Waterloo)","blurb":"Canada's Gauss contest has two papers each year, Gauss 7 and the harder Gauss 8. Pick any year's Gauss 7 paper and do questions 1 to 20 with no time limit. Mark it with the solutions.","how":"Bring me the marked paper.","record":{"label":"Correct out of 20","best":"high"},"pass":12},
+  {"id":"c-jmc-15","title":"Junior Maths Challenge: first 15","dir":"compete","topic":"any","pts":2,"rung":2,"url":"https://ukmt.org.uk/competition-papers","src":"UKMT","blurb":"The UK's Junior Mathematical Challenge. Choose it on the papers page and do questions 1 to 15 with no time limit.","how":"Bring me the marked questions.","record":{"label":"Correct out of 15","best":"high"},"pass":10},
   {"id":"jmc-paper","title":"Junior Maths Challenge: full paper","dir":"compete","topic":"any","pts":3,"rung":3,"url":"https://ukmt.org.uk/competition-papers","src":"UKMT","blurb":"All 25 questions in 60 minutes, no calculator. Mark it with the solutions, then read the extended solutions for the ones you missed.","how":"Bring me your marked paper and the question you most want to talk about.","record":{"label":"Correct out of 25","best":"high"},"pass":15},
-  {"id":"c-gauss7","title":"Gauss Grade 7: full paper","dir":"compete","topic":"any","pts":3,"rung":3,"url":"https://cemc.uwaterloo.ca/resources/past-contests","src":"CEMC (Waterloo)","blurb":"All 25 questions in 60 minutes. The last five (Part C) are the hard ones.","how":"Bring me your marked paper.","record":{"label":"Correct out of 25","best":"high"},"pass":15},
-  {"id":"c-kangaroo","title":"Math Kangaroo sample questions","dir":"compete","topic":"any","pts":2,"rung":3,"url":"https://mathkangaroo.org/mks/practice/free-question-samples/","src":"Math Kangaroo USA","blurb":"Free sample questions from the international Kangaroo contest, one set per year. Do the Grades 7–8 section against the clock: about 2 minutes a question.","how":"Show me your answers checked against the answer key."},
-  {"id":"c-gauss8","title":"Gauss Grade 8: full paper","dir":"compete","topic":"any","pts":3,"rung":4,"url":"https://cemc.uwaterloo.ca/resources/past-contests","src":"CEMC (Waterloo)","blurb":"The Grade 8 paper: 25 questions in 60 minutes.","how":"Bring me your marked paper.","record":{"label":"Correct out of 25","best":"high"},"pass":15},
-  {"id":"amc8-paper","title":"AMC 8 paper","dir":"compete","topic":"any","pts":3,"rung":4,"url":"https://artofproblemsolving.com/wiki/index.php/AMC_8_Problems_and_Solutions","src":"Art of Problem Solving","blurb":"The American middle school competition: 25 questions in 40 minutes. Pick a year and sit it under the clock. Every question has worked solutions on the same site.","how":"Bring me your marked paper and the question you most want to talk about.","record":{"label":"Correct out of 25","best":"high"},"pass":13},
-  {"id":"c-mathcounts-sprint","title":"MATHCOUNTS Sprint round","dir":"compete","topic":"any","pts":3,"rung":4,"url":"https://mathcounts.org/pastcompetition","src":"MATHCOUNTS","blurb":"Last year's US middle school competitions are free. Do the Sprint round from the Chapter competition: quick questions, no calculator, answers written in.","how":"Bring me your marked round.","record":{"label":"Sprint score","best":"high"}},
-  {"id":"c-otago-p1","title":"Otago Junior Maths Competition: Part One","dir":"compete","topic":"any","pts":3,"rung":4,"url":"https://maths.otago.ac.nz/jmc/previous","src":"University of Otago","blurb":"New Zealand's competition for Years 9 to 11. Do the Year 9 Part One sample questions.","how":"Show me your answers and the three you found hardest."},
+  {"id":"c-gauss7","title":"Gauss 7: full paper","dir":"compete","topic":"any","pts":3,"rung":3,"url":"https://cemc.uwaterloo.ca/resources/past-contests","src":"CEMC (Waterloo)","blurb":"All 25 questions in 60 minutes. The last five (Part C) are the hard ones.","how":"Bring me your marked paper.","record":{"label":"Correct out of 25","best":"high"},"pass":15},
+  {"id":"c-kangaroo","title":"Math Kangaroo sample questions","dir":"compete","topic":"any","pts":2,"rung":3,"url":"https://mathkangaroo.org/mks/practice/free-question-samples/","src":"Math Kangaroo USA","blurb":"Free sample questions from the international Kangaroo contest, in sections that get harder. Pick a section, do it against the clock (about 2 minutes a question), and move up a section if it was easy.","how":"Show me your answers checked against the answer key."},
+  {"id":"c-gauss8","title":"Gauss 8: full paper","dir":"compete","topic":"any","pts":3,"rung":4,"url":"https://cemc.uwaterloo.ca/resources/past-contests","src":"CEMC (Waterloo)","blurb":"The harder Gauss paper: 25 questions in 60 minutes.","how":"Bring me your marked paper.","record":{"label":"Correct out of 25","best":"high"},"pass":15},
+  {"id":"amc8-paper","title":"AMC 8 paper","dir":"compete","topic":"any","pts":3,"rung":4,"url":"https://artofproblemsolving.com/wiki/index.php/AMC_8_Problems_and_Solutions","src":"Art of Problem Solving","blurb":"The American AMC 8: 25 questions in 40 minutes. Pick a year and sit it under the clock. Every question has worked solutions on the same site.","how":"Bring me your marked paper and the question you most want to talk about.","record":{"label":"Correct out of 25","best":"high"},"pass":13},
+  {"id":"c-mathcounts-sprint","title":"MATHCOUNTS Sprint round","dir":"compete","topic":"any","pts":3,"rung":4,"url":"https://mathcounts.org/pastcompetition","src":"MATHCOUNTS","blurb":"Last year's MATHCOUNTS competitions are free. Do the Sprint round from the Chapter competition: quick questions, no calculator, answers written in.","how":"Bring me your marked round.","record":{"label":"Sprint score","best":"high"}},
+  {"id":"c-otago-p1","title":"Otago Junior Maths Competition: Part One","dir":"compete","topic":"any","pts":3,"rung":4,"url":"https://maths.otago.ac.nz/jmc/previous","src":"University of Otago","blurb":"New Zealand's Junior Mathematics Competition. Do a set of the Part One sample questions.","how":"Show me your answers and the three you found hardest."},
   {"id":"c-junior-kangaroo","title":"Junior Kangaroo","dir":"compete","topic":"any","pts":3,"rung":5,"url":"https://ukmt.org.uk/competition-papers","src":"UKMT","blurb":"The UK follow-on round for top Junior Challenge scorers. No options: you write every answer in.","how":"Bring me your marked paper.","record":{"label":"Correct out of 25","best":"high"},"pass":12},
   {"id":"c-mathcounts-target","title":"MATHCOUNTS Target round","dir":"compete","topic":"any","pts":3,"rung":5,"url":"https://mathcounts.org/pastcompetition","src":"MATHCOUNTS","blurb":"Eight harder questions in pairs, calculator allowed. Use last year's Chapter or State competition.","how":"Bring me your marked round and your working for the last pair."},
-  {"id":"c-pascal","title":"Pascal contest (Grade 9)","dir":"compete","topic":"any","pts":3,"rung":6,"url":"https://cemc.uwaterloo.ca/resources/past-contests","src":"CEMC (Waterloo)","blurb":"The next Waterloo contest after Gauss, written for Grade 9.","how":"Bring me your marked paper.","record":{"label":"Correct out of 25","best":"high"},"pass":15},
-  {"id":"c-imc","title":"Intermediate Maths Challenge","dir":"compete","topic":"any","pts":3,"rung":6,"url":"https://ukmt.org.uk/competition-papers","src":"UKMT","blurb":"The UK paper for Years 9 to 11: 25 questions in 60 minutes.","how":"Bring me your marked paper.","record":{"label":"Correct out of 25","best":"high"},"pass":13},
+  {"id":"c-pascal","title":"Pascal contest","dir":"compete","topic":"any","pts":3,"rung":6,"url":"https://cemc.uwaterloo.ca/resources/past-contests","src":"CEMC (Waterloo)","blurb":"The next Waterloo contest after Gauss.","how":"Bring me your marked paper.","record":{"label":"Correct out of 25","best":"high"},"pass":15},
+  {"id":"c-imc","title":"Intermediate Maths Challenge","dir":"compete","topic":"any","pts":3,"rung":6,"url":"https://ukmt.org.uk/competition-papers","src":"UKMT","blurb":"The next UK paper after the Junior Challenge: 25 questions in 60 minutes.","how":"Bring me your marked paper.","record":{"label":"Correct out of 25","best":"high"},"pass":13},
   {"id":"c-amc10","title":"AMC 10 paper","dir":"compete","topic":"any","pts":5,"rung":6,"url":"https://artofproblemsolving.com/wiki/index.php/AMC_10_Problems_and_Solutions","src":"Art of Problem Solving","blurb":"The next American competition after AMC 8. Hard. Try the first 15 questions in 45 minutes before you try a whole paper.","how":"Bring me your marked paper.","record":{"label":"Correct out of 25","best":"high"}},
   {"id":"c-otago-p2","title":"Otago Junior Maths Competition: written round","dir":"compete","topic":"any","pts":5,"rung":7,"url":"https://maths.otago.ac.nz/jmc/previous","src":"University of Otago","blurb":"Past papers where every answer is a written solution. The competition says full answers to three questions is an excellent effort. Model solutions are on the same page.","how":"Give me full written solutions to two questions. We'll compare them with the model solutions."},
   {"id":"c-jmo","title":"Junior Mathematical Olympiad","dir":"compete","topic":"any","pts":5,"rung":7,"url":"https://ukmt.org.uk/competition-papers","src":"UKMT","blurb":"The UK's top junior round. Section B is six problems that need full written solutions.","how":"Give me full written solutions to two Section B problems."},
@@ -299,14 +296,14 @@ window.SQ_DATA = {
   {"id":"mathex-practice","title":"Mathex practice","dir":"compete","topic":"any","pts":2,"rung":0,"url":"https://drive.google.com/drive/folders/1aYSRWzcN6dwih3_lm0Pngkqtv41jXxYv","src":"Auckland Mathex","blurb":"Past questions from the Auckland team competition. Get a team of four together and race another team through a set.","how":"Tell me both teams' scores and which question split you."},
   {"id":"c-ukmt-team","title":"Team Maths Challenge rounds","dir":"compete","topic":"any","pts":2,"rung":0,"url":"https://ukmt.org.uk/competition-papers","src":"UKMT","blurb":"Past UK team competition papers with several kinds of round, including a relay. Choose Team Maths Challenge on the papers page.","how":"Run one round with a team of four and tell me your score."},
   {"id":"c-mathcounts-team","title":"MATHCOUNTS Team round","dir":"compete","topic":"any","pts":2,"rung":0,"url":"https://mathcounts.org/pastcompetition","src":"MATHCOUNTS","blurb":"Ten problems for a team of four, calculator allowed. Split the work and check each other.","how":"Bring me your team's answers and who solved what."},
-  {"id":"c-purple-comet","title":"Purple Comet practice","dir":"compete","topic":"any","pts":3,"rung":0,"url":"https://purplecomet.org/","src":"Purple Comet","blurb":"A free online team contest held each April: 20 problems in 60 minutes for middle school teams. Practise on a past middle school paper as a team.","how":"Tell me your team's score. Good teams get entered for the real one."},
-  {"id":"explore-writeup","title":"Write up an exploration","dir":"report","topic":"any","pts":5,"src":"Side Quests","blurb":"Take an Explore quest you are already on the board for and turn it into a full report: what you tried, what you found, and why it happens.","how":"Hand in the finished report."},
+  {"id":"c-purple-comet","title":"Purple Comet practice","dir":"compete","topic":"any","pts":3,"rung":0,"url":"https://purplecomet.org/","src":"Purple Comet","blurb":"A free online team contest held each April. Practise on a past paper from its middle school division (20 problems in 60 minutes) as a team.","how":"Tell me your team's score. Good teams get entered for the real one."},
+  {"id":"explore-writeup","title":"Write up an exploration","dir":"report","topic":"any","pts":5,"src":"Side Quests","blurb":"Take an Explore quest you have already finished and turn it into a full report: what you tried, what you found, and why it happens.","how":"Hand in the finished report."},
   {"id":"fair-game","title":"Is it a fair game?","dir":"report","topic":"probability","pts":5,"src":"Side Quests","blurb":"Pick a dice, coin or card game. Work out who should win in theory, then play it at least 100 times and compare. Explain any difference.","how":"Hand in the finished report with your tally."},
   {"id":"data-detective","title":"Data detective","dir":"report","topic":"stats","pts":5,"url":"https://www.censusatschool.org.nz/","src":"Census At School NZ","blurb":"Ask a question about New Zealand students, answer it with real survey data and present it as a one-page poster. Ask for a data set before you start.","how":"Hand in the finished poster."},
-  {"id":"plus-explainer","title":"Explain an article","dir":"report","topic":"any","pts":5,"url":"https://plus.maths.org/","src":"Plus magazine","blurb":"Read an article from Plus, Cambridge University's maths magazine. Write a one-page explainer that a Year 7 student could follow, with one worked example of your own.","how":"Hand in the explainer and the link to the article."},
+  {"id":"plus-explainer","title":"Explain an article","dir":"report","topic":"any","pts":5,"url":"https://plus.maths.org/","src":"Plus magazine","blurb":"Read an article from Plus, Cambridge University's maths magazine. Write a one-page explainer that a friend who hasn't read it could follow, with one worked example of your own.","how":"Hand in the explainer and the link to the article."},
   {"id":"bowland-case","title":"Bowland case study","dir":"report","topic":"any","pts":5,"url":"https://www.bowlandmaths.org.uk/","src":"Bowland Maths","blurb":"Real-life problem-solving projects written for this age group. Work through one and write up your recommendation and the maths behind it.","how":"Hand in the finished report."},
-  {"id":"own-puzzle","title":"Write your own puzzle","dir":"create","topic":"any","pts":3,"src":"Side Quests","blurb":"Make a puzzle in the style of one you have solved: an area maze, a Shikaku, a make-24, a skyscraper grid. It has to have exactly one answer. It goes on the board when someone else solves it.","how":"Give me the puzzle and its solution. I'll hand it to someone on the board."},
-  {"id":"teach-it","title":"Teach a quest","dir":"create","topic":"any","pts":3,"src":"Side Quests","blurb":"Pick a quest you are on the board for and teach it to a group in three minutes, without giving the answer away.","how":"Book a slot with me."},
+  {"id":"own-puzzle","title":"Write your own puzzle","dir":"create","topic":"any","pts":3,"src":"Side Quests","blurb":"Make a puzzle in the style of one you have solved: an area maze, a Shikaku, a make-24, a skyscraper grid. It has to have exactly one answer. It counts when a friend solves it.","how":"Show me the puzzle, your solution and your friend's attempt."},
+  {"id":"teach-it","title":"Teach a quest","dir":"create","topic":"any","pts":3,"src":"Side Quests","blurb":"Pick a quest you have finished and teach it to a group in three minutes, without giving the answer away.","how":"Book a slot with me."},
   {"id":"hexaflexagon","title":"Hexaflexagons","dir":"create","topic":"any","pts":2,"url":"https://www.youtube.com/watch?v=nlgXT6WotQk","src":"Vi Hart","blurb":"Fold a strip of paper triangles into a hexagon with hidden faces. Make one, colour each face as you find it, and work out how many faces it has.","how":"Bring me one that works."},
   {"id":"logo-shapes","title":"Turtle drawings","dir":"create","topic":"angles","pts":2,"url":"https://www.transum.org/software/Logo/","src":"Transum","blurb":"Steer a turtle with typed commands. Draw a square, then a regular hexagon, then a five-pointed star. The turns are the interesting part.","how":"Show me your star and the commands that drew it."},
   {"id":"desmos-picture","title":"Draw with equations","dir":"create","topic":"graphs","pts":3,"url":"https://www.desmos.com/calculator","src":"Desmos","blurb":"Make a picture on Desmos using only equations of straight lines. Ten lines or more. Restrict each line so it stops where you want it to.","how":"Show me the picture and tell me how you chose three of the equations."}
