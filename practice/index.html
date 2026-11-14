@@ -23,7 +23,7 @@ p{margin:6px 0}.muted{color:var(--muted)}.small{font-size:14px}.center{text-alig
 .btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
 .btn.big{font-size:19px;padding:13px 22px}.btn.ghost{background:transparent}.btn.sm{min-height:34px;padding:5px 10px;font-size:14px}
 .btn:disabled{opacity:.45}.btn.danger{color:var(--bad)}
-.top{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.top{display:flex;align-items:center;gap:10px;margin:0 -16px 4px;padding:8px 16px;position:sticky;top:0;z-index:10;background:var(--bg)}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--panel)}
 .seg button{border:0;background:none;padding:7px 14px;cursor:pointer;min-height:38px}
 .seg button.on{background:var(--ink);color:var(--bg)}
@@ -78,9 +78,25 @@ textarea{min-height:110px;font-family:ui-monospace,Menlo,Consolas,monospace;font
 .ops button{width:60px;height:54px;font-size:26px}
 .target{font-size:54px;font-weight:800;text-align:center;color:var(--accent)}
 .flag{padding:5px 0;border-bottom:1px solid var(--line)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
 .modal .card{max-width:420px;width:100%}
 #print{display:none}
+.sheet{width:186mm;color:#000;background:#fff;font-size:15px;line-height:1.35}
+.sheet h2{font-size:20px;margin:0}.sheet .sub{font-size:12px;color:#444}
+.sheet .shd{display:flex;gap:5mm;align-items:flex-end;font-size:14px;border-bottom:1.5px solid #000;padding-bottom:2mm}
+.sheet .ln{display:inline-block;min-width:38mm;border-bottom:1px solid #000;font-weight:700;padding:0 1mm}.sheet .ln.sm{min-width:22mm}
+.sheet .shd2{display:flex;gap:5mm;align-items:center;font-size:14px;margin:2.5mm 0 1mm}.sheet .shd2>span:first-child{white-space:nowrap;flex:none}.sheet .stip{font-size:12.5px;color:#333;font-style:italic}
+.sheet .bx{display:inline-block;border:1.5px solid #000;width:24mm;height:8mm;vertical-align:middle;margin-left:1.5mm;border-radius:1mm}.sheet .bx.sm{width:14mm}
+.sheet .sec{font-weight:700;font-size:13.5px;margin:3mm 0 0}
+.sheet .sq{display:grid;column-gap:6mm}
+.sheet .sq>div{display:flex;gap:2.5mm;align-items:baseline;padding:2.6mm 0;border-bottom:1px dotted #999;font-size:18px}
+.sheet .sq b{font-size:11px;color:#555;min-width:6mm;font-weight:600}
+.sheet .sq.tall>div{min-height:36mm;align-items:flex-start}
+.sheet .sq>.pair{gap:3mm;align-items:center;font-size:16px}.sheet .pair>div{display:flex;gap:1.5mm;align-items:baseline;flex:1;white-space:nowrap}
+.sheet .pair>.known{border:1.5px dashed #666;border-radius:2mm;padding:1mm 2mm}
+.sheet .sft{margin-top:4mm;border-top:1.5px solid #000;padding-top:2mm;font-size:13px}.sheet .sft>div:first-child{display:flex;gap:8mm;align-items:center;margin-bottom:1.5mm}
+.sheet .ans{display:flex;flex-wrap:wrap;gap:1.5mm 7mm;font-size:13px;margin-top:3mm}
+.shprev{overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff;padding:3mm;margin:8px 0}
 @media print{@page{size:A4;margin:12mm}body>*:not(#print){display:none!important}#print{display:block;color:#000;background:#fff}
 #print .pg{page-break-after:always}#print .pg:last-child{page-break-after:auto}
 #print .pq{display:grid;grid-template-columns:1fr 1fr;gap:14px 30px;font-size:19px;margin-top:14px}#print .pq div{padding-bottom:16px;border-bottom:1px dotted #999}
@@ -105,9 +121,13 @@ const CONFIG = {
   bookN: 8,             // written (in the book) questions per round
   passAcc: 0.8,         // round counts as a pass at this accuracy (and not rated "tough")
   gameSecs: 180,        // length of the reward game
-  autoSecs: 3,          // number facts: an answer counts as automatic within this many seconds (answers up to 2 digits)
-  autoShare: 0.8,       // share of typed facts that must be automatic for a round to count towards securing the level
-  checkLongSecs: 120,   // after this long, the level check offers "These questions take me too long"
+  autoSecs: 3,          // whole-number fluency: an answer counts as automatic within this many seconds (small numbers; see autoLimit)
+  autoShare: 0.8,       // share of typed fluency answers that must be automatic for a round to count towards securing the level
+  checkLongSecs: 120,   // after this long, the Fluency challenge offers "These questions take me too long"
+  checkCap: {fluency: 16, skill: 6},   // most questions the level check asks in one area
+  divAfter: 'M6',       // division joins the Fluency challenge only if multiplication reached this level (the tougher tables)
+  quizN: 10,            // questions in the quick quiz after a worksheet
+  quizPass: 0.9,        // the quick quiz secures a level at this accuracy (and, for fluency, autoShare automatic)
   links: [              // "stretch" links shown to students working at the top levels
     ['Transum games and puzzles', 'https://www.transum.org/Software/Game/'],
     ['Beast Academy: All Ten', 'https://beastacademy.com/all-ten'],
@@ -173,45 +193,53 @@ const tab = list => () => { const n = pick(list), k = ri(2, 12); return pick([q(
 const ds = (m, p) => p <= 0 ? String(m * 10 ** (-p)) : (m / 10 ** p).toFixed(p);
 const no5 = n => +Array.from({length: n}, () => pick([1, 2, 3, 4, 6, 7, 8, 9])).join('');
 
-/* ---- Strand K: number facts, in the order of Dylan Kane's Incremental Fact Fluency ----
-   Each level is one fact family. The 5 typed questions are that family only (Kane's "blocked" practice);
-   the book questions alternate the new family with earlier families of the same operation (his "mixed" practice).
-   pl = 1 marks the levels the placement check samples, so strong students are not asked every family.
+/* ---- Number facts, in the order of Dylan Kane's Incremental Fact Fluency ----
+   Each level is one fact family. Typed and book questions mix the new family with earlier families of the same operation.
    x12 and the mixed-tables level are additions for the English 12 x 12 expectation. */
-const fam = (id, name, tip, gen, pl) => sk(id, 'K', name, tip, gen, {op: id[0], pl: !!pl});
+const fam = (id, name, tip, gen) => sk(id, 'K', name, tip, gen, {op: id[0]});
 const com = (a, b, op = '+') => Math.random() < .5 ? `${a} ${op} ${b}` : `${b} ${op} ${a}`;
 const addF = (ns, lo = 1) => () => { const n = pick(ns), a = ri(lo, 10); return q(com(a, n), a + n); };
 const subF = (ns, hi) => () => { const n = pick(ns), x = ri(n + 1, hi); return q(`${x} − ${n}`, x - n); };
 const difF = (ns, hi) => () => { const n = pick(ns), x = ri(n + 2, hi); return q(`${x} − ${x - n}`, n); };
 fam('A1', 'Addition: +1', 'Adding 1 gives the next number when you count.', addF([1]));
-fam('A2', 'Addition: +2', 'Count on two. Even stays even, odd stays odd.', addF([2]), 1);
+fam('A2', 'Addition: +2', 'Count on two. Even stays even, odd stays odd.', addF([2]));
 fam('A3', 'Addition: +0', 'Adding zero changes nothing.', addF([0], 0));
 fam('A4', 'Addition: doubles', 'Doubles are worth knowing by heart. They unlock lots of other facts.', () => { const a = ri(1, 10); return q(`${a} + ${a}`, 2 * a); });
-fam('A5', 'Addition: near doubles', 'Double the smaller number, then add 1. For 7 + 8: double 7 is 14, and one more is 15.', () => { const a = ri(1, 9); return q(com(a, a + 1), 2 * a + 1); }, 1);
+fam('A5', 'Addition: near doubles', 'Double the smaller number, then add 1. For 7 + 8: double 7 is 14, and one more is 15.', () => { const a = ri(1, 9); return q(com(a, a + 1), 2 * a + 1); });
 fam('A6', 'Addition: +3 and +4', 'Count on, or split it: +4 is +2 and +2.', addF([3, 4]));
-fam('A7', 'Addition: +5, +6 and +7', 'Go through 10. For 8 + 6: 8 + 2 makes 10, then 4 more is 14.', addF([5, 6, 7], 3), 1);
+fam('A7', 'Addition: +5, +6 and +7', 'Go through 10. For 8 + 6: 8 + 2 makes 10, then 4 more is 14.', addF([5, 6, 7], 3));
 fam('S1', 'Subtraction: −1 and −2', 'Count back one or two.', subF([1, 2], 12));
 fam('S2', 'Subtraction: difference of 1 or 2', 'The numbers are close together, so count up from the smaller one. 9 − 7: from 7 up to 9 is 2.', difF([1, 2], 12));
 fam('S3', 'Subtraction: taking all or nothing', 'A number take away itself is 0. A number take away 0 stays the same.', () => { const x = ri(1, 12); return pick([q(`${x} − ${x}`, 0), q(`${x} − 0`, x)]); });
-fam('S4', 'Subtraction: −3 and −4', 'Count back, or think addition: 11 − 4 asks "4 and what makes 11?"', subF([3, 4], 13), 1);
+fam('S4', 'Subtraction: −3 and −4', 'Count back, or think addition: 11 − 4 asks "4 and what makes 11?"', subF([3, 4], 13));
 fam('S5', 'Subtraction: difference of 3 or 4', 'Count up from the smaller number to the bigger one.', difF([3, 4], 13));
-fam('S6', 'Subtraction: −9', 'Take away 10, then add 1 back. 16 − 9: 16 − 10 is 6, add 1 is 7.', subF([9], 18), 1);
+fam('S6', 'Subtraction: −9', 'Take away 10, then add 1 back. 16 − 9: 16 − 10 is 6, add 1 is 7.', subF([9], 18));
 fam('S7', 'Subtraction: −5 and −6', 'Think addition: 13 − 6 asks "6 and what makes 13?"', subF([5, 6], 15));
-fam('S8', 'Subtraction: −7 and −8', 'Go back through 10. 15 − 7: take 5 to reach 10, then 2 more is 8.', subF([7, 8], 17), 1);
+fam('S8', 'Subtraction: −7 and −8', 'Go back through 10. 15 − 7: take 5 to reach 10, then 2 more is 8.', subF([7, 8], 17));
 const MT = {2: 'Double it.', 10: 'The digits move one place to the left: 7 becomes 70.', 5: 'Half of ten times. 5 × 8 is half of 80.', 4: 'Double, then double again.', 3: 'Double it, then add one more lot.', 11: 'Up to 9, the digit repeats: 11 × 7 = 77. Then 11 × 10 = 110.', 9: 'Ten lots, take away one lot. 9 × 7 is 70 − 7.', 6: 'Five lots, plus one more lot. 6 × 7 is 35 + 7.', 8: 'Double, double, double.', 7: 'Five lots plus two lots. 7 × 8 is 40 + 16.', 12: 'Ten lots plus two lots. 12 × 7 is 70 + 14.'};
-const GATE_M = [5, 4, 3, 9, 6, 8, 7, 12], GATE_D = [5, 4, 9, 8, 7];
 [2, 10, 5, 0, 4, 3, 11, 9, 6, 8, 7, 12].forEach(n => n === 0
   ? fam('M01', 'Multiplication: ×0 and ×1', 'Times 1 stays the same. Times 0 is always 0.', () => { const n1 = pick([0, 1]), k = ri(1, 10); return q(com(n1, k, '×'), n1 * k); })
-  : fam('M' + n, 'Multiplication: ×' + n, MT[n], () => { const k = ri(2, n === 12 ? 12 : 10); return q(com(n, k, '×'), n * k); }, GATE_M.includes(n)));
+  : fam('M' + n, 'Multiplication: ×' + n, MT[n], () => { const k = ri(2, n === 12 ? 12 : 10); return q(com(n, k, '×'), n * k); }));
 [2, 10, 5, 0, 4, 3, 11, 9, 6, 8, 7, 12].forEach(n => n === 0
   ? fam('D01', 'Division: ÷1 and by itself', 'Dividing by 1 changes nothing. A number divided by itself is 1. Zero shared out is still 0.', () => { const k = ri(2, 12); return pick([q(`${k} ÷ 1`, k), q(`${k} ÷ ${k}`, 1), q(`0 ÷ ${k}`, 0)]); })
-  : fam('D' + n, 'Division: ÷' + n, `Ask the multiplication question: ${n * 7} ÷ ${n} is "${n} times what makes ${n * 7}?"`, () => { const k = ri(2, n === 12 ? 12 : 10); return q(`${n * k} ÷ ${n}`, k); }, GATE_D.includes(n)));
+  : fam('D' + n, 'Division: ÷' + n, `Ask the multiplication question: ${n * 7} ÷ ${n} is "${n} times what makes ${n * 7}?"`, () => { const k = ri(2, n === 12 ? 12 : 10); return q(`${n * k} ÷ ${n}`, k); }));
 
 /* ---- Strand N: number skills ---- */
 sk('N3', 'N', 'Adding and subtracting through a ten', 'Use the fact you know. 8 + 7 = 15, so 28 + 7 ends in 5 and goes into the next ten: 35.', () => { const u = ri(2, 9), v = ri(11 - u, 9), t = ri(1, 8); return pick([q(`${t}${u} + ${v}`, t * 10 + u + v), q(`${t}${u} + ${v}`, t * 10 + u + v), q(`${t * 10 + u + v} − ${v}`, t * 10 + u)]); },
   {chain: () => { const u = ri(4, 9), v = ri(11 - u, 9); return [q(`${u} + ${v}`, u + v), q(`1${u} + ${v}`, 10 + u + v), q(`3${u} + ${v}`, 30 + u + v), q(`6${u} + ${v}`, 60 + u + v)]; }});
 sk('N4', 'N', 'Bonds to 100', 'Jump to the next ten, then to 100. From 64: 6 more is 70, then 30 more is 100. So 36.', () => { const a = pick([ri(1, 19) * 5, ri(11, 89)]); return pick([q(`100 − ${a}`, 100 - a), q(`${a} + □ = 100`, 100 - a)]); });
 sk('N5', 'N', 'Add and subtract 2-digit numbers', 'Split the second number. 47 + 36: add 30 to get 77, then add 6 to get 83.', () => { if (Math.random() < .5) { const a = ri(12, 58), b = ri(12, 99 - a); return q(`${a} + ${b}`, a + b); } const a = ri(31, 95), b = ri(12, a - 11); return q(`${a} − ${b}`, a - b); });
+/* ---- Extending facts (added 14 Nov 2026): whole-number fluency beyond single-digit facts. Timed, like the facts.
+   N3, N4 and N5 moved here from Mental methods; their ids are unchanged so students keep their progress. ---- */
+sk('X1', 'X', 'Bonds to 10', 'Pairs that make 10: 1 and 9, 2 and 8, 3 and 7, 4 and 6, 5 and 5.', () => { const a = ri(1, 9); return pick([q(`${a} + □ = 10`, 10 - a), q(`□ + ${a} = 10`, 10 - a), q(`10 − ${a}`, 10 - a)]); });
+sk('X2', 'X', 'Bonds to 20', 'Make the 10 first. 13 + 7 = 20 because 3 + 7 = 10.', () => { const a = ri(11, 19); return pick([q(`${a} + □ = 20`, 20 - a), q(`20 − ${a}`, 20 - a), q(`20 − ${20 - a}`, a)]); });
+sk('X3', 'X', 'To the next ten', 'How far to the next ten? 37 to 40 is 3, because 7 + 3 = 10.', () => { const t = ri(1, 9), u = ri(1, 9); return pick([q(`${t}${u} + □ = ${(t + 1) * 10}`, 10 - u), q(`${(t + 1) * 10} − ${t}${u}`, 10 - u)]); });
+sk('X4', 'X', 'Adding and taking ones (no new ten)', 'Only the ones change. 23 + 5: 3 + 5 = 8, so 28. 47 − 5: 7 − 5 = 2, so 42.', () => { const t = ri(1, 9), u = ri(1, 8); if (Math.random() < .5) { const v = ri(1, 9 - u); return q(com(`${t}${u}`, v), t * 10 + u + v); } const u2 = ri(2, 9), v = ri(1, u2 - 1); return q(`${t}${u2} − ${v}`, t * 10 + u2 - v); });
+sk('X5', 'X', 'Adding and taking tens', 'Only the tens change. 47 + 30: 4 tens and 3 tens make 7 tens, so 77.', () => { const t = ri(1, 8), u = ri(0, 9), s_ = ri(1, 9 - t); return pick([q(`${t}${u} + ${s_}0`, (t + s_) * 10 + u), q(`${t + s_}${u} − ${s_}0`, t * 10 + u)]); });
+sk('X6', 'X', 'Doubling and halving', 'Split it. Double 36 is double 30 and double 6: 60 + 12 = 72. Half of 74 is half of 70 and half of 4: 35 + 2 = 37.', () => { const a = ri(11, 49), b = ri(6, 99) * 2; return pick([q(`Double ${a}`, 2 * a), q(`Half of ${b}`, b / 2), q(`${a} + ${a}`, 2 * a)]); });
+/* ---- Mental methods with bigger numbers (added 14 Nov 2026): whole-number fluency with a longer time goal ---- */
+sk('N22', 'N', 'Adding and subtracting near tens and hundreds', 'Round, then adjust. 47 + 29: add 30 to get 77, then take 1 back: 76. 365 − 99: take 100, then add 1 back: 266.', () => { const a = ri(21, 79), n9 = pick([9, 19, 29, 39]), b = ri(150, 899); return pick([q(`${a} + ${n9}`, a + n9), q(`${a + 40} − ${n9}`, a + 40 - n9), q(`${b} + 99`, b + 99), q(`${b} − 99`, b - 99)]); });
+sk('N21', 'N', 'Multiplying by splitting', 'Split the bigger number into tens and ones. 14 × 6 is 10 × 6 = 60 plus 4 × 6 = 24, so 84.', () => { const a = ri(11, 29), b = ri(2, 9); return a % 10 === 0 ? q(`${a + 1} × ${b}`, (a + 1) * b) : q(com(a, b, '×'), a * b); });
 sk('KX', 'K', 'All tables mixed, with division', 'For division, ask the multiplication question: 56 ÷ 7 is "7 times what makes 56?"', tab([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]));
 sk('N11', 'N', 'Multiply and divide by 10, 100, 1000', 'The digits move, the decimal point stays. ×100 moves every digit two places to the left; ÷100 moves them two places to the right.', () => { let m = pick([ri(2, 9), ri(11, 99), ri(101, 999)]); if (m % 10 === 0) m++; const p = pick([0, 0, 1, 2]), op = pick(['×', '÷']); let k = pick([1, 2, 3]); if (op === '÷') k = Math.min(k, 4 - p); return q(`${ds(m, p)} ${op} ${10 ** k}`, parseFloat(ds(m, op === '×' ? p - k : p + k))); },
   {chain: () => { let m = ri(12, 98); if (m % 10 === 0) m++; return [q(`${ds(m, 1)} × 10`, m), q(`${ds(m, 1)} × 100`, m * 10), q(`${ds(m, 1)} ÷ 10`, m / 100), q(`${m} ÷ 100`, m / 100)]; }});
@@ -335,9 +363,9 @@ WP[5].push(['repeated doubling (powers of 2)', () => { const n = ri(5, 10); retu
 // Which practice areas (track ids, see GROUPS) each template leans on, in the same order as the templates above.
 // After a good round in an area, the app offers word problems that use it.
 const WTAGS = {
-  1: [['S', 'NM'], ['S', 'NW'], ['A', 'NM'], ['A', 'NW'], ['S', 'NM'], ['NN']],
+  1: [['S', 'X'], ['S', 'NW'], ['A', 'X'], ['A', 'NW'], ['S', 'X'], ['NN']],
   2: [['M'], ['M'], ['D'], ['M'], ['M'], ['D']],
-  3: [['M', 'S'], ['A', 'S', 'NM'], ['M', 'S'], ['D', 'NW'], ['M', 'A'], ['M', 'A'], ['NW']],
+  3: [['M', 'S'], ['A', 'S', 'X'], ['M', 'S', 'NM'], ['D', 'NW'], ['M', 'A', 'NM'], ['M', 'A', 'NM'], ['NW']],
   4: [['FF'], ['FP'], ['FP', 'FE'], ['FF'], ['FP'], ['FD'], ['NW', 'FD']],
   5: [['FP'], ['FF'], ['D', 'M'], ['FP', 'FD'], ['FF'], ['D', 'M'], ['D', 'M'], ['NX']],
   6: [['FP'], ['FP'], ['FP'], ['FF', 'FP'], ['D', 'M'], ['FP']],
@@ -354,9 +382,9 @@ const famIds = op => SK.filter(s => s.op === op).map(s => s.id);
    To add a level: write its sk(...) line above and put its id in a track here. To add an area: add a track. Never rename ids.
    seq: true means the tracks are meant to be done in order (addition first); otherwise the app suggests the least-done area. */
 const GROUPS = [
-  {id: 'K', name: 'Number facts', short: 'Facts', col: '--k', seq: true, tracks: [['A', 'Addition facts', famIds('A')], ['S', 'Subtraction facts', famIds('S')], ['M', 'Multiplication facts', famIds('M')], ['D', 'Division facts', [...famIds('D'), 'KX']]]},
+  {id: 'K', name: 'Number facts', short: 'Facts', col: '--k', seq: true, tracks: [['A', 'Addition facts', famIds('A')], ['S', 'Subtraction facts', famIds('S')], ['X', 'Extending facts', ['X1', 'X2', 'X3', 'X4', 'N3', 'X5', 'N4', 'X6', 'N5']], ['M', 'Multiplication facts', famIds('M')], ['D', 'Division facts', [...famIds('D'), 'KX']]]},
   {id: 'N', name: 'Number skills', short: 'Skills', col: '--n', tracks: [
-    ['NM', 'Mental methods', ['N3', 'N4', 'N5', 'N12']],
+    ['NM', 'Mental methods', ['N22', 'N21', 'N12']],
     ['NP', 'Place value, rounding and estimating', ['N11', 'N16', 'N17', 'NE']],
     ['NW', 'Written methods', ['WA', 'WS', 'WM1', 'WM2', 'WD1', 'WM3', 'WM4', 'WD2', 'WD3']],
     ['NN', 'Negative numbers and order of operations', ['N13', 'N14', 'N15']],
@@ -373,33 +401,95 @@ GROUPS.forEach(g => { g.t = g.tracks.map(x => x[0]); g.tracks.forEach(([t, name,
 SK.forEach(s_ => { if (!STR[s_.st]) console.error('Skill not placed in a track: ' + s_.id); });
 // The simplest families (+1, +0, take away all or nothing, ×0 and ×1, ÷1) are never practised on their own: they are mixed into every later level.
 ['A1', 'A3', 'S3', 'M01', 'D01'].forEach(id => { BY[id].easy = true; });
-// Typed and book questions on a facts level mix the new family with earlier families of the same operation, plus the easy families.
-GROUPS[0].t.forEach(t => L[t].forEach(k => { const e = L[t].filter(x => x.op && x !== k && (x.idx < k.idx || x.easy)); k.old = k.op && e.length ? () => pick(e).gen() : null; }));
-const isFacts = k => STR[k.st].g.id === 'K';
+// Typed and book questions on a facts level mix the new family with earlier families of the same operation.
+// Recent families come up more often than the first ones, and the easy families (+1, +0 ...) at most once a round (see oldQs).
+GROUPS[0].t.forEach(t => L[t].forEach(k => { const e = L[t].filter(x => x !== k && (x.idx < k.idx || (x.easy && x.op === k.op))); k.olds = e; k.old = e.length ? () => pick(e).gen() : null; }));
+function oldQs(k, n) {
+  const pool = k.olds || [], out = [], seen = new Set(); let easyUsed = false;
+  for (let t = 0; out.length < n && t < 80; t++) {
+    let tot = 0; const w = pool.map(x => { const v = x.easy ? (easyUsed ? 0 : .5) : x.idx + 1; tot += v; return v; });
+    if (!tot) break; let r = Math.random() * tot, i = 0; while ((r -= w[i]) > 0) i++;
+    const x = pool[i], Q = x.gen(); if (seen.has(Q.q)) continue; seen.add(Q.q); out.push(Q); if (x.easy) easyUsed = true;
+  }
+  return out;
+}
+/* Every level has a kind. fluency: whole-number recall, shown with a visible clock and an automatic goal.
+   skill: a method practised straight up (fractions, percentages, written methods ...), timed quietly for the record only.
+   context: word problems, not timed at all. */
+SK.forEach(k => { k.kind = k.st === 'W' ? 'context' : (STR[k.st].g.id === 'K' || k.st === 'NM' || k.id === 'N18') ? 'fluency' : 'skill'; });
+const isFacts = k => k.kind === 'fluency';
+// A question gets the visible clock only if it is a fluency question made only of whole numbers (no decimals, fractions, % or negatives).
+const isWholeQ = Q => typeof Q.a === 'number' && Number.isInteger(Q.a) && Q.a >= 0 && !/[.{%]|(^|[\s(])[−-]\d/.test(String(Q.q));
+const showClock = (k, Q) => isFacts(k) && isWholeQ(Q);
+// Area lists as they were on 13 Nov 2026 (build b264b8a). Used only to read progress saved by that build, which stored list positions.
+const OLD_LISTS = {A: 'A1 A2 A3 A4 A5 A6 A7', S: 'S1 S2 S3 S4 S5 S6 S7 S8', M: 'M2 M10 M5 M01 M4 M3 M11 M9 M6 M8 M7 M12', D: 'D2 D10 D5 D01 D4 D3 D11 D9 D6 D8 D7 D12 KX', NM: 'N3 N4 N5 N12', NP: 'N11 N16 N17 NE', NW: 'WA WS WM1 WM2 WD1 WM3 WM4 WD2 WD3', NN: 'N13 N14 N15', NX: 'N18 N19 NX5 NX1 NX2 NX3 NX4', FF: 'F1 F2 F3 F4 F10 F11 F12 F13 F14', FD: 'F5 F15 F16', FE: 'F6 F9', FP: 'F7 F8 F17 F18 F19 F20', W: 'W1 W2 W3 W4 W5 W6'};
+for (const t in OLD_LISTS) OLD_LISTS[t] = OLD_LISTS[t].split(' ');
+// Students see levels numbered without the mixed-in families.
+const real = t => L[t].filter(k => !k.easy);
+const lvNum = k => real(k.st).indexOf(k) + 1;
 const UNITS = ['£', 'p', 'cm', 'm', 'km', 'g', 'kg', '%', '°C', 'ml', 'minutes'];
-SK.forEach(s => { s.eg = s.st === 'W' ? '' : s.gen().q; });
+SK.forEach(s => { s.eg = s.st === 'W' ? '' : s.gen().q; s.speedOK = isFacts(s) && Array.from({length: 40}, () => s.gen()).every(isWholeQ); });
 
 // ---------- state ----------
-const KEY = 'mathsPractice.v1';
-const fresh = () => ({v: 1, name: '', mode: 'class', pin: CONFIG.pin, placed: false, start: {}, expected: {}, maxPos: {}, totalT: null, timeAw: 0, skills: {}, days: {}, trophies: [], log: [], tokens: 0, best: 0, sessions: 0, wpSeen: [], packs: [], set: {games: true, links: true}, celebrated: '', cls: {}});
-let S; try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = fresh(); }
-if (S.pin === '1234') S.pin = CONFIG.pin;                                   // first draft's default
-for (const st in L) { S.start[st] ??= 0; S.expected[st] ??= 1; }
-if (S.totalT === null) S.totalT = Object.values(S.days).reduce((a, d) => a + d.t, 0);
-Object.values(S.cls).forEach(P => { for (const st in L) { P.pos[st] ??= 0; P.st[st] ??= 0; P.ex[st] ??= 0; } });
+/* Saved data, version 2 (14 Nov 2026). Everything about a level is stored under its id, never its position in a list,
+   so levels and areas can be added or reordered without moving any student:
+   - skills[id].as = true: the level is below where the student started (from the level check or "Start here").
+   - exp[area] = id of the expected level; maxId[area] = id of the furthest "next up" level reached ('#end' = all done).
+   - chk[area] = date that area's level check was done. known = level ids that existed when the data was last loaded.
+   Version 1 (10-13 Nov 2026) stored list positions; migrate() converts it using OLD_LISTS. Keep migrate() able to read v1. */
+const KEY = 'mathsPractice.v1';      // the storage key stays the same so existing progress is found
+const fresh = () => ({v: 2, name: '', mode: 'class', pin: CONFIG.pin, placed: false, chk: {}, exp: {}, maxId: {}, known: null, skills: {}, days: {}, trophies: [], log: [], tokens: 0, best: 0, sessions: 0, wpSeen: [], packs: [], set: {games: true, links: true}, celebrated: '', cls: {}, lastBackup: ''});
+// Saved data without a version number is version 1 (fresh() would otherwise stamp it as 2 and skip the conversion).
+const fromSaved = D => { if (D && typeof D === 'object' && Object.keys(D).length && !D.v) D.v = 1; return Object.assign(fresh(), D); };
+let S; try { S = fromSaved(JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = fresh(); }
 let storageOK = true;
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { storageOK = false; } }
 const ss = id => S.skills[id] || (S.skills[id] = {st: 'new', passes: [], rounds: 0, fails: 0, wob: 0});
 const day = () => S.days[today()] || (S.days[today()] = {t: 0, g: 0, q: 0, c: 0, s: 0});
-function status(k) { const s = S.skills[k.id]; if (s?.support) return 'support'; if (s?.st === 'secure') return 'secure'; if (k.easy) return 'mixed'; if (k.idx < S.start[k.st]) return 'assumed'; return s?.rounds ? 'learning' : 'new'; }
+function migrate(D) {
+  if (D.pin === '1234') D.pin = CONFIG.pin;                                   // first draft's default
+  if ((D.v || 1) < 2) {
+    const st = D.start || {}, ex = D.expected || {}, mx = D.maxPos || {}, sk_ = id => D.skills[id] || (D.skills[id] = {st: 'new', passes: [], rounds: 0, fails: 0, wob: 0});
+    D.exp = {}; D.maxId = {}; D.chk = {};
+    for (const t in OLD_LISTS) {
+      const ids = OLD_LISTS[t];
+      ids.slice(0, st[t] || 0).forEach(id => { const r = sk_(id); if (r.st !== 'secure') r.as = true; });
+      if (ex[t] != null && ids[ex[t]] && BY[ids[ex[t]]]) D.exp[BY[ids[ex[t]]].st] = ids[ex[t]];
+      if (mx[t] != null) { const id = mx[t] >= ids.length ? null : ids[mx[t]]; if (id && BY[id]) D.maxId[BY[id].st] = id; else if (!id && L[t]) D.maxId[t] = '#end'; }
+      if (D.placed && t !== 'W') D.chk[t] = 'before 14 Nov';
+    }
+    ['start', 'expected', 'maxPos', 'totalT', 'timeAw'].forEach(x => delete D[x]);
+    D.v = 2;
+  }
+  // Levels added since the data was last loaded count as passed if the student is already beyond them in that area.
+  const known = new Set(D.known || Object.values(OLD_LISTS).flat());
+  for (const t in L) {
+    let last = -1; L[t].forEach((k, i) => { const r = D.skills[k.id]; if (r && (r.as || r.st === 'secure') && known.has(k.id)) last = i; });
+    L[t].forEach((k, i) => { if (!known.has(k.id) && i < last && !D.skills[k.id]) D.skills[k.id] = {st: 'new', passes: [], rounds: 0, fails: 0, wob: 0, as: true}; });
+  }
+  D.known = SK.map(k => k.id);
+  Object.values(D.cls || {}).forEach(P => readCode(P));
+  return D;
+}
+function status(k) { const s = S.skills[k.id]; if (s?.support) return 'support'; if (s?.st === 'secure') return 'secure'; if (k.easy) return 'mixed'; if (s?.as) return 'assumed'; return s?.rounds ? 'learning' : 'new'; }
 const done = k => ['secure', 'assumed', 'mixed'].includes(status(k));
 function pos(st) { const i = L[st].findIndex(k => !done(k)); return i < 0 ? L[st].length : i; }
 const rec = st => L[st][Math.min(pos(st), L[st].length - 1)];
 const frac = st => pos(st) / L[st].length;
 function recTrack(g) { const open = g.t.filter(t => pos(t) < L[t].length); if (!open.length) return g.t[g.t.length - 1]; return g.seq ? open[0] : open.reduce((a, b) => frac(b) < frac(a) ? b : a); }
-const gGot = (g, P) => g.t.reduce((a, t) => a + (P ? P.pos[t] || 0 : pos(t)), 0), gTot = g => g.t.reduce((a, t) => a + L[t].length, 0);
-for (const st in L) S.maxPos[st] ??= pos(st);
-const syncMax = () => { for (const st in L) S.maxPos[st] = Math.max(S.maxPos[st], pos(st)); };
+const idAt = (t, i) => i >= L[t].length ? '#end' : L[t][Math.max(0, i)].id;
+const idxOf = (t, id) => id === '#end' ? L[t].length : L[t].findIndex(k => k.id === id);
+const realBefore = (t, i) => L[t].slice(0, i).filter(k => !k.easy).length;
+// For a class code P, P.pos[area] is the id of that student's next-up level.
+const posOf = (t, P) => { if (!P) return pos(t); const i = idxOf(t, P.pos?.[t] ?? L[t][0].id); return i < 0 ? 0 : i; };
+const gGot = (g, P) => g.t.reduce((a, t) => a + realBefore(t, posOf(t, P)), 0), gTot = g => g.t.reduce((a, t) => a + real(t).length, 0);
+const expIdx = t => S.exp[t] ? idxOf(t, S.exp[t]) : Infinity;
+const maxIdx = t => { const i = S.maxId[t] ? idxOf(t, S.maxId[t]) : -1; return i < 0 ? pos(t) : i; };
+const syncMax = () => { for (const t in L) if (pos(t) > maxIdx(t) || !S.maxId[t]) S.maxId[t] = idAt(t, pos(t)); };
+// "Start here": every level before index i counts as below the start; i and after don't (and lose any secure status).
+function setStart(t, i, keepSecure) {
+  L[t].forEach((k, j) => { const r = S.skills[k.id]; if (j < i) { if (!r || r.st !== 'secure') ss(k.id).as = true; } else if (r) { r.as = false; if (!keepSecure && r.st === 'secure') { r.st = 'new'; r.passes = []; r.fast = false; } } });
+}
 const STLAB = {secure: 'Secure', learning: 'Learning', support: 'Needs support', assumed: 'Below start', mixed: 'Mixed into other levels', new: 'Not started'};
 function trophy(ic, text) { const t = {d: today(), ic, text}; S.trophies.push(t); return t; }
 function flags() {
@@ -419,9 +509,16 @@ function wpSet(level) {
   return items;
 }
 
-// ---------- automatic recall (number facts, typed only) ----------
-// The goal grows with the size of the numbers: 3 s up to 2 digits, 4.5 s for 3 digits, 6 s (double) for 4 or more.
-function autoLimit(Q) { const d = Math.max(1, ...(`${Q.q} ${Q.a}`.match(/\d+/g) || ['0']).map(x => x.length)); return CONFIG.autoSecs * (d <= 2 ? 1 : d === 3 ? 1.5 : 2); }
+// ---------- automatic recall (whole-number fluency, typed only) ----------
+/* The time goal grows with the numbers in the question. Count the digits of all the numbers shown; multiplying or dividing
+   by a number above 12 adds one. Up to 3 digits (7 × 8, 15 − 7, 28 + 7): 3 s. 4 digits (47 + 36, 12 × 12, 37 + □ = 40): 4.5 s.
+   5 or more (100 − 64, 365 + 99, 30 × 40): 6 s, double the base, as agreed with Matt. */
+function autoLimit(Q) {
+  const qs = String(Q.q), nums = qs.match(/\d+/g) || [];
+  let d = nums.reduce((a, x) => a + x.length, 0);
+  if (/[×÷]/.test(qs) && nums.some(x => +x > 12)) d++;
+  return CONFIG.autoSecs * (d <= 3 ? 1 : d === 4 ? 1.5 : 2);
+}
 const secsTxt = ms => (ms / 1000).toFixed(1) + ' s';
 setInterval(() => {
   const A = V.ask, el = $('#qt');
@@ -478,7 +575,7 @@ function skipAns() { const A = V.ask; if (!A) return; A.first = false; A.skipped
 function nextAsk() { const A = V.ask; if (!A) return; A.onDone(A.first === true, A.state === 'right', A.auto); }
 function askHTML() {
   const A = V.ask, Q = A.q, wp = !!Q.steps;
-  let h = `${A.label ? `<div class="muted small center">${esc(A.label)}</div>` : ''}<div class="qbig ${wp ? 'wp' : ''}">${fmt(Q.q)}</div>${A.hint && A.state === 'open' ? `<p class="muted small center">${esc(A.hint)}</p>` : ''}${A.state === 'open' ? (A.lim ? `<p class="center small"><span class="chip">⏱ Timed</span> <span id="qt" class="chip timer">${secsTxt(Date.now() - A.t0)}</span> <span class="muted">Automatic goal: under ${A.lim} s</span></p>` : `<p class="center small"><span class="chip">Not timed</span> <span class="muted">Take your time</span></p>`) : ''}`;
+  let h = `${A.label ? `<div class="muted small center">${esc(A.label)}</div>` : ''}<div class="qbig ${wp ? 'wp' : ''}">${fmt(Q.q)}</div>${A.hint && A.state === 'open' ? `<p class="muted small center">${esc(A.hint)}</p>` : ''}${A.state === 'open' ? (A.lim ? `<p class="center small"><span class="chip">⏱ Timed</span> <span id="qt" class="chip timer">${secsTxt(Date.now() - A.t0)}</span> <span class="muted">Automatic goal: under ${A.lim} s</span></p>` : wp ? `<p class="center small"><span class="chip">Not timed</span> <span class="muted">Take your time</span></p>` : `<p class="center small"><span class="chip">No time goal</span> <span class="muted">Take your time</span></p>`) : ''}`;
   if (A.state === 'open') {
     h += `<div class="fb ${A.cls}">${esc(A.fb)}</div>`;
     if (Q.kind === 'choice') h += `<div class="row" style="justify-content:center">${Q.opts.map((o, i) => `<button class="btn big" data-act="choice" data-i="${i}">${fmt(o)}</button>`).join('')}</div>`;
@@ -502,83 +599,127 @@ const PADKEYS = [['7', '7'], ['8', '8'], ['9', '9'], ['⌫', '⌫', 'Delete'], [
 
 // ---------- practice session ----------
 const PH = ['warm', 'learn', 'typed', 'book', 'mark', 'rate', 'done'];
+const median = a => { const b = a.slice().sort((x, y) => x - y); return b.length ? b[Math.floor((b.length - 1) / 2)] : null; };
 function distinct(k, n, from = []) { const out = from.slice(), seen = new Set(out.map(x => x.q)); for (let t = 0; out.length < n && t < 200; t++) { const x = k.gen(); if (!seen.has(x.q)) { seen.add(x.q); out.push(x); } } return out; }
+// New questions and earlier ones alternate: new, earlier, new, earlier ... (for facts levels; other levels use the level alone).
+function mixedQs(k, n) {
+  if (!(isFacts(k) && k.olds?.length)) return distinct(k, n);
+  const nw = distinct(k, Math.ceil(n * .6)), od = oldQs(k, n - nw.length);
+  return nw.flatMap((x, i) => od[i] ? [x, od[i]] : [x]);
+}
+// Where a round was started from, so ✕ and Back return there rather than to the home screen.
+const fromHere = () => ['ladder', 'group'].includes(V.view) ? {view: V.view, st: V.st, g: V.g, back: V.back} : V.back || null;
 function startSkill(k) {
   const above = k.idx > pos(k.st);
-  V = {view: 'sess', sk: k, sc: {c: 0, n: 0}, above, t0: Date.now()};
+  V = {view: 'sess', sk: k, sc: {c: 0, n: 0}, above, t0: Date.now(), back: fromHere(), tt: [], auto: {f: 0, n: 0, ms: 0}};
   if (k.st === 'W') { V.phase = 'learn'; return render(); }
-  const pool = SK.filter(x => x.st !== 'W' && !x.written && !x.easy && x.id !== k.id && done(x) && x.idx >= S.start[x.st] - 5);
+  const pool = SK.filter(x => x.st !== 'W' && !x.written && !x.easy && x.id !== k.id && done(x) && x.idx >= pos(x.st) - 6);
   if (pool.length >= 2) {
     V.phase = 'warm';
     const w = shuf(pool).sort((a, b) => (S.skills[b.id]?.wob || 0) - (S.skills[a.id]?.wob || 0)).slice(0, 3);
-    runQ(w.map(x => ({q: x.gen(), label: 'Warm-up: ' + x.name, rid: x.id, timed: isFacts(x)})), (it, first, fin, items, auto) => { const s = ss(it.rid), good = first && (!it.timed || auto); s.wob = good ? Math.max(0, s.wob - 1) : s.wob + 1; const d = day(); d.q++; if (first) d.c++; save(); }, () => { V.phase = 'learn'; render(); });
+    runQ(w.map(x => { const Q = x.gen(); return {q: Q, label: 'Warm-up: ' + x.name, rid: x.id, timed: showClock(x, Q)}; }), (it, first, fin, items, auto) => { const s = ss(it.rid), good = first && (!it.timed || auto); s.wob = good ? Math.max(0, s.wob - 1) : s.wob + 1; const d = day(); d.q++; if (first) d.c++; save(); }, () => { V.phase = 'learn'; render(); });
   } else { V.phase = 'learn'; render(); }
 }
-function startLinked(k) {      // bonus word problems that use the area just practised; they don't change any level
+function startLinked(k) {      // bonus word problems that use an area; they don't change any level
   const fns = shuf(linkFns(k.st));
-  V = {view: 'sess', sk: {id: 'WL-' + k.st, name: 'Word problems using ' + STR[k.st].name.toLowerCase(), st: 'W', bonus: true, tip: WTIP, items: [0, 1, 2].map(i => fns[i % fns.length]())}, sc: {c: 0, n: 0}, above: false, t0: Date.now(), phase: 'learn'};
+  V = {view: 'sess', sk: {id: 'WL-' + k.st, name: 'Word problems using ' + STR[k.st].name.toLowerCase(), st: 'W', bonus: true, tip: WTIP, items: [0, 1, 2].map(i => fns[i % fns.length]())}, sc: {c: 0, n: 0}, above: false, t0: Date.now(), phase: 'learn', back: fromHere(), tt: [], auto: {f: 0, n: 0, ms: 0}};
   render();
+}
+// Records the first-attempt time of a typed answer (every question except word problems), and counts automatic answers where the clock showed.
+function noteTime(it, auto) {
+  const ms = V.ask?.ms; if (ms == null) return;
+  V.tt.push(ms);
+  if (it.timed) { V.auto.n++; if (auto) V.auto.f++; V.auto.ms += ms; }
 }
 function startTyped() {
   const k = V.sk;
   V.phase = 'typed';
   if (k.st === 'W') return runQ((k.items || wpSet(k.wl)).map((x, i) => ({q: x, tries: 2, steps: true, label: `Problem ${i + 1} of 3`, hint: 'Work it out in your book first, then type your final answer.'})), (it, first, fin) => { V.sc.n++; V.sc.c += first ? 1 : fin ? .5 : 0; }, () => { V.phase = 'rate'; render(); });
   const tn = k.tn || CONFIG.typedN, bn = k.bn || CONFIG.bookN;
-  const tm = isFacts(k); V.auto = {f: 0, n: 0, ms: 0};
-  const typedQs = tm && k.old ? (() => { const nw = distinct(k, Math.ceil(tn * .6)), od = distinct({gen: k.old}, tn - nw.length); return nw.flatMap((x, i) => od[i] ? [x, od[i]] : [x]); })() : distinct(k, tn);
-  runQ(typedQs.map(x => ({q: x, label: 'Quick check', timed: tm, hint: k.written ? 'Do the working in your book, then type the answer.' : ''})), (it, first, fin, items, auto) => {
-    if (it.again) return; V.sc.n++; if (first) V.sc.c++; else if (!k.written) items.push({q: it.q, again: true, label: 'Try this one again', timed: tm});
-    if (tm) { V.auto.n++; if (auto) V.auto.f++; V.auto.ms += V.ask?.ms || 0; }
+  runQ(mixedQs(k, tn).map(x => ({q: x, label: 'Quick check', timed: showClock(k, x), hint: k.written ? 'Do the working in your book, then type the answer.' : ''})), (it, first, fin, items, auto) => {
+    if (it.again) return; V.sc.n++; if (first) V.sc.c++; else if (!k.written) items.push({q: it.q, again: true, label: 'Try this one again', timed: it.timed});
+    noteTime(it, auto);
   },
     () => {
-      V.phase = 'book'; const ch = k.chain ? k.chain() : []; V.chainN = ch.length; V.mixed = !!k.old;
-      if (k.old) { const nw = distinct(k, bn / 2), od = distinct({gen: k.old}, bn / 2); V.book = nw.flatMap((x, i) => od[i] ? [x, od[i]] : [x]); }
-      else V.book = distinct(k, bn, ch);
+      V.phase = 'book'; V.bt0 = Date.now(); const ch = k.chain ? k.chain() : []; V.chainN = ch.length; V.mixed = isFacts(k) && !!k.olds?.length;
+      V.book = V.mixed ? (() => { const nw = distinct(k, bn / 2), od = oldQs(k, bn / 2); return nw.flatMap((x, i) => od[i] ? [x, od[i]] : [x]); })() : distinct(k, bn, ch);
       V.marks = V.book.map(() => null); render();
     });
 }
+// Milestone trophies after a level changes: a new highest level, finishing an area, beyond the expected level.
+function levelTrophies(k, R) {
+  const np = pos(k.st), n = L[k.st].length;
+  if (np > maxIdx(k.st)) {
+    S.maxId[k.st] = idAt(k.st, np);
+    R.tro.push(np >= n ? trophy('🏆', 'Finished ' + STR[k.st].name) : trophy('🏅', `Reached level ${lvNum(L[k.st][np])} in ${STR[k.st].name}`));
+    if (np - 1 > expIdx(k.st)) R.tro.push(trophy('⭐', 'Beyond expected level: ' + L[k.st][np - 1].name));
+  }
+}
+function roundTrophies(R) {
+  const dd = day(); dd.s++; S.sessions++;
+  if ([5, 10, 20, 30, 50, 75, 100, 150, 200].includes(S.sessions)) R.tro.push(trophy('💪', S.sessions + ' practice rounds completed'));
+  const wk = Object.keys(S.days).filter(x => x >= dOff(6) && S.days[x].s > 0).length;
+  if (wk >= 3 && !S.trophies.some(t => t.ic === '🔥' && t.d >= dOff(6))) R.tro.push(trophy('🔥', 'Practised on 3 days this week'));
+}
+function keepTimes(s, d) { const m = median(V.tt); if (m == null) return; s.times = (s.times || []).concat({d, med: m, n: V.tt.length}).slice(-5); }
+function logRound(e) { S.log.push(e); if (S.log.length > 400) S.log = S.log.slice(-400); }
 function finishRound(rate) {
   const k = V.sk, d = today(), secs = Math.round((Date.now() - V.t0) / 1000);      // time from opening the round to finishing it
   if (V.book) { V.sc.n += V.book.length; V.sc.c += V.marks.filter(m => m === true).length; }
   const acc = V.sc.n ? V.sc.c / V.sc.n : 0, au = V.auto?.n ? V.auto : null;
-  // On a facts level, accurate is not enough: most typed answers must also be automatic for the round to count towards securing it.
+  // On a fluency level, accurate is not enough: most clocked answers must also be automatic for the round to count towards securing it.
   const accurate = acc >= CONFIG.passAcc && rate !== 'hard', fluent = !au || au.f / au.n >= CONFIG.autoShare, pass = accurate && fluent;
-  const R = {acc, pass, slow: accurate && !fluent, au, tro: [], secured: false, stepBack: false, secs};
+  const R = {acc, pass, slow: accurate && !fluent, au, tro: [], secured: false, stepBack: false, secs, tmed: median(V.tt)};
   if (!k.bonus) {
     const s = ss(k.id), was = status(k);
     s.rounds++; s.last = {acc, rate, d};
     if (au) s.auto = {f: au.f, n: au.n, avg: Math.round(au.ms / au.n), d};
+    keepTimes(s, d);
     if (pass) {
       if (!s.passes.includes(d)) s.passes.push(d);
       if (s.hadFail) { R.tro.push(trophy('🌱', 'Bounced back on ' + k.name)); s.hadFail = false; }
       s.fails = 0;
       const fast = acc >= .9 && rate === 'easy';
       if (was !== 'secure' && (s.passes.length >= 2 || fast)) { s.st = 'secure'; s.wob = 0; s.fast = fast && s.passes.length < 2; R.secured = true; s.support = false; }
-    } else if (acc < .5) { s.fails++; s.hadFail = true; if (s.fails >= 2 && k.idx > 0) R.stepBack = true; }
+    } else if (acc < .5) { s.fails++; s.hadFail = true; if (s.fails >= 2 && k.idx > 0 && !L[k.st][k.idx - 1].easy) R.stepBack = true; }
     else s.fails = 0;
-    // Trophies are milestones: a new highest level, finishing an area, and a first perfect round on a skill.
-    const np = pos(k.st), n = L[k.st].length;
-    if (np > S.maxPos[k.st]) {
-      S.maxPos[k.st] = np;
-      R.tro.push(np >= n ? trophy('🏆', 'Finished ' + STR[k.st].name) : trophy('🏅', `Reached level ${np + 1} in ${STR[k.st].name}`));
-      if (np - 1 > S.expected[k.st]) R.tro.push(trophy('⭐', 'Beyond expected level: ' + L[k.st][np - 1].name));
-    }
+    levelTrophies(k, R);
     if (acc === 1 && fluent && !s.perfect) { s.perfect = true; R.tro.push(trophy('🎯', 'First perfect round: ' + k.name)); }
   }
-  const dd = day(); dd.s++; dd.q += V.sc.n; dd.c += V.sc.c; S.sessions++;
-  if ([5, 10, 20, 30, 50, 75, 100, 150, 200].includes(S.sessions)) R.tro.push(trophy('💪', S.sessions + ' practice rounds completed'));
-  const wk = Object.keys(S.days).filter(x => x >= dOff(6) && S.days[x].s > 0).length;
-  if (wk >= 3 && !S.trophies.some(t => t.ic === '🔥' && t.d >= dOff(6))) R.tro.push(trophy('🔥', 'Practised on 3 days this week'));
-  S.log.push({d, id: k.id, nm: k.bonus ? k.name : undefined, sc: +V.sc.c.toFixed(1), n: V.sc.n, rate, pass, above: V.above, secs, au: au ? `${au.f}/${au.n}` : undefined});
-  if (S.log.length > 400) S.log = S.log.slice(-400);
+  const dd = day(); dd.q += V.sc.n; dd.c += V.sc.c;
+  roundTrophies(R);
+  logRound({d, id: k.id, nm: k.bonus ? k.name : undefined, sc: +V.sc.c.toFixed(1), n: V.sc.n, rate, pass, above: V.above, secs, au: au ? `${au.f}/${au.n}` : undefined, tmed: R.tmed, tn: V.tt.length, bsec: V.bsec});
   if (S.set.games) S.tokens = Math.min(3, S.tokens + 1);
   V.res = R; V.phase = 'done'; V.rate = rate; save(); render();
+}
+
+// ---------- quick quiz after a worksheet ----------
+/* A student who has done a printed sheet for a level and feels confident takes a 10-question typed quiz.
+   At least 9 of 10 correct (and, where the clock shows, 8 of 10 automatic) secures the level in one go.
+   The times written on the sheet can be entered, and go into the log for the teacher. */
+function startQuiz(k) { V = {view: 'sess', sk: k, quiz: true, phase: 'qintro', sc: {c: 0, n: 0}, t0: Date.now(), back: fromHere(), tt: [], auto: {f: 0, n: 0, ms: 0}}; render(); }
+function runQuiz() {
+  const k = V.sk; V.sheet = [$('#qs1')?.value.trim(), $('#qs2')?.value.trim()].filter(Boolean).join('–'); V.phase = 'typed'; V.t0 = Date.now();
+  runQ(mixedQs(k, CONFIG.quizN).map((x, i) => ({q: x, label: `Quiz question ${i + 1} of ${CONFIG.quizN}`, timed: showClock(k, x)})), (it, first, fin, items, auto) => { V.sc.n++; if (first) V.sc.c++; noteTime(it, auto); }, finishQuiz);
+}
+function finishQuiz() {
+  const k = V.sk, d = today(), s = ss(k.id), acc = V.sc.n ? V.sc.c / V.sc.n : 0, au = V.auto.n ? V.auto : null;
+  const fluent = !au || au.f / au.n >= CONFIG.autoShare, pass = acc >= CONFIG.quizPass && fluent, was = status(k);
+  const R = {acc, pass, quiz: true, slow: acc >= CONFIG.quizPass && !fluent, au, tro: [], secured: false, secs: Math.round((Date.now() - V.t0) / 1000), tmed: median(V.tt)};
+  s.quizzes = (s.quizzes || 0) + 1; keepTimes(s, d);
+  if (au) s.auto = {f: au.f, n: au.n, avg: Math.round(au.ms / au.n), d};
+  if (pass && was !== 'secure') { s.st = 'secure'; s.support = false; s.wob = 0; s.fast = false; s.quizSecured = d; if (!s.passes.includes(d)) s.passes.push(d); R.secured = true; }
+  levelTrophies(k, R);
+  const dd = day(); dd.q += V.sc.n; dd.c += V.sc.c;
+  roundTrophies(R);
+  logRound({d, id: k.id, quiz: true, sc: V.sc.c, n: V.sc.n, rate: V.sheet ? 'sheet ' + V.sheet : 'quiz', pass, secs: R.secs, au: au ? `${au.f}/${au.n}` : undefined, tmed: R.tmed, tn: V.tt.length});
+  V.ask = null; V.res = R; V.phase = 'done'; save(); render();
 }
 
 // ---------- speed rounds: typed only, number facts only, timed ----------
 // Speed matters where the goal is recall from memory. Nothing written in a book is ever timed.
 let spTimer = null;
-function startSpeed(k, n) { V = {view: 'speed', sk: k, n, i: 0, err: 0, t0: null, val: '', cur: null, flash: false}; render(); }
+function startSpeed(k, n) { V = {view: 'speed', back: fromHere(), sk: k, n, i: 0, err: 0, t0: null, val: '', cur: null, flash: false}; render(); }
 function speedNext() { let x; do { x = V.sk.gen(); } while (V.cur && x.q === V.cur.q); V.cur = x; V.val = ''; }
 function speedGo() {
   V.t0 = Date.now(); speedNext(); render(); clearInterval(spTimer);
@@ -597,7 +738,7 @@ function speedKey(c) {
 function speedEnd() {
   clearInterval(spTimer);
   const secs = (Date.now() - V.t0) / 1000, k = V.sk, s = ss(k.id), n = V.n, err = V.err, tro = [];
-  s.speed ??= {}; const prev = s.speed[n], best = !prev || secs < prev.t;
+  s.speed = s.speed || {}; const prev = s.speed[n], best = !prev || secs < prev.t;
   if (best) s.speed[n] = {t: +secs.toFixed(1), err, d: today()};
   if (n === 30) {                                // under a minute allows 1 slip; under 30 seconds allows none
     if (secs < 60 && err <= 1 && !s.sp60) { s.sp60 = true; tro.push(trophy('⚡', '30 in under a minute: ' + k.name)); }
@@ -605,13 +746,13 @@ function speedEnd() {
   }
   const dd = day(); dd.q += n; dd.c += n;
   S.log.push({d: today(), id: k.id, speed: true, sc: n, n, rate: err + ' slip' + (err === 1 ? '' : 's'), pass: false, above: false, secs: +secs.toFixed(1)});
-  V = {view: 'speeddone', sk: k, n, secs, err, best, prev, tro}; save(); render();
+  V = {view: 'speeddone', back: V.back, sk: k, n, secs, err, best, prev, tro}; save(); render();
 }
 const speedRow = k => { const sp = S.skills[k.id]?.speed, b = sp && Object.keys(sp).map(n => `${n} in ${sp[n].t} s`).join(', '); return `<div class="row" style="margin:6px 0"><span class="small">⚡ Speed round, typed only:</span>${[10, 20, 30].map(n => `<button class="btn sm" data-act="speed" data-id="${k.id}" data-n="${n}">${n}</button>`).join('')}${b ? `<span class="muted small">Best: ${b}</span>` : ''}</div>`; };
 function speedHTML() {
   const k = V.sk;
   if (!V.t0) return head('Speed round') + `<div class="card"><h2 style="margin-top:0">${esc(k.name)}</h2><p><b>${V.n} questions</b>, typed. The clock starts when you press Go.</p><p class="muted small">Type each answer. It moves on by itself when you are right. A wrong answer clears and counts as a slip.</p><p class="muted small">Trophies for 30 questions: under 1 minute with no more than 1 slip ⚡, and under 30 seconds with no slips 🚀.</p><button class="btn pri big" data-act="sgo">Go</button></div>`;
-  return `<div class="top"><button class="btn sm ghost" data-act="home" aria-label="Stop">✕</button><b>${esc(k.name)}</b><span class="sp"></span><span>${V.i + 1} of ${V.n}</span><span id="st" class="chip">${((Date.now() - V.t0) / 1000).toFixed(1)} s</span></div>
+  return `<div class="top"><button class="btn sm ghost" data-act="up" aria-label="Back">✕</button><b>${esc(k.name)}</b><span class="sp"></span><span>${V.i + 1} of ${V.n}</span><span id="st" class="chip">${((Date.now() - V.t0) / 1000).toFixed(1)} s</span></div>
   <div class="qbig">${fmt(V.cur.q)}</div><div id="sv" style="max-width:420px;margin:0 auto;font-size:28px;text-align:center;padding:8px;min-height:56px;border:2px solid var(${V.flash ? '--bad' : '--line'});border-radius:12px;background:var(--panel)">${esc(V.val)}</div>
   <div class="pad" style="grid-template-columns:repeat(3,1fr)">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0'].map(c => `<button data-act="skey" data-k="${c}">${c}</button>`).join('')}</div>`;
 }
@@ -619,40 +760,47 @@ function speedDoneHTML() {
   const k = V.sk;
   return head('Speed round') + `<div class="card center"><div style="font-size:44px">⚡</div><h2>${V.n} questions in ${V.secs.toFixed(1)} seconds</h2><p>${V.err} slip${V.err === 1 ? '' : 's'}. ${V.best ? (V.prev ? `A new best. It was ${V.prev.t} s.` : 'That is your first time for this one.') : `Your best is ${V.prev.t} s.`}</p></div>
   ${V.tro.length ? `<div class="card"><b>New trophies</b>${V.tro.map(t => `<div class="tro"><span class="ic">${t.ic}</span><span>${esc(t.text)}</span></div>`).join('')}</div>` : ''}
-  <div class="card">${speedRow(k)}<p><button class="btn" data-act="go" data-id="${k.id}">A full round of ${esc(k.name)}</button></p></div><p class="center"><button class="btn big" data-act="home">Finish</button></p>`;
+  <div class="card">${speedRow(k)}<p><button class="btn" data-act="go" data-id="${k.id}">A full round of ${esc(k.name)}</button></p></div><p class="center"><button class="btn big" data-act="up">Finish</button></p>`;
 }
 
-// ---------- placement ----------
-// The check is adaptive. It starts each area part-way up (multiplication at ×2, then teen subtraction and addition facts),
-// moves up 2 levels after a good probe (3 if fast), drops down a little after a miss and then rechecks that level,
-// and jumps ahead after 10 good answers in a row. A level counts as "not yet" only after it is missed twice.
-const PL_FACTS = ['M', 'S', 'A', 'D'];
-const PL_ORDER = () => [...PL_FACTS, ...Object.keys(L).filter(t => t !== 'W' && !PL_FACTS.includes(t))];
-const PL_CAP = {facts: 16, other: 6};
-function plList(st) { const fx = STR[st].g.id === 'K'; return L[st].filter(k => !k.easy && (fx || k.pl !== false)); }
+// ---------- level checks ----------
+/* Two kinds of check (14 Nov 2026):
+   - The Fluency challenge: timed whole-number fluency only. Multiplication (from ×2), then subtraction and addition (from teen facts),
+     then Extending facts (bonds, through a ten ...), then division, which joins only if multiplication reached CONFIG.divAfter.
+   - Skills checks: one per group (Number skills; Fractions, decimals, percentages), offered later from the home screen.
+   Both are adaptive: two questions per fluency level (both correct, and automatic when the clock shows), one per skill level.
+   A good result moves up 2 levels (3 if very quick); 10 good answers in a row jumps half-way up. A missed fluency level drops
+   down a little and is rechecked: it counts as "not yet" only after two misses. In skills, one miss counts.
+   Modes: 'fluency' and 'skills' (student, from home), 'area' (student, one area from its card), 'single' (teacher recheck). */
+const FLUENCY_ORDER = ['M', 'S', 'A', 'X', 'D'];
+const isFluencyArea = t => L[t].every(k => isFacts(k));
+function plList(st) { const fx = isFluencyArea(st); return L[st].filter(k => !k.easy && (fx || k.pl !== false)); }
 function plStart(st, list) {
+  const len = list.length, mStrong = pos('M') >= idxOf('M', CONFIG.divAfter);
   if (st === 'M') return 0;
-  if (st === 'S' || st === 'A') return Math.min(2, list.length - 1);
-  if (st === 'D') { const t = Math.max(0, (S.start.M || 0) - 2), i = list.findIndex(k => k.idx >= t); return i < 0 ? 0 : i; }
-  return (S.start.M || 0) >= 6 ? Math.floor(list.length / 3) : 0;
+  if (st === 'S' || st === 'A') return Math.min(2, len - 1);
+  if (st === 'X') return pos('A') >= L.A.length && pos('S') >= L.S.length ? Math.min(2, len - 1) : 0;
+  if (st === 'D') { const t = Math.max(0, pos('M') - 2), i = list.findIndex(k => k.idx >= t); return i < 0 ? 0 : i; }
+  return mStrong ? Math.floor(len / 3) : 0;
 }
-function placeIntro() { V = {view: 'placeintro'}; render(); }
-function startPlacement(areas = PL_ORDER(), single = false) {
-  V = {view: 'place', areas, ai: 0, single, asked: 0, t0: Date.now(), longShown: false, note: ''};
-  if (!single) delete S.placeStopped;
+function placeIntro(mode = 'fluency', areas = FLUENCY_ORDER) { V = {view: 'placeintro', mode, areas, back: fromHere()}; render(); window.scrollTo(0, 0); }
+function startPlacement(areas, mode = 'fluency') {
+  V = {view: 'place', areas, ai: 0, mode, single: mode === 'single', asked: 0, t0: Date.now(), longShown: false, note: '', back: fromHere()};
+  if (mode === 'fluency') delete S.placeStopped;
   beginArea();
 }
 function beginArea() {
-  const st = V.areas[V.ai], list = plList(st), fx = STR[st].g.id === 'K', prev = V.areas[V.ai - 1];
+  const st = V.areas[V.ai], list = plList(st), fx = isFluencyArea(st);
+  if (st === 'D' && V.mode === 'fluency' && pos('M') < idxOf('M', CONFIG.divAfter)) { V.skipD = true; V.ai++; return V.ai < V.areas.length ? beginArea() : endPlacement(); }
   V.pl = {st, list, fx, lo: -1, hi: list.length, pends: [], cur: null, p0: plStart(st, list), n: 0, fast: false};
-  if (V.single) V.inter = {t: 'Recheck: ' + STR[st].name, b: fx ? `<span class="chip">⏱ Timed</span> Goal: each answer in under ${CONFIG.autoSecs} seconds, without counting.` : '<span class="chip">Not timed</span> Take your time, and use your book for working if you need it.'};
-  else if (!fx && (!prev || STR[prev].g.id === 'K')) V.inter = {t: 'Number facts done', b: '<b>Next: number skills, fractions, decimals and percentages.</b></p><p><span class="chip">Not timed</span> Take your time and use your book for working if you need it. Type only the final answer.'};
+  if (V.single || V.mode === 'area') V.inter = {t: (V.single ? 'Recheck: ' : 'Find your level: ') + STR[st].name, b: fx ? `<span class="chip">⏱ Timed</span> Goal: each answer straight away, in under ${CONFIG.autoSecs} seconds for small numbers, without counting.` : `<span class="chip">No time goal</span> Take your time, and use your book for working if you need it.`};
+  else if (st === 'D' && V.mode === 'fluency') V.inter = {t: 'Now division', b: 'Your multiplication went well, so here are some division facts. <span class="chip">⏱ Timed</span> Think of the multiplication: 56 ÷ 7 asks "7 times what makes 56?"'};
   else V.inter = null;
   if (V.inter) return render();
   nextProbe();
 }
 function nextProbe() {
-  const p = V.pl, len = p.list.length, cap = p.fx ? PL_CAP.facts : PL_CAP.other;
+  const p = V.pl, len = p.list.length, cap = p.fx ? CONFIG.checkCap.fluency : CONFIG.checkCap.skill;
   if (p.hi - p.lo <= 1 || p.lo >= len - 1 || p.n >= cap) return finishArea();
   let c;
   const big = V.big; V.big = false;
@@ -663,13 +811,13 @@ function nextProbe() {
   askPlace();
 }
 function askPlace() {
-  const p = V.pl, k = p.list[p.cur];
-  ask(k.gen(), {label: `Finding your level: ${STR[p.st].name}`, quiet: true, skip: true, timed: p.fx, onDone: (first, fin, auto) => {
+  const p = V.pl, k = p.list[p.cur], Q = k.gen(), timed = showClock(k, Q);
+  ask(Q, {label: `Finding your level: ${STR[p.st].name}`, quiet: true, skip: true, timed, kind: k.kind, onDone: (first, fin, auto) => {
     const A = V.ask, d = day(); V.asked++; p.n++; d.q++; if (first) d.c++;
-    const good = first && (!p.fx || auto);      // in number facts, correct but slow isn't automatic yet
-    if (p.fx && first && !auto) ss(k.id).place = 'correct but slow';
+    const good = first && (!timed || auto);      // a fluency answer that is correct but slow isn't automatic yet
+    if (timed && first && !auto) ss(k.id).place = 'correct but slow';
     if (A?.skipped) p.hard = true;
-    if (!(p.fx && good && A.ms <= A.lim * 500)) p.quick = false;
+    if (!(timed && good && A.ms <= A.lim * 500)) p.quick = false;
     V.note = '';
     V.run = good ? (V.run || 0) + 1 : 0;
     if (V.run >= 10) { V.big = true; V.run = 0; V.note = 'Ten right in a row, so we are jumping ahead.'; }
@@ -678,7 +826,6 @@ function askPlace() {
     const X = p.cur;
     if (p.ok) { p.lo = Math.max(p.lo, X); p.pends = p.pends.filter(v => v !== X); p.fast = p.quick; }
     else {
-      // A timed fact level is "not yet" only after it is missed twice (a slow start shouldn't sink it). Untimed areas and "I haven't learned this yet" count straight away.
       p.fast = false;
       if (p.hard || !p.fx || p.pends.includes(X)) { p.hi = Math.min(p.hi, X); p.pends = p.pends.filter(v => v < p.hi); }
       else p.pends.push(X);
@@ -689,40 +836,62 @@ function askPlace() {
 }
 function areaStart(p) { return p.lo < 0 ? 0 : Math.min(L[p.st].length - 1, p.list[p.lo].idx + 1); }
 function applyStart(st, start) {
-  S.start[st] = start;
-  L[st].slice(start).forEach(x => { const s = S.skills[x.id]; if (s && s.st === 'secure') { s.st = 'new'; s.passes = []; s.fast = false; } });
-  S.expected[st] = Math.min(L[st].length - 1, start + 1); S.maxPos[st] = pos(st);
+  setStart(st, start);
+  if (!S.exp[st]) S.exp[st] = L[st][Math.min(L[st].length - 1, start + 1)].id;      // the teacher's expected level is never overwritten
+  S.chk[st] = today(); syncMax();
 }
 function finishArea() {
   applyStart(V.pl.st, areaStart(V.pl));
+  V.done = (V.done || []).concat(V.pl.st);
   V.ai++; V.note = '';
   if (V.ai < V.areas.length) return beginArea();
   endPlacement();
 }
+function wordStart() {      // word problems start from how far the student is in fractions, decimals and percentages
+  if (GROUPS[2].t.some(t => !S.chk[t]) || L.W.some(k => S.skills[k.id]?.rounds)) return;
+  const f = GROUPS[2].t.reduce((a, t) => a + realBefore(t, pos(t)), 0), w = f >= 15 ? 4 : f >= 10 ? 3 : f >= 6 ? 2 : pos('M') >= 4 ? 1 : 0;
+  setStart('W', w); if (!S.exp.W) S.exp.W = L.W[Math.min(5, w + 1)].id; S.chk.W = today(); syncMax();
+}
 function endPlacement(stopped) {
-  if (stopped) {      // "These questions take me too long": this area starts just after what they showed; areas not reached start at the beginning
-    if (V.pl) applyStart(V.pl.st, areaStart(V.pl));
-    V.areas.slice(V.ai + 1).forEach(t => applyStart(t, 0));
+  if (stopped) {      // "These questions take me too long": this area starts just after what was shown; areas not reached stay unchecked
+    if (V.pl && V.pl.n) { applyStart(V.pl.st, areaStart(V.pl)); V.done = (V.done || []).concat(V.pl.st); }
     S.placeStopped = today();
   }
+  wordStart();
   if (V.single) { V = {view: 'teacher', tab: 'levels', unlocked: true}; save(); return render(); }
-  const fsum = GROUPS[2].t.reduce((a, t) => a + S.start[t], 0); S.start.W = fsum >= 15 ? 4 : fsum >= 10 ? 3 : fsum >= 6 ? 2 : S.start.M >= 3 ? 1 : 0;
-  S.expected.W = Math.min(L.W.length - 1, S.start.W + 1); S.maxPos.W = pos('W');
-  S.placed = true; V.ask = null; V.view = 'placed'; V.stopped = !!stopped; save(); render();
+  if (V.mode === 'fluency') S.placed = true;
+  V.ask = null; V.view = 'placed'; V.stopped = !!stopped; save(); render();
 }
 function placeIntroHTML() {
-  return head('Finding your level') + `<div class="card"><p>This check finds where you should start in each area. Have your book closed and answer from memory.</p>
-  <div class="tline"><span class="chip">⏱ Timed</span><span><b>Number facts first:</b> multiplication, subtraction, addition and division. We are checking whether each answer is <b>automatic</b>: you know it straight away, in under ${CONFIG.autoSecs} seconds, without counting. Bigger numbers get a little longer. A clock shows how you are doing.</span></div>
-  <div class="tline"><span class="chip">Not timed</span><span><b>Then everything else:</b> number skills, fractions, decimals and percentages. Take your time and use your book for working if you need it.</span></div>
+  if (V.mode === 'skills') {
+    const g = GROUPS.find(x => x.t.includes(V.areas[0]));
+    return head('Find your level: ' + g.name) + `<div class="card"><p>A short check of each area in ${esc(g.name.toLowerCase())}, about 2 minutes each. It stops in each area as soon as it finds where you should start.</p>
+    <div class="tline"><span class="chip">No time goal</span><span>Take your time and use your book for working if you need it. Type only the final answer. Your time is recorded for your teacher, but there is no clock to beat.</span></div>
+    ${g.t.includes('NM') ? `<div class="tline"><span class="chip">⏱ Timed</span><span>Except mental methods with whole numbers, which show a clock like the number facts.</span></div>` : ''}
+    <p>If you haven't learned something yet, tap <b>"I haven't learned this yet"</b>. That is useful information, not a fail.</p>
+    <button class="btn pri big" data-act="placego">Start</button></div>`;
+  }
+  return head('Fluency challenge') + `<div class="card"><p>This finds where you should start in number facts. Have your book closed and answer from memory.</p>
+  <div class="tline"><span class="chip">⏱ Timed</span><span><b>Every question is timed.</b> We are checking whether each answer is <b>automatic</b>: you know it straight away, in under ${CONFIG.autoSecs} seconds, without counting. Bigger numbers get longer, up to double. A clock shows how you are doing.</span></div>
+  <p>The order: multiplication, then subtraction and addition, then bigger facts like bonds to 100 and 28 + 7. If your multiplication goes well, some division comes at the end.</p>
   <p>It doesn't start from the very basics. Get questions right and it moves up quickly; 10 right in a row and it jumps ahead. Get some wrong and it drops down a little, then checks again.</p>
   <p>If you would have to count or work a fact out, tap <b>"I haven't learned this yet"</b>. That is useful information, not a fail.</p>
-  <p class="muted small">If the check is taking too long, a button appears after ${Math.round(CONFIG.checkLongSecs / 60)} minutes so you can stop and start practising. Your teacher can move your levels later.</p>
-  <button class="btn pri big" data-act="placego">Start the check</button></div>`;
+  <p class="muted small">Fractions, percentages and other skills have their own short checks later, with no time goal. If this is taking too long, a button appears after ${Math.round(CONFIG.checkLongSecs / 60)} minutes so you can stop and start practising.</p>
+  <button class="btn pri big" data-act="placego">Start the challenge</button></div>`;
 }
 function placeHTML() {
-  if (V.inter) return head('Finding your level') + `<div class="card"><h2 style="margin-top:0">${esc(V.inter.t)}</h2><p>${V.inter.b}</p><button class="btn pri big" data-act="plcont">Carry on</button></div>`;
-  return head('Finding your level') + (V.note ? `<div class="fb ok">${esc(V.note)}</div>` : '') + askHTML() + `<p class="center muted small">Question ${V.asked + 1}. It stops in each area when it finds your level.</p>` +
-    (V.longShown && !V.single ? `<p class="center"><button class="btn" data-act="toolong">These questions take me too long</button></p>` : '');
+  const title = V.mode === 'fluency' ? 'Fluency challenge' : 'Finding your level';
+  if (V.inter) return head(title) + `<div class="card"><h2 style="margin-top:0">${esc(V.inter.t)}</h2><p>${V.inter.b}</p><button class="btn pri big" data-act="plcont">Carry on</button></div>`;
+  return head(title) + (V.note ? `<div class="fb ok">${esc(V.note)}</div>` : '') + askHTML() + `<p class="center muted small">Question ${V.asked + 1}. It stops in each area when it finds your level.</p>` +
+    (V.longShown && ['fluency', 'skills'].includes(V.mode) ? `<p class="center"><button class="btn" data-act="toolong">These questions take me too long</button></p>` : '');
+}
+function placedHTML() {
+  const done_ = V.done || [], notDone = (V.areas || []).filter(t => !done_.includes(t) && !(t === 'D' && V.skipD));
+  return head(V.mode === 'fluency' ? 'Your starting levels' : 'Your levels', false) + `<div class="card">${done_.map(t => { const p = pos(t), n = real(t).length; return `<p><b style="color:var(${STR[t].col})">${STR[t].name}</b><br>${p >= L[t].length ? 'Every level is secure already.' : `Level ${lvNum(L[t][p])} of ${n}: ${esc(L[t][p].name)}`}</p>`; }).join('')}
+  ${V.skipD ? `<p><b style="color:var(--k)">Division facts</b><br>Not checked yet. Division joins once your multiplication reaches ${esc(BY[CONFIG.divAfter].name.replace('Multiplication: ', ''))}. Until then, it starts at the beginning.</p>` : ''}
+  ${notDone.length ? `<p class="small">Not checked: ${notDone.map(t => esc(STR[t].name)).join(', ')}. You can check ${notDone.length > 1 ? 'these' : 'this'} later from the home screen, or just start practising.</p>` : ''}
+  ${V.mode === 'fluency' ? '<p class="small">Fractions, percentages and other skills have their own short checks, on the home screen, with no time goal.</p>' : ''}
+  <p class="muted small">These are a starting point. You can pick any level, and your teacher can change them.</p><button class="btn pri big" data-act="up">Let's go</button></div>`;
 }
 
 // ---------- game: make the target ----------
@@ -739,9 +908,9 @@ let gTimer = null;
 function gNew() { const P = puzzle(V.g.hard); Object.assign(V.g, {t: P.tiles.slice(), orig: P.tiles.slice(), target: P.target, sel: null, op: null, hist: [], msg: ''}); }
 function startGame() {
   if (S.tokens < 1) return;
-  V = {view: 'game', g: {hard: pos('M') > 5, solved: 0, end: Date.now() + CONFIG.gameSecs * 1000}}; gNew(); render();
+  V = {view: 'game', back: fromHere(), g: {hard: pos('M') > 5, solved: 0, end: Date.now() + CONFIG.gameSecs * 1000}}; gNew(); render();
   clearInterval(gTimer);
-  gTimer = setInterval(() => { if (V.view !== 'game') return clearInterval(gTimer); const left = Math.max(0, Math.ceil((V.g.end - Date.now()) / 1000)); const el = $('#gt'); if (el) el.textContent = Math.floor(left / 60) + ':' + pad2(left % 60); if (left <= 0) { clearInterval(gTimer); S.tokens--; S.best = Math.max(S.best, V.g.solved); const n = V.g.solved; V = {view: 'gameover', n}; save(); render(); } }, 500);
+  gTimer = setInterval(() => { if (V.view !== 'game') return clearInterval(gTimer); const left = Math.max(0, Math.ceil((V.g.end - Date.now()) / 1000)); const el = $('#gt'); if (el) el.textContent = Math.floor(left / 60) + ':' + pad2(left % 60); if (left <= 0) { clearInterval(gTimer); S.tokens--; S.best = Math.max(S.best, V.g.solved); const n = V.g.solved; V = {view: 'gameover', n, back: V.back}; save(); render(); } }, 500);
 }
 function gTap(i) {
   const g = V.g; g.msg = '';
@@ -761,54 +930,110 @@ setInterval(() => {
   if (document.visibilityState !== 'visible') return;
   const slow = V.view === 'sess' && (['book', 'mark'].includes(V.phase) || V.sk?.st === 'W');   // writing in a book means long gaps between taps
   if (Date.now() - lastAct > (slow ? 300000 : 60000)) return;
-  if (V.view === 'game') day().g += 5; else if (['sess', 'place', 'speed'].includes(V.view)) { day().t += 5; S.totalT += 5; } else return;
+  if (V.view === 'game') day().g += 5; else if (['sess', 'place', 'speed'].includes(V.view)) day().t += 5; else return;
   if (Math.random() < .2) save();
 }, 5000);
 
 // ---------- snapshot / progress code ----------
 function snap() {
   const days = {}; Object.keys(S.days).filter(d => d >= dOff(27)).forEach(d => { const x = S.days[d]; days[d] = [x.t, x.q, +x.c.toFixed(1), x.s, x.g]; });
-  return {n: S.name, d: today(), pos: Object.fromEntries(Object.keys(L).map(st => [st, pos(st)])), st: S.start, ex: S.expected, days, tr: S.trophies.slice(-30).map(t => [t.d, t.ic, t.text]), fl: flags().map(f => f[0] + ': ' + f[1].name), ses: S.sessions, cel: S.celebrated};
+  const tm = {}; SK.forEach(k => { const t = S.skills[k.id]?.times; if (t?.length && t[t.length - 1].d >= dOff(27)) tm[k.id] = t[t.length - 1].med; });
+  return {v: 2, n: S.name, d: today(), pos: Object.fromEntries(Object.keys(L).map(t => [t, idAt(t, pos(t))])), ex: {...S.exp}, chk: Object.keys(S.chk), days, tr: S.trophies.slice(-30).map(t => [t.d, t.ic, t.text]), fl: flags().map(f => f[0] + ': ' + f[1].name), ses: S.sessions, cel: S.celebrated, fc: fluencyCode(), tm};
 }
-const enc = o => 'MP1:' + btoa(unescape(encodeURIComponent(JSON.stringify(o))));
-const dec = s => { s = s.trim(); if (!s.startsWith('MP1:')) throw new Error('not a progress code'); return JSON.parse(decodeURIComponent(escape(atob(s.slice(4).replace(/\s/g, ''))))); };
+/* The fluency code: the next-up level in each number facts area, in the order addition, subtraction, extending, multiplication,
+   division, written as level ids ("A5 S4 X3 M6 D2"); "A*" means every addition level is done. Short enough to read off a
+   screen and type into the Class or Sheets tab on the teacher's device. */
+const FC_ORDER = ['A', 'S', 'X', 'M', 'D'];
+const fluencyCode = () => FC_ORDER.map(t => pos(t) >= L[t].length ? t + '*' : L[t][pos(t)].id).join(' ');
+function readFluencyCode(txt) {
+  const out = {};
+  for (const tok of String(txt).toUpperCase().replace(/[^A-Z0-9* ]/g, ' ').split(/\s+/).filter(Boolean)) {
+    if (tok.endsWith('*') && L[tok.slice(0, -1)]) out[tok.slice(0, -1)] = '#end';
+    else { const id = Object.keys(BY).find(x => x.toUpperCase() === tok); if (id && FC_ORDER.includes(BY[id].st)) out[BY[id].st] = id; }
+  }
+  return Object.keys(out).length ? out : null;
+}
+const enc = o => 'MP2:' + btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+const dec = s => { s = s.trim(); if (!/^MP[12]:/.test(s)) throw new Error('not a progress code'); return readCode(JSON.parse(decodeURIComponent(escape(atob(s.slice(4).replace(/\s/g, '')))))); };
+// Brings a class code up to date. Codes from before 14 Nov 2026 (MP1) gave list positions; they are turned into level ids.
+function readCode(P) {
+  if (P.v !== 2) {
+    const pos_ = {}, ex = {};
+    for (const t in OLD_LISTS) {
+      const ids = OLD_LISTS[t], i = P.pos?.[t];
+      if (i != null) { const id = i >= ids.length ? null : ids[i]; if (id && BY[id]) pos_[BY[id].st] = id; else if (!id) pos_[t] = '#end'; }
+      const e = P.ex?.[t]; if (e != null && ids[e] && BY[ids[e]]) ex[BY[ids[e]].st] = ids[e];
+    }
+    P.pos = pos_; P.ex = ex; delete P.st; P.v = 2;
+  }
+  P.days = P.days || {}; P.tr = P.tr || []; P.fl = P.fl || []; P.pos = P.pos || {}; P.ex = P.ex || {};
+  return P;
+}
 const sumDays = (days, n, i) => Object.keys(days).filter(d => d >= dOff(n - 1)).reduce((a, d) => a + days[d][i], 0);
 function overviewHTML(P) {
-  const ds_ = Object.keys(P.days).sort().reverse().slice(0, 14);
-  return `<div class="row"><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Active practice, last 7 days</div><b style="font-size:24px">${Math.round(sumDays(P.days, 7, 0) / 60)} min</b></div><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Rounds, last 7 days</div><b style="font-size:24px">${sumDays(P.days, 7, 3)}</b></div><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Last 28 days</div><b style="font-size:24px">${Math.round(sumDays(P.days, 28, 0) / 60)} min</b></div></div>
-  <h3>Levels</h3><table><tr><th>Strand</th><th>Working at</th><th>Started at</th><th>Expected</th></tr>${Object.keys(L).map(st => `<tr><td>${STR[st].name}</td><td><b>${Math.min(P.pos[st] + 1, L[st].length)}</b> of ${L[st].length}: ${esc(L[st][Math.min(P.pos[st], L[st].length - 1)].name)}${P.pos[st] >= L[st].length ? ' (all secure)' : ''}</td><td>${P.st[st] + 1}</td><td>${P.ex[st] + 1}</td></tr>`).join('')}</table>
-  <h3>Things to look at</h3>${P.fl.length ? P.fl.map(f => `<div class="flag">${esc(f)}</div>`).join('') : '<p class="muted">Nothing flagged.</p>'}
+  const ds_ = Object.keys(P.days).sort().reverse().slice(0, 14), tracks = P.light ? FC_ORDER : Object.keys(L);
+  const lvl = t => { const i = posOf(t, P); return i >= L[t].length ? 'All secure' : `<b>${lvNum(L[t][i])}</b> of ${real(t).length}: ${esc(L[t][i].name)}`; };
+  return (P.fc ? `<p>Fluency code: <b style="font-size:20px;letter-spacing:1px">${esc(P.fc)}</b> <span class="muted small">Type it into Sheets or Class on the teacher's device.</span></p>` : '') +
+  (P.light ? '<p class="muted small">Added from a fluency code, so only the number facts levels are known.</p>' : `<div class="row"><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Active practice, last 7 days</div><b style="font-size:24px">${Math.round(sumDays(P.days, 7, 0) / 60)} min</b></div><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Rounds, last 7 days</div><b style="font-size:24px">${sumDays(P.days, 7, 3)}</b></div><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Last 28 days</div><b style="font-size:24px">${Math.round(sumDays(P.days, 28, 0) / 60)} min</b></div></div>`) +
+  `<h3>Levels</h3><table><tr><th>Area</th><th>Working at</th><th>Expected</th></tr>${tracks.map(t => { const e = P.ex?.[t] && BY[P.ex[t]]; return `<tr><td>${STR[t].name}</td><td>${lvl(t)}</td><td>${e ? lvNum(e) : ''}</td></tr>`; }).join('')}</table>` +
+  (P.light ? '' : `<h3>Things to look at</h3>${P.fl.length ? P.fl.map(f => `<div class="flag">${esc(f)}</div>`).join('') : '<p class="muted">Nothing flagged.</p>'}
   <h3>Trophies since last celebrated${P.cel ? ' (' + nice(P.cel) + ')' : ''}</h3>${P.tr.filter(t => !P.cel || t[0] > P.cel).map(t => `<div class="tro"><span class="ic">${t[1]}</span><span>${esc(t[2])}<br><span class="muted small">${nice(t[0])}</span></span></div>`).join('') || '<p class="muted">None yet.</p>'}
-  <h3>Daily record</h3>${ds_.length ? `<table><tr><th>Day</th><th>Active</th><th>Rounds</th><th>Questions</th><th>Correct</th><th>Game</th></tr>${ds_.map(d => { const x = P.days[d]; return `<tr><td>${nice(d)}</td><td>${Math.round(x[0] / 60)} min</td><td>${x[3]}</td><td>${x[1]}</td><td>${x[1] ? Math.round(100 * x[2] / x[1]) + '%' : ''}</td><td>${Math.round(x[4] / 60)} min</td></tr>`; }).join('')}</table>` : '<p class="muted">No practice recorded yet.</p>'}`;
+  <h3>Daily record</h3>${ds_.length ? `<table><tr><th>Day</th><th>Active</th><th>Rounds</th><th>Questions</th><th>Correct</th><th>Game</th></tr>${ds_.map(d => { const x = P.days[d]; return `<tr><td>${nice(d)}</td><td>${Math.round(x[0] / 60)} min</td><td>${x[3]}</td><td>${x[1]}</td><td>${x[1] ? Math.round(100 * x[2] / x[1]) + '%' : ''}</td><td>${Math.round(x[4] / 60)} min</td></tr>`; }).join('')}</table>` : '<p class="muted">No practice recorded yet.</p>'}`);
 }
+
+S = migrate(S); syncMax();
+
+// ---------- navigation ----------
+/* ✕, and the browser or iPad Back gesture, go up one step: a round or check returns to the screen it was started from,
+   an area's levels return to its group, everything else to the home screen. The app keeps one extra history entry while a
+   student is inside it, so Back never unloads the page. A round in progress asks before stopping. */
+function goUp() {
+  clearInterval(gTimer); clearInterval(spTimer);
+  const b = V.back;
+  if (b) V = {...b};
+  else if (V.view === 'ladder' && STR[V.st].g.t.length > 1) V = {view: 'group', g: STR[V.st].g.id};
+  else V = {view: 'home'};
+  save(); render(); window.scrollTo(0, 0);
+}
+function backBtn() {
+  if (V.modal) { V.modal = null; return render(); }
+  if (V.view === 'sess') {
+    if (V.phase === 'done' || (['learn', 'qintro'].includes(V.phase) && !V.sc.n)) return goUp();
+    if (V.ask && $('#ans')) V.ask.val = $('#ans').value;
+    return guard(V.quiz ? 'Stop the quiz? It will not be saved.' : 'Stop this round? It will not be saved.', () => { V.ask = null; goUp(); }, false);
+  }
+  if (V.view === 'place') { if (V.ask && $('#ans')) V.ask.val = $('#ans').value; return guard('Stop the check here? The levels it has found so far are kept.', () => endPlacement(true), false); }
+  goUp();
+}
+function keepHistory() { if (V.view !== 'home' && V.view !== 'welcome' && !(history.state && history.state.mp)) { try { history.pushState({mp: 1}, ''); } catch (e) {} } }
+addEventListener('popstate', () => { if (V.view === 'home' || V.view === 'welcome') return; backBtn(); });
 
 // ---------- screens ----------
 function render() {
   const app = $('#app');
-  const views = {home: homeHTML, welcome: welcomeHTML, placed: placedHTML, place: placeHTML, placeintro: placeIntroHTML, sess: sessHTML, ladder: ladderHTML, me: meHTML, teacher: teacherHTML, game: gameHTML, group: groupHTML, speed: speedHTML, speeddone: speedDoneHTML, gameover: () => head('Time is up') + `<div class="card center"><div style="font-size:48px">🎯</div><h2>${V.n} solved</h2><p class="muted">Your best is ${S.best}.</p><button class="btn pri big" data-act="home">Back to practice</button></div>`};
+  const views = {home: homeHTML, welcome: welcomeHTML, placed: placedHTML, place: placeHTML, placeintro: placeIntroHTML, sess: sessHTML, ladder: ladderHTML, me: meHTML, teacher: teacherHTML, game: gameHTML, group: groupHTML, speed: speedHTML, speeddone: speedDoneHTML, gameover: () => head('Time is up') + `<div class="card center"><div style="font-size:48px">🎯</div><h2>${V.n} solved</h2><p class="muted">Your best is ${S.best}.</p><button class="btn pri big" data-act="up">Back to practice</button></div>`};
   if (!S.name && V.view === 'home') V.view = 'welcome';
   const m = V.modal;
   app.innerHTML = (views[V.view] || homeHTML)() + (m ? `<div class="modal"><div class="card"><p><b>${esc(m.msg)}</b></p>${m.pin ? `<label class="f"><span>Teacher PIN</span><input type="password" id="mpin" inputmode="numeric" autocomplete="off"></label>` : ''}<div class="fb no">${esc(m.err)}</div><div class="row"><button class="btn pri" data-act="myes">${m.pin ? 'Confirm' : 'Yes'}</button><button class="btn" data-act="mno">Cancel</button></div></div></div>` : '');
   const a = $('#mpin') || $('#ans'); if (a) { a.focus(); try { a.setSelectionRange(a.value.length, a.value.length); } catch (e) {} }
+  keepHistory();
 }
-const head = (t, back = true) => `<div class="top">${back ? '<button class="btn sm ghost" data-act="home" aria-label="Close">✕</button>' : ''}<h1 style="margin:0">${esc(t)}</h1></div>`;
+const head = (t, back = true) => `<div class="top">${back ? '<button class="btn sm ghost" data-act="up" aria-label="Back">✕</button>' : ''}<h1 style="margin:0">${esc(t)}</h1></div>`;
 function welcomeHTML() {
   return `<h1>Maths Practice</h1><div class="card"><p>Short practice at your level. Have your <b>exercise book and a pen</b> ready: most of the work is written down.</p><label class="f"><span>Your first name</span><input type="text" id="nm" maxlength="24" autocomplete="off"></label><button class="btn pri big" data-act="setname">Start</button></div>${storageOK ? '' : '<p class="fb warn">This browser is not saving progress. Ask your teacher.</p>'}`;
-}
-function placedHTML() {
-  return head('Your starting levels', false) + `<div class="card">${Object.keys(L).map(st => `<p><b style="color:var(${STR[st].col})">${STR[st].name}</b><br>Level ${S.start[st] + 1} of ${L[st].length}: ${esc(L[st][S.start[st]].name)}</p>`).join('')}${V.stopped ? '<p class="small">You stopped the check early, so some areas start at level 1. That is fine: they will move up quickly if they are easy.</p>' : ''}<p class="muted small">These are a starting point. You can pick any level, and your teacher can change them.</p><button class="btn pri big" data-act="home">Let's go</button></div>`;
 }
 function homeHTML() {
   const d = S.days[today()], newT = S.trophies.filter(t => !S.celebrated || t.d > S.celebrated).length;
   const wob = SK.filter(k => (S.skills[k.id]?.wob || 0) >= 2);
   let h = `<div class="top"><h1 style="margin:0">Hi ${esc(S.name)}</h1><span class="sp"></span><button class="btn sm" data-act="me">🏆 ${S.trophies.length}</button><button class="btn sm" data-act="prog" aria-label="Progress and options">⚙</button></div>
   <div class="row"><div class="seg" role="group" aria-label="Where are you working"><button class="${S.mode === 'class' ? 'on' : ''}" data-act="mode" data-m="class">In class</button><button class="${S.mode === 'home' ? 'on' : ''}" data-act="mode" data-m="home">At home</button></div><span class="muted small">${d ? `Today: ${Math.round(d.t / 60)} min, ${d.s} round${d.s === 1 ? '' : 's'}` : 'Nothing yet today'}</span></div>`;
-  if (!S.placed) h += `<div class="card"><b>Find your level</b><p class="muted small">A check of what you already know. Number facts are timed; everything else isn't. It moves up quickly when you know things.</p><div class="row"><button class="btn pri" data-act="place">Start the check</button><button class="btn ghost" data-act="skipplace">Skip, I'll choose</button></div></div>`;
+  if (!S.placed) h += `<div class="card"><b>Start with the Fluency challenge</b><p class="muted small">A timed check of your number facts: multiplication, subtraction, addition, then bigger facts like bonds to 100. It moves up quickly when you know things. Fractions, percentages and other skills have their own short checks later, with no time goal.</p><div class="row"><button class="btn pri" data-act="place">Start the challenge</button><button class="btn ghost" data-act="skipplace">Skip, I'll choose</button></div></div>`;
   for (const g of GROUPS) {
     const t = recTrack(g), k = rec(t), tot = gTot(g), got = gGot(g), multi = g.t.length > 1, all = got >= tot;
+    const unchecked = S.placed && !['K', 'W'].includes(g.id) && g.t.some(x => !S.chk[x]);
     h += `<div class="card strand" style="--c:var(${g.col})"><div class="row"><b>${g.name}</b><span class="sp"></span><span class="lvl">${multi ? `${got} of ${tot} levels` : `Level ${Math.min(got + 1, tot)} of ${tot}`}</span></div><div class="pbar"><i style="width:${Math.round(100 * got / tot)}%"></i></div>
     <p>${all ? 'Every level is secure. Keep it fresh:' : 'Next up:'} ${multi ? `<span class="muted">${STR[t].name}:</span> ` : ''}<b>${esc(k.name)}</b>${k.eg ? `<span class="eg">${fmt(k.eg)}</span>` : ''}</p>
-    <div class="row"><button class="btn pri" data-act="go" data-id="${k.id}">Practise</button>${multi ? `<button class="btn" data-act="group" data-g="${g.id}">Choose an area</button>` : `<button class="btn" data-act="ladder" data-st="${t}">All levels</button>`}</div></div>`;
+    <div class="row"><button class="btn pri" data-act="go" data-id="${k.id}">Practise</button>${multi ? `<button class="btn" data-act="group" data-g="${g.id}">Choose an area</button>` : `<button class="btn" data-act="ladder" data-st="${t}">All levels</button>`}${unchecked ? `<button class="btn ghost" data-act="gcheck" data-g="${g.id}">Find my level</button>` : ''}</div></div>`;
   }
   if (wob.length) h += `<div class="card"><b>Worth another look</b><p class="muted small">These slipped in your warm-ups.</p>${wob.map(k => `<div class="row" style="margin:6px 0"><span>${esc(k.name)}</span><span class="sp"></span><button class="btn sm" data-act="go" data-id="${k.id}">Practise</button></div>`).join('')}</div>`;
   if (S.set.games && S.tokens > 0) h += `<div class="card"><div class="row"><span>🎯 <b>Target game</b> earned (${S.tokens})</span><span class="sp"></span><button class="btn" data-act="game">Play 3 minutes</button></div></div>`;
@@ -819,34 +1044,46 @@ function groupHTML() {
   const g = GROUPS.find(x => x.id === V.g), r = recTrack(g);
   let h = head(g.name) + `<p class="muted small">${g.seq ? 'Each area has its own trophy. If you are still building your facts, start with addition and work down the list.' : 'Pick any area. The app suggests the one you have done least of.'}</p>`;
   g.t.forEach(t => {
-    const p = pos(t), n = L[t].length, k = rec(t), fin = p >= n;
-    h += `<div class="card strand" style="--c:var(${g.col})"><div class="row"><b>${STR[t].name}</b>${t === r && !fin ? '<span class="chip learning">Suggested</span>' : ''}<span class="sp"></span><span class="lvl">${fin ? '🏆 Trophy earned' : `Level ${p + 1} of ${n}`}</span></div><div class="pbar"><i style="width:${Math.round(100 * p / n)}%"></i></div>
+    const p = pos(t), n = real(t).length, k = rec(t), fin = p >= L[t].length, got = realBefore(t, p);
+    h += `<div class="card strand" style="--c:var(${g.col})"><div class="row"><b>${STR[t].name}</b>${t === r && !fin ? '<span class="chip learning">Suggested</span>' : ''}<span class="sp"></span><span class="lvl">${fin ? '🏆 Trophy earned' : `Level ${lvNum(k)} of ${n}`}</span></div><div class="pbar"><i style="width:${Math.round(100 * got / n)}%"></i></div>
     <p>${fin ? 'Keep it fresh:' : 'Next up:'} <b>${esc(k.name)}</b>${k.eg ? `<span class="eg">${fmt(k.eg)}</span>` : ''}</p>${fin ? '' : `<p class="muted small">You haven't earned your ${STR[t].name.toLowerCase()} trophy yet.</p>`}
-    <div class="row"><button class="btn ${t === r ? 'pri' : ''}" data-act="go" data-id="${k.id}">Practise</button><button class="btn" data-act="ladder" data-st="${t}">All levels</button></div></div>`;
+    <div class="row"><button class="btn ${t === r ? 'pri' : ''}" data-act="go" data-id="${k.id}">Practise</button><button class="btn" data-act="ladder" data-st="${t}">All levels</button>${!S.chk[t] && t !== 'W' && !fin ? `<button class="btn ghost" data-act="tcheck" data-st="${t}">Find my level</button>` : ''}</div></div>`;
   });
   return h;
 }
 function ladderHTML() {
-  const st = V.st, p = pos(st);
-  return head(STR[st].name) + `<p class="muted small">Pick any level. The app suggests the one marked "next up".</p>` + L[st].map(k => {
-    const s = status(k), r = S.skills[k.id];
+  const st = V.st, p = pos(st), lf = st !== 'W' ? linkFns(st) : [];
+  let h = head(STR[st].name) + `<p class="muted small">Pick any level. The app suggests the one marked "next up".${st !== 'W' ? ' Done a printed sheet? The <b>quick quiz</b> on that level can secure it.' : ''}</p>`;
+  if (!S.chk[st] && st !== 'W' && p < L[st].length) h += `<div class="card"><div class="row"><span><b>Not sure where to start?</b> <span class="muted small">A short check of this area.</span></span><span class="sp"></span><button class="btn" data-act="tcheck" data-st="${st}">Find my level</button></div></div>`;
+  if (lf.length >= 2) h += `<div class="card strand" style="--c:var(--w)"><div class="row"><b>In context</b><span class="sp"></span><span class="muted small">${lf.length} kinds of word problem use this area</span></div><p class="muted small">Using a skill in a problem is how it sticks. A bonus: it doesn't change your levels.</p><button class="btn" data-act="linked" data-id="${rec(st).id}">Word problems with ${esc(STR[st].name.toLowerCase())}</button></div>`;
+  return h + L[st].map(k => {
+    const s = status(k), r = S.skills[k.id], nx = k.idx === p;
+    if (k.easy) return `<div class="card" style="margin:8px 0"><div class="row"><span class="muted small">·</span><b>${esc(k.name)}</b><span class="sp"></span><span class="chip mixed">${STLAB.mixed}</span></div><div class="muted small" style="margin-top:4px">Not practised on its own: these come up inside the other levels.</div></div>`;
     const uses = k.wl ? [...new Set(WP[k.wl].flatMap(t => t[2]))].map(t => STR[t].name.toLowerCase()).join(', ') : '';
-    return `<div class="card" style="margin:8px 0;${k.idx === p ? `border-color:var(${STR[st].col});border-width:2px` : ''}"><div class="row"><span class="muted small">${k.idx + 1}</span><b>${esc(k.name)}</b><span class="sp"></span><span class="chip ${s}">${k.idx === p ? 'Next up' : STLAB[s]}</span></div>${k.eg ? `<div class="muted" style="margin:4px 0">${fmt(k.eg)}</div>` : ''}${uses ? `<div class="muted small" style="margin:4px 0">Uses: ${esc(uses)}</div>` : ''}<div class="row"><button class="btn sm ${k.idx === p ? 'pri' : ''}" data-act="go" data-id="${k.id}">Practise</button>${r?.last ? `<span class="muted small">Last time ${Math.round(r.last.acc * 100)}%</span>` : ''}</div>${isFacts(k) && (r?.rounds || done(k)) ? speedRow(k) : ''}</div>`;
+    return `<div class="card" style="margin:8px 0;${nx ? `border-color:var(${STR[st].col});border-width:2px` : ''}"><div class="row"><span class="muted small">${lvNum(k)}</span><b>${esc(k.name)}</b><span class="sp"></span><span class="chip ${s}">${nx ? 'Next up' : STLAB[s]}</span></div>${k.eg ? `<div class="muted" style="margin:4px 0">${fmt(k.eg)}</div>` : ''}${uses ? `<div class="muted small" style="margin:4px 0">Uses: ${esc(uses)}</div>` : ''}<div class="row"><button class="btn sm ${nx ? 'pri' : ''}" data-act="go" data-id="${k.id}">Practise</button>${st !== 'W' && (nx || ['learning', 'support'].includes(s)) ? `<button class="btn sm ghost" data-act="quiz" data-id="${k.id}">I did a sheet: quick quiz</button>` : ''}${r?.last ? `<span class="muted small">Last time ${Math.round(r.last.acc * 100)}%</span>` : ''}</div>${k.speedOK && (r?.rounds || done(k)) ? speedRow(k) : ''}</div>`;
   }).join('');
 }
 function sessHTML() {
-  const k = V.sk, wp = k.st === 'W', order = wp ? ['learn', 'typed', 'rate', 'done'] : PH, at = order.indexOf(V.phase);
-  let h = `<div class="top"><button class="btn sm ghost" data-act="quit" aria-label="Stop">✕</button><b>${esc(k.name)}</b></div><div class="steps">${order.slice(0, -1).map((_, i) => `<i class="${i <= at ? 'on' : ''}"></i>`).join('')}</div>`;
+  const k = V.sk, wp = k.st === 'W', order = V.quiz ? ['qintro', 'typed', 'done'] : wp ? ['learn', 'typed', 'rate', 'done'] : PH, at = order.indexOf(V.phase);
+  let h = `<div class="top"><button class="btn sm ghost" data-act="up" aria-label="Back">✕</button><b>${V.quiz ? 'Quick quiz: ' : ''}${esc(k.name)}</b></div><div class="steps">${order.slice(0, -1).map((_, i) => `<i class="${i <= at ? 'on' : ''}"></i>`).join('')}</div>`;
   if (V.ask) return h + askHTML();
-  if (V.phase === 'learn') {
+  const tn = k.tn || CONFIG.typedN, bn = k.bn || CONFIG.bookN;
+  if (V.phase === 'qintro') {
+    h += `<div class="card"><h2 style="margin-top:0">Quick quiz</h2><p>For when you have done a printed sheet on this level and feel sure of it. <b>${CONFIG.quizN} questions on screen.</b> ${Math.round(CONFIG.quizN * CONFIG.quizPass)} or more right secures the level.</p>
+    ${isFacts(k) ? `<div class="tline"><span class="chip">⏱ Timed</span><span class="small">Whole-number questions show a clock. Most answers need to be automatic as well: straight away, without counting.</span></div>` : `<div class="tline"><span class="chip">No time goal</span><span class="small">Use your book for working if you need it, then type the answer.</span></div>`}
+    <p class="small" style="margin-top:12px"><b>From your sheet</b>, if you wrote the times on it:</p><div class="row"><label class="f" style="flex:1;margin:0"><span>Time started</span><input type="text" id="qs1" placeholder="10:05" maxlength="8" autocomplete="off"></label><label class="f" style="flex:1;margin:0"><span>Time finished</span><input type="text" id="qs2" placeholder="10:17" maxlength="8" autocomplete="off"></label></div>
+    <p class="muted small">Not ready yet? Practise the level on screen instead. Nothing changes unless you pass.</p><button class="btn pri big" data-act="qgo">Start the quiz</button></div>`;
+  } else if (V.phase === 'learn') {
     const ex = wp ? null : k.gen();
+    const typedLine = isFacts(k)
+      ? `<div class="tline"><span class="chip">⏱ Timed</span><span class="small"><b>${tn} quick questions on screen.</b> Goal: each one straight away, without counting: under ${CONFIG.autoSecs} seconds for small numbers, longer for bigger ones.${k.old ? ' They mix these facts with ones from earlier levels.' : ''}${k.speedOK ? '' : ' Questions with decimals have no clock.'}</span></div>`
+      : `<div class="tline"><span class="chip">No time goal</span><span class="small"><b>${tn} quick questions on screen.</b> No clock to beat; how long you take is noted for your teacher.${k.written ? ' Use your book for the working.' : ''}</span></div>`;
     h += `<div class="card"><h2 style="margin-top:0">${wp ? 'Before you start' : 'Study this first'}</h2><p>${esc(k.tip)}</p>${ex ? `<div class="sol"><span class="muted small">Example</span><div style="font-size:26px;font-weight:700">${fmt(ex.q)}</div><div style="font-size:22px">Answer: <b>${ansHTML(ex)}</b></div></div>` : ''}
-    ${wp ? `<div class="tline"><span class="chip">Not timed</span><span class="small">3 problems. Do your working in your book, then type the final answer. You get two tries.</span></div>` : isFacts(k)
-      ? `<div class="tline"><span class="chip">⏱ Timed</span><span class="small"><b>${k.tn || CONFIG.typedN} quick questions on screen.</b> Goal: each one straight away, in under ${CONFIG.autoSecs} seconds, without counting.${k.old ? ' They mix these facts with ones from earlier levels.' : ''}</span></div><div class="tline"><span class="chip">Not timed</span><span class="small"><b>${k.bn || CONFIG.bookN} questions in your book.</b> Take care with these.</span></div>`
-      : `<div class="tline"><span class="chip">Not timed</span><span class="small">Nothing in this round is timed. ${k.tn || CONFIG.typedN} quick questions on screen, then ${k.bn || CONFIG.bookN} in your book.${k.written ? ' Use your book for the working on all of them.' : ''}</span></div>`}<button class="btn pri big" data-act="typed">${wp ? 'Start' : 'Got it, start'}</button></div>`;
+    ${wp ? `<div class="tline"><span class="chip">Not timed</span><span class="small">3 problems. Do your working in your book, then type the final answer. You get two tries.</span></div>`
+      : typedLine + `<div class="tline"><span class="chip">No time goal</span><span class="small"><b>${bn} questions in your book.</b> Take care with these.</span></div>`}<button class="btn pri big" data-act="typed">${wp ? 'Start' : 'Got it, start'}</button></div>`;
   } else if (V.phase === 'book' || V.phase === 'mark') {
     const mk = V.phase === 'mark';
-    h += `<div class="card"><h2 style="margin-top:0">${mk ? 'Mark your work' : 'Now in your book'} ${mk ? '' : '<span class="chip">Not timed</span>'}</h2><p class="muted small">${mk ? 'Tick or cross each one. If it was wrong, write the correct answer next to it.' : 'Write the question number and your answer. Show your working where it helps. No typing for these.'}</p>
+    h += `<div class="card"><h2 style="margin-top:0">${mk ? 'Mark your work' : 'Now in your book'} ${mk ? '' : '<span class="chip">No time goal</span>'}</h2><p class="muted small">${mk ? 'Tick or cross each one. If it was wrong, write the correct answer next to it.' : 'Write the question number and your answer. Show your working where it helps. No typing for these.'}</p>
     ${!mk && V.chainN ? `<p class="small" style="color:var(--accent)">Questions 1 to ${V.chainN} change one thing at a time. Think about what changes before you work each one out.</p>` : ''}
     ${!mk && V.mixed ? `<p class="small" style="color:var(--accent)">These mix the new facts with ones from earlier levels.</p>` : ''}
     <ul class="blist">${V.book.map((x, i) => `<li><span class="n">${i + 1}</span><span>${fmt(x.q)}</span>${mk ? `<span class="a">${ansHTML(x)}</span><span class="mk"><button class="y ${V.marks[i] === true ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="1" aria-label="Correct">✓</button><button class="x ${V.marks[i] === false ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="0" aria-label="Wrong">✗</button></span>` : ''}</li>`).join('')}</ul>
@@ -858,14 +1095,26 @@ function sessHTML() {
 }
 function doneHTML() {
   const k = V.sk, R = V.res, pct = Math.round(R.acc * 100), st = k.st, g = STR[st].g;
-  const msg = k.bonus ? 'Bonus round done. Using a skill in a problem is how it sticks.' : R.slow ? 'Accurate, well done. Some answers took longer than the goal, so they are not automatic yet. Practise this level again, or try a speed round. This round did not count towards securing it.' : R.secured ? `You've secured this level.` : R.pass ? 'A strong round. One more good round on another day will secure this level.' : R.acc >= .5 ? 'Good effort. This one needs a bit more practice, and that is normal.' : 'Good effort for sticking with it. This is a tough one right now.';
-  let h = `<div class="card center"><div style="font-size:44px">${R.secured ? '🏅' : R.pass ? '👏' : '💪'}</div><h2>Well done, ${esc(S.name)}</h2><p><b>${nstr(V.sc.c)} out of ${V.sc.n}</b> (${pct}%)</p><p>${msg}</p>${R.au ? `<p class="small">Automatic answers: <b>${R.au.f} of ${R.au.n}</b> within the goal (average ${secsTxt(R.au.ms / R.au.n)})</p>` : ''}<p class="muted small">Time on this round: ${mmss(R.secs)}</p></div>`;
-  if (R.tro.length) h += `<div class="card"><b>New trophies</b>${R.tro.map(t => `<div class="tro"><span class="ic">${t.ic}</span><span>${esc(t.text)}</span></div>`).join('')}</div>`;
-  const nxt = rec(st), others = GROUPS.filter(x => x.id !== g.id).map(x => rec(recTrack(x))), opts = [];
-  const nonW = Object.keys(L).filter(t => t !== 'W'), top = nonW.reduce((a, t) => a + pos(t), 0) / nonW.reduce((a, t) => a + L[t].length, 0) >= .85;
-  const real = !k.bonus && st !== 'W', link = real && R.pass && linkFns(st).length >= 2, speed = real && isFacts(k);
+  const troHTML = R.tro.length ? `<div class="card"><b>New trophies</b>${R.tro.map(t => `<div class="tro"><span class="ic">${t.ic}</span><span>${esc(t.text)}</span></div>`).join('')}</div>` : '';
+  const auHTML = R.au ? `<p class="small">Automatic answers: <b>${R.au.f} of ${R.au.n}</b> within the goal (average ${secsTxt(R.au.ms / R.au.n)})</p>` : '';
   const btn = o => `<p><button class="btn ${o[2] ? 'pri' : ''}" style="width:100%;text-align:left" data-act="${o[3] || 'go'}" data-id="${o[1]}">${esc(o[0])}</button></p>`;
-  if (R.stepBack) opts.push([`Step back to build up: ${L[st][k.idx - 1].name}`, L[st][k.idx - 1].id, true]);
+  const nxt = rec(st);
+  if (V.quiz) {
+    const need = Math.round(CONFIG.quizN * CONFIG.quizPass);
+    const msg = R.secured ? 'You have secured this level with the quiz.' : R.pass ? 'A strong quiz. This level was already secure.' : R.slow ? 'Accurate, but some answers took longer than the goal, so they are not automatic yet. Practise this level on screen or on another sheet, then try the quiz again.' : `Not yet: you need ${need} out of ${CONFIG.quizN}. Practise this level on screen or on another sheet, then try the quiz again.`;
+    const opts = [];
+    if (R.secured && nxt.id !== k.id) opts.push([`Next level: ${nxt.name}`, nxt.id, true]);
+    if (!R.pass) opts.push(['Practise this level on screen', k.id, true]);
+    return `<div class="card center"><div style="font-size:44px">${R.secured ? '🏅' : R.pass ? '👏' : '💪'}</div><h2>Quiz done, ${esc(S.name)}</h2><p><b>${nstr(V.sc.c)} out of ${V.sc.n}</b> (${pct}%)</p><p>${msg}</p>${auHTML}<p class="muted small">Time on the quiz: ${mmss(R.secs)}</p></div>` + troHTML +
+      (opts.length ? `<div class="card">${opts.map(btn).join('')}</div>` : '') + `<p class="center"><button class="btn big" data-act="up">Finish</button></p>`;
+  }
+  const msg = k.bonus ? 'Bonus round done. Using a skill in a problem is how it sticks.' : R.slow ? 'Accurate, well done. Some answers took longer than the goal, so they are not automatic yet. Practise this level again, or try a speed round. This round did not count towards securing it.' : R.secured ? `You've secured this level.` : R.pass ? 'A strong round. One more good round on another day will secure this level.' : R.acc >= .5 ? 'Good effort. This one needs a bit more practice, and that is normal.' : 'Good effort for sticking with it. This is a tough one right now.';
+  let h = `<div class="card center"><div style="font-size:44px">${R.secured ? '🏅' : R.pass ? '👏' : '💪'}</div><h2>Well done, ${esc(S.name)}</h2><p><b>${nstr(V.sc.c)} out of ${V.sc.n}</b> (${pct}%)</p><p>${msg}</p>${auHTML}<p class="muted small">Time on this round: ${mmss(R.secs)}</p></div>` + troHTML;
+  const others = GROUPS.filter(x => x.id !== g.id).map(x => rec(recTrack(x))), opts = [];
+  const nonW = Object.keys(L).filter(t => t !== 'W'), top = nonW.reduce((a, t) => a + pos(t), 0) / nonW.reduce((a, t) => a + L[t].length, 0) >= .85;
+  const levelRound = !k.bonus && st !== 'W', link = levelRound && R.pass && linkFns(st).length >= 2, speed = levelRound && k.speedOK;
+  const prev = k.idx > 0 ? L[st][k.idx - 1] : null;
+  if (R.stepBack && prev && !prev.easy) opts.push([`Step back to build up: ${prev.name}`, prev.id, true]);
   if (S.mode === 'class') {
     if (!k.bonus && !R.pass && !R.stepBack) opts.push([R.slow ? 'Another round of this, aiming for automatic' : 'Another round of this', k.id, true]);
     if (R.pass && nxt.id !== k.id) opts.push([`Next level: ${nxt.name}`, nxt.id, true]);
@@ -879,14 +1128,17 @@ function doneHTML() {
     const one = R.pass || k.bonus ? others[0] : k; opts.push([`One more: ${one.name}`, one.id, false]);
     h += `<div class="card"><b>That's a solid session.</b><p class="muted small">Little and often works best. Stop here, or do one more.</p>${opts.map(btn).join('')}${speed ? speedRow(k) : ''}</div>`;
   }
-  return h + `<p class="center"><button class="btn big" data-act="home">Finish</button></p>`;
+  return h + `<p class="center"><button class="btn big" data-act="up">Finish</button></p>`;
 }
 function meHTML() {
-  return head('My progress') + `<div class="card"><p>Active practice this week: <b>${Math.round(sumDays(snap().days, 7, 0) / 60)} minutes</b> over <b>${sumDays(snap().days, 7, 3)}</b> rounds.</p></div><div class="card"><b>Trophies (${S.trophies.length})</b>${S.trophies.slice().reverse().slice(0, 40).map(t => `<div class="tro"><span class="ic">${t.ic}</span><span>${esc(t.text)}<br><span class="muted small">${nice(t.d)}</span></span></div>`).join('') || '<p class="muted">Secure a level to earn your first one.</p>'}</div>`;
+  const sn = snap();
+  return head('My progress') + `<div class="card"><p>Active practice this week: <b>${Math.round(sumDays(sn.days, 7, 0) / 60)} minutes</b> over <b>${sumDays(sn.days, 7, 3)}</b> rounds.</p></div>
+  <div class="card"><b>Your fluency code</b><p style="font-size:26px;font-weight:700;letter-spacing:1px;margin:6px 0">${esc(fluencyCode())}</p><p class="muted small">Where you are in number facts: addition, subtraction, extending, multiplication, division. Your teacher uses it to print you the right practice sheet.</p></div>
+  <div class="card"><b>Trophies (${S.trophies.length})</b>${S.trophies.slice().reverse().slice(0, 40).map(t => `<div class="tro"><span class="ic">${t.ic}</span><span>${esc(t.text)}<br><span class="muted small">${nice(t.d)}</span></span></div>`).join('') || '<p class="muted">Secure a level to earn your first one.</p>'}</div>`;
 }
 function gameHTML() {
   const g = V.g;
-  return `<div class="top"><button class="btn sm ghost" data-act="home" aria-label="Close">✕</button><b>Target game</b><span class="sp"></span><span>Solved: <b>${g.solved}</b></span><span id="gt" class="chip">3:00</span></div>
+  return `<div class="top"><button class="btn sm ghost" data-act="up" aria-label="Back">✕</button><b>Target game</b><span class="sp"></span><span>Solved: <b>${g.solved}</b></span><span id="gt" class="chip">3:00</span></div>
   <div class="card center"><div class="muted small">Use every number to make</div><div class="target">${g.target}</div>
   <div class="tiles">${g.t.map((v, i) => `<button class="${g.sel === i ? 'on' : ''}" data-act="gt" data-i="${i}">${v}</button>`).join('')}</div>
   <div class="tiles ops">${(g.hard ? ['+', '−', '×', '÷'] : ['+', '−', '×']).map(o => `<button class="${g.op === o ? 'on' : ''}" data-act="gop" data-o="${o}">${o}</button>`).join('')}</div>
@@ -896,28 +1148,36 @@ function gameHTML() {
 }
 
 // ---------- teacher ----------
+const chkTxt = d => !d ? 'not checked' : /^\d{4}-/.test(d) ? 'checked ' + nice(d) : 'checked ' + d;
 function teacherHTML() {
-  const lk = V.unlocked ? '' : ' 🔒', tabs = [['over', 'Overview'], ['levels', 'Levels'], ['log', 'Log'], ['class', 'Class' + lk], ['tools', 'Tools' + lk]], t = V.tab || 'over';
+  const lk = V.unlocked ? '' : ' 🔒', tabs = [['over', 'Overview'], ['levels', 'Levels'], ['log', 'Log'], ['sheets', 'Sheets' + lk], ['class', 'Class' + lk], ['tools', 'Tools' + lk]], t = V.tab || 'over';
   let h = head('Progress: ' + S.name) + `<div class="tabs">${tabs.map(x => `<button class="${t === x[0] ? 'on' : ''}" data-act="ttab" data-t="${x[0]}">${x[1]}</button>`).join('')}</div>`;
   if (t === 'over') h += overviewHTML(snap()) + `<p class="row"><button class="btn" data-act="celebrate">Mark trophies as celebrated</button><button class="btn" data-act="setexp">Set expected levels to where they are now</button></p><p class="muted small">⭐ trophies are given for securing levels beyond the expected level, so resetting expected every few weeks keeps them meaningful.</p>
+    <p class="muted small">Last backup of this device: ${S.lastBackup ? nice(S.lastBackup) : 'never'} (Tools tab).</p>
     <h3>Progress code</h3><p class="muted small">A snapshot of this screen that the student can send you. Paste it into the Class tab on your own device.</p><textarea readonly id="code">${esc(enc(snap()))}</textarea><p><button class="btn" data-act="copy" data-el="code">Copy code</button></p>`;
-  if (t === 'levels') h += `<p class="muted small">Anyone can look. Changing anything here asks "are you sure" and needs the teacher PIN. <b>Start here</b> moves the student's level to that skill (use it to roll back, or to jump forward). <b>Needs support</b> puts one skill back into practice without moving anything else.</p>` + Object.keys(L).map(st => `<div class="row" style="margin-top:18px"><h2 style="color:var(${STR[st].col});margin:0">${STR[st].name}</h2><span class="sp"></span>${st !== 'W' ? `<button class="btn sm" data-act="trecheck" data-st="${st}">Recheck this area</button>` : ''}</div><table>${L[st].map(k => { const s = status(k), r = S.skills[k.id]; return `<tr><td>${k.idx + 1}${k.idx === S.expected[st] ? ' <span title="expected level">◆</span>' : ''}</td><td><b>${esc(k.name)}</b><br><span class="chip ${s}">${STLAB[s]}</span> <span class="muted small">${r?.rounds ? `${r.rounds} round${r.rounds > 1 ? 's' : ''}, last ${Math.round(r.last.acc * 100)}% (${r.last.rate})` : ''}${r?.auto ? ` · automatic ${r.auto.f}/${r.auto.n}, average ${secsTxt(r.auto.avg)}` : ''}${r?.place ? ` · level check: ${esc(r.place)}` : ''}</span></td><td><button class="btn sm" data-act="tstart" data-id="${k.id}">Start here</button> <button class="btn sm" data-act="tsec" data-id="${k.id}">Secure</button> <button class="btn sm" data-act="tsup" data-id="${k.id}">Needs support</button> <button class="btn sm ghost" data-act="texp" data-id="${k.id}">Expected ◆</button></td></tr>`; }).join('')}</table>`).join('');
-  if (t === 'log') h += S.log.length ? `<table><tr><th>Day</th><th>Skill</th><th>Score</th><th>Felt</th><th>Time</th><th></th></tr>${S.log.slice().reverse().slice(0, 60).map(l => `<tr><td>${nice(l.d)}</td><td>${esc(l.nm || BY[l.id]?.name || l.id)}${l.speed ? ' ⚡ speed round' : ''}</td><td>${l.sc}/${l.n}${l.au ? `<br><span class="muted small">${l.au} automatic</span>` : ''}</td><td>${l.rate}</td><td>${l.secs != null ? mmss(l.secs) : l.mins + ' min'}</td><td>${l.pass ? '<span class="chip secure">pass</span>' : ''}${l.above ? ' <span class="chip">above level</span>' : ''}</td></tr>`).join('')}</table>` : '<p class="muted">No rounds yet.</p>';
+  if (t === 'levels') h += `<p class="muted small">Anyone can look. Changing anything here asks "are you sure" and needs the teacher PIN. <b>Start here</b> moves the student's level to that skill (use it to roll back, or to jump forward, for example when sheets have shown a level is known). <b>Needs support</b> puts one skill back into practice without moving anything else. Times are the middle (median) time per typed question in recent rounds.</p>` + Object.keys(L).map(st => `<div class="row" style="margin-top:18px"><h2 style="color:var(${STR[st].col});margin:0">${STR[st].name}</h2><span class="muted small">${chkTxt(S.chk[st])}</span><span class="sp"></span>${st !== 'W' ? `<button class="btn sm" data-act="trecheck" data-st="${st}">Recheck this area</button>` : ''}</div><table>${L[st].map(k => {
+    const s = status(k), r = S.skills[k.id], tm = r?.times?.length ? r.times.map(x => (x.med / 1000).toFixed(1)).join(', ') + ' s' : '';
+    return `<tr><td>${k.easy ? '·' : lvNum(k)}${k.id === S.exp[st] ? ' <span title="expected level">◆</span>' : ''}</td><td><b>${esc(k.name)}</b> <span class="muted small">${k.id}</span><br><span class="chip ${s}">${STLAB[s]}</span> <span class="muted small">${r?.rounds ? `${r.rounds} round${r.rounds > 1 ? 's' : ''}, last ${Math.round(r.last.acc * 100)}% (${esc(r.last.rate)})` : ''}${r?.auto ? ` · automatic ${r.auto.f}/${r.auto.n}, average ${secsTxt(r.auto.avg)}` : ''}${tm ? ` · typed: ${tm}` : ''}${r?.quizSecured ? ` · secured by quick quiz ${nice(r.quizSecured)}` : ''}${r?.place ? ` · level check: ${esc(r.place)}` : ''}</span></td><td>${k.easy ? '<span class="muted small">Mixed into later levels</span>' : `<button class="btn sm" data-act="tstart" data-id="${k.id}">Start here</button> <button class="btn sm" data-act="tsec" data-id="${k.id}">Secure</button> <button class="btn sm" data-act="tsup" data-id="${k.id}">Needs support</button> <button class="btn sm ghost" data-act="texp" data-id="${k.id}">Expected ◆</button>`}</td></tr>`; }).join('')}</table>`).join('');
+  if (t === 'log') h += S.log.length ? `<table><tr><th>Day</th><th>Skill</th><th>Score</th><th>Felt</th><th>Time</th><th></th></tr>${S.log.slice().reverse().slice(0, 60).map(l => `<tr><td>${nice(l.d)}</td><td>${esc(l.nm || BY[l.id]?.name || l.id)}${l.speed ? ' ⚡ speed round' : ''}${l.quiz ? ' 📝 quick quiz' : ''}</td><td>${l.sc}/${l.n}${l.au ? `<br><span class="muted small">${l.au} automatic</span>` : ''}</td><td>${esc(l.rate)}</td><td>${l.secs != null ? mmss(l.secs) : (l.mins || 0) + ' min'}${l.tmed ? `<br><span class="muted small">typed ${secsTxt(l.tmed)} each</span>` : ''}${l.bsec ? `<br><span class="muted small">book ${mmss(l.bsec)}</span>` : ''}</td><td>${l.pass ? '<span class="chip secure">pass</span>' : ''}${l.above ? ' <span class="chip">above level</span>' : ''}</td></tr>`).join('')}</table>` : '<p class="muted">No rounds yet.</p>';
+  if (t === 'sheets') h += sheetsHTML();
   if (t === 'class') {
     const cs = Object.values(S.cls).sort((a, b) => a.n.localeCompare(b.n));
-    h += `<p class="muted small">For your own device. Paste a student's progress code to add or update them. Nothing is sent anywhere.</p><textarea id="cin" placeholder="MP1:..."></textarea><div class="fb no">${esc(V.err || '')}</div><p><button class="btn pri" data-act="cadd">Add progress code</button></p>
-    ${cs.length ? `<table><tr><th>Student</th><th>Updated</th><th>7 days</th><th>28 days</th><th>Facts</th><th>Skills</th><th>FDP</th><th>WP</th><th>New 🏆</th><th>Flags</th><th></th></tr>${cs.map(P => `<tr><td><b>${esc(P.n)}</b></td><td>${nice(P.d)}</td><td>${Math.round(sumDays(P.days, 7, 0) / 60)} min</td><td>${Math.round(sumDays(P.days, 28, 0) / 60)} min</td>${GROUPS.map(g => `<td>${gGot(g, P)}/${gTot(g)}</td>`).join('')}<td>${P.tr.filter(x => !P.cel || x[0] > P.cel).length}</td><td>${P.fl.length}</td><td><button class="btn sm" data-act="cview" data-n="${esc(P.n)}">View</button> <button class="btn sm ghost danger" data-act="cdel" data-n="${esc(P.n)}">✕</button></td></tr>`).join('')}</table>` : ''}
+    h += `<p class="muted small">For your own device. Nothing is sent anywhere.</p>
+    <div class="card"><b>Add a progress code</b><p class="muted small">The full picture. The student copies it from ⚙ on their device and sends it to you.</p><textarea id="cin" placeholder="MP2:..."></textarea><p><button class="btn pri" data-act="cadd">Add progress code</button></p></div>
+    <div class="card"><b>Or add a fluency code</b><p class="muted small">Quicker: the student reads out the short code on their 🏆 screen. It gives the number facts levels only, enough to print the right sheet.</p><div class="row"><input type="text" id="fcn" placeholder="Name" style="flex:1;min-width:120px"><input type="text" id="fcc" placeholder="A5 S4 X3 M6 D2" style="flex:2;min-width:160px" autocapitalize="characters"></div><p><button class="btn" data-act="fcadd">Add fluency code</button></p></div>
+    <div class="fb no">${esc(V.err || '')}</div>
+    ${cs.length ? `<table><tr><th>Student</th><th>Updated</th><th>7 days</th><th>28 days</th>${GROUPS.map(g => `<th>${g.short}</th>`).join('')}<th>New 🏆</th><th>Flags</th><th></th></tr>${cs.map(P => `<tr><td><b>${esc(P.n)}</b></td><td>${nice(P.d)}</td><td>${P.light ? '–' : Math.round(sumDays(P.days, 7, 0) / 60) + ' min'}</td><td>${P.light ? '–' : Math.round(sumDays(P.days, 28, 0) / 60) + ' min'}</td>${GROUPS.map(g => `<td>${P.light && g.id !== 'K' ? '–' : `${gGot(g, P)}/${gTot(g)}`}</td>`).join('')}<td>${P.tr.filter(x => !P.cel || x[0] > P.cel).length}</td><td>${P.fl.length}</td><td><button class="btn sm" data-act="cview" data-n="${esc(P.n)}">View</button> <button class="btn sm" data-act="csheet" data-n="${esc(P.n)}">Sheet</button> <button class="btn sm ghost danger" data-act="cdel" data-n="${esc(P.n)}">✕</button></td></tr>`).join('')}</table>` : ''}
     ${V.cv && S.cls[V.cv] ? `<div class="card"><div class="row"><h2 style="margin:0">${esc(V.cv)}</h2><span class="sp"></span><button class="btn sm" data-act="cprint">Print report</button></div>${overviewHTML(S.cls[V.cv])}</div>` : ''}`;
   }
   if (t === 'tools') {
     const lv = V.plv || 3, pk = packs();
-    h += `<div class="card"><b>Print a practice sheet</b><div class="row"><select id="pskill" style="flex:2;min-width:200px">${SK.map(k => `<option value="${k.id}" ${k.id === rec(k.st).id ? '' : ''}>${k.id} ${esc(k.name)}</option>`).join('')}</select><select id="pn" style="flex:1;min-width:90px"><option>20</option><option>30</option><option>12</option></select><button class="btn" data-act="psheet">Print</button></div></div>
+    h += `<div class="card"><b>Backup</b><p class="muted small">Progress lives only in this browser. A backup file keeps it safe if the iPad is reset or Safari's website data is cleared. Last backup: ${S.lastBackup ? nice(S.lastBackup) : 'never'}.</p><div class="row"><button class="btn" data-act="backup">Download a backup</button><label class="btn">Restore from a backup<input type="file" id="rfile" accept=".json,application/json" style="display:none"></label></div><div class="fb ${V.bok ? 'ok' : 'no'}">${esc(V.berr || '')}</div></div>
     <div class="card"><b>More word problems</b><p class="muted small">${pk.length} extra problem${pk.length === 1 ? '' : 's'} loaded (${S.packs.length} saved on this device, the rest from packs.js). Copy the prompt into any AI assistant, then paste its answer below. The prompt includes a log of what students have already seen so it does not repeat.</p>
-    <div class="row"><label>Level <select id="plv" data-act="plv" style="width:auto">${[1, 2, 3, 4, 5, 6].map(i => `<option ${i === lv ? 'selected' : ''}>${i}</option>`).join('')}</select></label><button class="btn" data-act="copy" data-el="prompt">Copy prompt</button></div><textarea readonly id="prompt">${esc(llmPrompt(lv))}</textarea>
+    <div class="row"><label>Level <select id="plv" style="width:auto">${[1, 2, 3, 4, 5, 6].map(i => `<option ${i === lv ? 'selected' : ''}>${i}</option>`).join('')}</select></label><button class="btn" data-act="copy" data-el="prompt">Copy prompt</button></div><textarea readonly id="prompt">${esc(llmPrompt(lv))}</textarea>
     <label class="f"><span>Paste the JSON it gives you</span><textarea id="pin_"></textarea></label><div class="fb ${V.pok ? 'ok' : 'no'}">${esc(V.err || '')}</div><div class="row"><button class="btn pri" data-act="padd">Add to this device</button><button class="btn" data-act="copy" data-el="pfile">Copy packs.js for all students</button><button class="btn ghost danger sm" data-act="pclear">Clear saved problems</button></div><textarea readonly id="pfile" style="display:none">${esc('window.MP_PACKS = ' + JSON.stringify(pk, null, 1) + ';')}</textarea></div>
     <div class="card"><b>Settings</b><label class="f"><span>Student name</span><input type="text" id="sname" value="${esc(S.name)}"></label><label class="f"><span>Teacher PIN</span><input type="text" id="spin" value="${esc(S.pin)}" inputmode="numeric"></label>
     <p><label><input type="checkbox" id="sg" ${S.set.games ? 'checked' : ''}> Target game as a reward (one 3-minute game per finished round)</label></p><p><label><input type="checkbox" id="sl" ${S.set.links ? 'checked' : ''}> Show stretch links at the top levels</label></p>
-    <div class="row"><button class="btn pri" data-act="ssave">Save settings</button><button class="btn" data-act="place">Redo the level check</button><button class="btn danger" data-act="wipe">Erase this student's data</button></div></div>`;
+    <div class="row"><button class="btn pri" data-act="ssave">Save settings</button><button class="btn" data-act="place">Redo the Fluency challenge</button><button class="btn danger" data-act="wipe">Erase this student's data</button></div></div>`;
   }
   return h;
 }
@@ -942,29 +1202,140 @@ Return only a JSON array. Each item:
 Log of problems these students have already seen:
 ${seen.map(s => '- ' + s).join('\n')}`;
 }
-function printSheet(k, n) {
-  const qs = distinct(k, n);
-  $('#print').innerHTML = `<div class="pg"><h2>${esc(k.name)}</h2><p>Name: ______________________ &nbsp; Date: ____________</p><p><i>${esc(k.tip)}</i></p><div class="pq">${qs.map((x, i) => `<div><b>${i + 1}.</b> &nbsp; ${fmt(x.q)}</div>`).join('')}</div></div><div class="pg"><h2>Answers: ${esc(k.name)}</h2><div class="pa">${qs.map((x, i) => `<span><b>${i + 1}.</b> ${ansHTML(x)}</span>`).join('')}</div></div>`;
-  setTimeout(() => window.print(), 60);
+
+// ---------- worksheets (teacher Sheets tab) ----------
+/* One A4 page for the book-work half of practice, plus an answer page. Three kinds:
+   - Level practice: the level's questions, mixed with earlier families for number facts, the way a round in the app works.
+   - Mixed known: the levels before the chosen one in that area, recent ones more often (retrieval of what is known).
+   - Bridge (Kane): a fact they know next to the new one, for levels that build on an earlier fact (BRIDGES below).
+   The questions are measured into the page, so it fills one side exactly. Times go in the boxes; the footer says to take the
+   quick quiz for the level in the app, which is what secures it. */
+function tables(n, from, tip) { return {from: from.map(f => '×' + f).join(' and '), tip, pair: () => { const k = ri(2, n === 12 ? 12 : 10); return [...from.map(f => q(`${f} × ${k}`, f * k)), q(`${n} × ${k}`, n * k)]; }}; }
+// pair() gives the known fact(s), then the new fact last.
+const BRIDGES = {
+  A5: {from: 'doubles', tip: 'Use the double. 6 + 6 = 12, so 6 + 7 is one more: 13.', pair: () => { const a = ri(2, 9); return [q(`${a} + ${a}`, 2 * a), q(com(a, a + 1), 2 * a + 1)]; }},
+  A7: {from: 'bonds to 10', tip: 'Make 10 first. 8 + 2 = 10, so 8 + 6 is 10 and 4 more: 14.', pair: () => { const a = ri(4, 9), n = ri(Math.max(5, 11 - a), 7); return [q(`${a} + ${10 - a}`, 10), q(`${a} + ${n}`, a + n)]; }},
+  S6: {from: 'taking 10', tip: 'Take 10, then add 1 back. 16 − 10 = 6, so 16 − 9 = 7.', pair: () => { const x = ri(11, 19); return [q(`${x} − 10`, x - 10), q(`${x} − 9`, x - 9)]; }},
+  S8: {from: 'back to 10', tip: 'Go back to 10 first. 15 − 5 = 10, so 15 − 7 is 2 less: 8.', pair: () => { const n = pick([7, 8]), u = ri(1, n - 1); return [q(`${10 + u} − ${u}`, 10), q(`${10 + u} − ${n}`, 10 + u - n)]; }},
+  X2: {from: 'bonds to 10', tip: '3 + 7 = 10, so 13 + 7 = 20.', pair: () => { const a = ri(1, 9); return [q(`${a} + □ = 10`, 10 - a), q(`1${a} + □ = 20`, 10 - a)]; }},
+  X3: {from: 'bonds to 10', tip: '7 + 3 = 10, so 37 + 3 = 40.', pair: () => { const u = ri(1, 9), t = ri(1, 9); return [q(`${u} + □ = 10`, 10 - u), q(`${t}${u} + □ = ${(t + 1) * 10}`, 10 - u)]; }},
+  N3: {from: 'teen facts', tip: 'Use the fact you know. 8 + 7 = 15, so 28 + 7 = 35.', pair: () => { const u = ri(4, 9), v = ri(11 - u, 9), t = ri(1, 8); return [q(`${u} + ${v}`, u + v), q(`${t}${u} + ${v}`, t * 10 + u + v)]; }},
+  N4: {from: 'bonds to 10', tip: '6 + 4 = 10, so 60 + 40 = 100.', pair: () => { const a = ri(1, 9); return [q(`${a} + □ = 10`, 10 - a), pick([q(`${a}0 + □ = 100`, 100 - 10 * a), q(`100 − ${a}0`, 100 - 10 * a)])]; }},
+  M4: tables(4, [2], 'Double the 2 times table. 2 × 7 = 14, so 4 × 7 = 28.'),
+  M3: tables(3, [2], 'Two lots and one more lot. 2 × 7 = 14, so 3 × 7 = 14 + 7 = 21.'),
+  M6: tables(6, [5], 'Five lots and one more lot. 5 × 7 = 35, so 6 × 7 = 35 + 7 = 42.'),
+  M8: tables(8, [4], 'Double the 4 times table. 4 × 7 = 28, so 8 × 7 = 56.'),
+  M9: tables(9, [10], 'Ten lots, take away one lot. 10 × 7 = 70, so 9 × 7 = 70 − 7 = 63.'),
+  M7: tables(7, [5, 2], 'Five lots and two lots. 5 × 8 = 40 and 2 × 8 = 16, so 7 × 8 = 56.'),
+  M12: tables(12, [10, 2], 'Ten lots and two lots. 10 × 7 = 70 and 2 × 7 = 14, so 12 × 7 = 84.'),
+};
+[2, 10, 5, 4, 3, 11, 9, 6, 8, 7, 12].forEach(n => { BRIDGES['D' + n] = {from: '×' + n, tip: `Use the multiplication. ${n} × 7 = ${n * 7}, so ${n * 7} ÷ ${n} = 7.`, pair: () => { const k = ri(2, n === 12 ? 12 : 10); return [q(`${n} × ${k}`, n * k), q(`${n * k} ÷ ${n}`, k)]; }}; });
+const SHEET_TYPES = {level: 'Level practice', known: 'Mixed known', bridge: 'Bridge'};
+const PAGE_MM = 262;      // usable height of A4 with 12 mm margins (273 mm), less a little for browsers that add a header
+function fillQs(gen, n) { const out = [], seen = new Set(); for (let t = 0; out.length < n && t < n * 40; t++) { const x = gen(); if (out.length && out[out.length - 1].q === x.q) continue; if (seen.has(x.q) && t < n * 20) continue; seen.add(x.q); out.push(x); } return out; }
+const weighted = lv => { const w = lv.map(x => x.easy ? .3 : x.idx + 1), tot = w.reduce((a, b) => a + b, 0); return () => { let r = Math.random() * tot, i = 0; while ((r -= w[i]) > 0 && i < w.length - 1) i++; return lv[i].gen(); }; };
+const knowns = B => () => { const p = B.pair(); return pick(p.slice(0, -1)); };
+const pairsOf = (B, n) => { const out = [], seen = new Set(); for (let t = 0; out.length < n && t < 200; t++) { const p = B.pair(), key = p[p.length - 1].q; if (!seen.has(key) || t > 100) { seen.add(key); out.push(p); } } return out; };
+const uniq = a => { const seen = new Set(); return a.filter(x => !seen.has(x.q) && seen.add(x.q)); };
+function sheetSections(k, type) {
+  const N = 90;
+  if (type === 'known') { const ks = L[k.st].slice(0, k.idx).filter(x => !x.written || k.written); return ks.length ? [{h: 'Levels you know, mixed', qs: fillQs(weighted(ks), N)}] : null; }
+  if (type === 'bridge' && BRIDGES[k.id]) {
+    const B = BRIDGES[k.id];
+    return [{h: `You know these (${B.from})`, qs: fillQs(knowns(B), 6)},
+      {h: 'Side by side: do the one in the box first, then use it', tip: B.tip, pairs: pairsOf(B, 6)},
+      {h: 'New ones ★', qs: fillQs(k.gen, 6)},
+      {h: 'Mixed', qs: (() => { const u = uniq(shuf([...fillQs(k.gen, 45), ...fillQs(knowns(B), 20), ...(k.olds?.length ? fillQs(weighted(k.olds), 25) : [])])); return u.length >= 30 ? u : shuf([...fillQs(k.gen, 45), ...fillQs(knowns(B), 20)]); })()}];
+  }
+  if (!(isFacts(k) && k.olds?.length)) { const ch = k.chain ? k.chain() : []; return [...(ch.length ? [{h: 'One change at a time: think about what changes', qs: ch}] : []), {h: ch.length ? 'Practice' : '', qs: fillQs(k.gen, N)}]; }
+  const nw = fillQs(k.gen, 54), od = fillQs(weighted(k.olds), 36);
+  return [{h: 'New facts mixed with earlier ones', qs: nw.flatMap((x, i) => od[i] ? [x, od[i]] : [x])}];
+}
+const eqs = s => /[=A-Za-z]/.test(s) ? fmt(s) : fmt(s) + ' =';
+function makeSheet(k, type, who) {
+  const secs = sheetSections(k, type); if (!secs) return null;
+  const long = Math.max(...Array.from({length: 15}, () => String(k.gen().q).length)), cols = k.written ? 2 : long > 22 ? 1 : long > 11 ? 2 : 3;
+  let n = 0; const ans = [];
+  const cell = (x, cls = '') => { n++; ans.push([n, x]); return `<div class="${cls}" data-n="${n}"><b>${n}</b><span>${eqs(x.q)}</span></div>`; };
+  const body = secs.map(s => `<div class="sect">${s.h ? `<div class="sec">${esc(s.h)}</div>` : ''}${s.tip ? `<div class="stip">${esc(s.tip)}</div>` : ''}` +
+    (s.pairs ? `<div class="sq" style="grid-template-columns:1fr 1fr">${s.pairs.map(p => `<div class="pair">${p.map((x, i) => cell(x, i < p.length - 1 ? 'known' : 'new')).join('')}</div>`).join('')}</div>`
+      : `<div class="sq${k.written ? ' tall' : ''}" style="grid-template-columns:repeat(${cols},1fr)">${s.qs.map(x => cell(x)).join('')}</div>`) + '</div>').join('');
+  const title = k.name, sub = `${esc(STR[k.st].name)} · level ${lvNum(k)} (${k.id}) · ${SHEET_TYPES[type]}`;
+  const page = `<div class="pg sheet"><div class="shd"><div style="flex:1"><h2>${esc(title)}</h2><div class="sub">${sub}</div></div><div>Name <span class="ln">${who ? esc(who) : ''}</span></div><div>Date <span class="ln sm"></span></div></div>
+    <div class="shd2"><span>Time started <span class="bx"></span></span><span class="stip">${esc(k.tip)}</span></div>${body}
+    <div class="sft"><div><span>Time finished <span class="bx"></span></span> <span>Correct <span class="bx sm"></span> out of <b class="tot">00</b></span></div><div class="nxt">Next: mark it with the answer sheet. Then in the app, open <b>${esc(STR[k.st].name)}</b>, find <b>${esc(k.name)}</b> and tap <b>I did a sheet: quick quiz</b>. ${Math.round(CONFIG.quizN * CONFIG.quizPass)} out of ${CONFIG.quizN} secures the level.</div></div></div>`;
+  // Measure: lay the page out at its printed width, then take questions off the end until it fits one side.
+  const m = document.createElement('div'); m.style.cssText = 'position:absolute;left:-9999px;top:0;width:186mm'; m.innerHTML = page + '<div id="mmref" style="height:100mm"></div>'; document.body.appendChild(m);
+  const pg = m.querySelector('.pg'), lim = PAGE_MM * m.querySelector('#mmref').offsetHeight / 100, last = () => [...pg.querySelectorAll('.sect')].pop()?.querySelector('.sq');
+  const lastCells = () => last() ? last().querySelectorAll(':scope > div') : [];
+  while (pg.offsetHeight > lim && lastCells().length) { const c = lastCells(); c[c.length - 1].remove(); if (!lastCells().length) [...pg.querySelectorAll('.sect')].pop().remove(); }
+  const lc = last(); if (lc && !lc.querySelector('.pair')) { const per = getComputedStyle(lc).gridTemplateColumns.split(' ').length; while (lastCells().length > per && lastCells().length % per) { const c = lastCells(); c[c.length - 1].remove(); } }
+  const kept = pg.querySelectorAll('[data-n]').length; pg.querySelector('.tot').textContent = kept;
+  const out = pg.outerHTML; m.remove();
+  const ansPage = `<div class="pg sheet"><div class="shd"><div style="flex:1"><h2>Answers: ${esc(title)}</h2><div class="sub">${sub}${who ? ' · ' + esc(who) : ''}</div></div></div><div class="ans">${ans.slice(0, kept).map(([i, x]) => `<span><b>${i}.</b> ${ansHTML(x)}</span>`).join('')}</div></div>`;
+  return {page: out, ans: ansPage, n: kept, title};
+}
+function sheetSrc() {
+  const src = V.shSrc || 'me', P = src.startsWith('cls:') ? S.cls[src.slice(4)] || null : null;
+  return {src, P, who: src === 'me' ? S.name : P ? P.n : ''};
+}
+function sheetLevel() {
+  const {src, P} = sheetSrc(), tracks = Object.keys(L).filter(t => t !== 'W' && (!P?.light || FC_ORDER.includes(t)));
+  const nextUp = t => { const i = src === 'pick' ? 0 : posOf(t, src === 'me' ? null : P); let k = L[t][Math.min(i, L[t].length - 1)]; while (k.easy && L[t][k.idx + 1]) k = L[t][k.idx + 1]; return k; };
+  const t = tracks.includes(V.shT) ? V.shT : (FC_ORDER.find(x => posOf(x, src === 'me' ? null : P) < L[x].length) || 'M');
+  const k = BY[V.shK] && BY[V.shK].st === t && !BY[V.shK].easy ? BY[V.shK] : nextUp(t);
+  const type = V.shType === 'bridge' && !BRIDGES[k.id] ? 'level' : V.shType === 'known' && !L[t].slice(0, k.idx).length ? 'level' : V.shType || 'level';
+  return {tracks, t, k, type, nextUp};
+}
+function sheetsHTML() {
+  const {src, who} = sheetSrc(), {tracks, t, k, type, nextUp} = sheetLevel(), nu = nextUp(t);
+  const help = {level: `Questions on ${esc(k.name)}${isFacts(k) && k.olds?.length ? ', mixed with facts from earlier levels' : ''}.`, known: `Questions from the levels before ${esc(k.name)} in ${esc(STR[t].name.toLowerCase())}, recent ones more often: keeping known facts fresh.`, bridge: BRIDGES[k.id] ? `Starts from ${esc(BRIDGES[k.id].from)}, puts each known fact in a box next to the new one, then the new facts, then a mixed section.` : ''};
+  return `<p class="muted small">One A4 page for the book-work half of practice, with an answer page. The student writes the time they start and finish, marks it, then takes the level's <b>quick quiz</b> in the app to secure it. You can still move them on yourself in the Levels tab.</p>
+  <div class="card"><label class="f"><span>Student</span><select id="shsrc"><option value="me" ${src === 'me' ? 'selected' : ''}>This device: ${esc(S.name)}</option>${Object.keys(S.cls).sort().map(n => `<option value="cls:${esc(n)}" ${src === 'cls:' + n ? 'selected' : ''}>Class list: ${esc(n)}${S.cls[n].light ? ' (fluency code)' : ''}</option>`).join('')}<option value="pick" ${src === 'pick' ? 'selected' : ''}>No student: choose a level by hand</option></select></label>
+  <div class="row"><label class="f" style="flex:1;min-width:160px"><span>Area</span><select id="sht">${tracks.map(x => `<option value="${x}" ${x === t ? 'selected' : ''}>${esc(STR[x].name)}</option>`).join('')}</select></label>
+  <label class="f" style="flex:2;min-width:200px"><span>Level</span><select id="shk">${real(t).map(x => `<option value="${x.id}" ${x === k ? 'selected' : ''}>${lvNum(x)}. ${esc(x.name)}${src !== 'pick' && x === nu ? ' (next up)' : ''}</option>`).join('')}</select></label></div>
+  <label class="f"><span>Sheet</span><select id="shtype"><option value="level" ${type === 'level' ? 'selected' : ''}>Level practice</option><option value="known" ${type === 'known' ? 'selected' : ''} ${k.idx ? '' : 'disabled'}>Mixed known</option><option value="bridge" ${type === 'bridge' ? 'selected' : ''} ${BRIDGES[k.id] ? '' : 'disabled'}>Bridge${BRIDGES[k.id] ? '' : ' (not for this level)'}</option></select></label>
+  <p class="muted small">${help[type]}</p>
+  <div class="row"><button class="btn pri" data-act="shmake">${V.sheet ? 'New questions' : 'Make the sheet'}</button>${V.sheet ? '<button class="btn" data-act="shprint">Print sheet and answers</button>' : ''}</div><div class="fb no">${esc(V.sherr || '')}</div></div>
+  ${V.sheet ? `<p class="muted small">${V.sheet.n} questions on one side. The answers print on a second page.</p><div class="shprev">${V.sheet.page}</div>` : ''}`;
 }
 
 // ---------- events ----------
 function copyEl(id) { const el = $('#' + id); if (!el) return; const t = el.value; (navigator.clipboard?.writeText(t) || Promise.reject()).catch(() => { el.style.display = ''; el.select(); try { document.execCommand('copy'); } catch (e) {} }); }
+function backup() {
+  const a_ = document.createElement('a'), url = URL.createObjectURL(new Blob([JSON.stringify(S)], {type: 'application/json'}));
+  a_.href = url; a_.download = `maths-practice-${(S.name || 'student').replace(/[^\w-]+/g, '-')}-${today()}.json`; document.body.appendChild(a_); a_.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a_.remove(); }, 2000);
+  S.lastBackup = today(); save(); V.berr = 'Backup downloaded. On an iPad it goes to the Files app, in Downloads.'; V.bok = true; render();
+}
+function restore(file) {
+  const rd = new FileReader();
+  rd.onload = () => {
+    let D; try { D = JSON.parse(rd.result); if (!D || typeof D !== 'object' || !D.skills || !D.days) throw 0; } catch (x) { V.berr = 'That file is not a Maths Practice backup.'; V.bok = false; return render(); }
+    guard(`Replace everything on this device with the backup of ${D.name || 'this student'}? What is here now will be lost.`, () => { S = migrate(fromSaved(D)); syncMax(); V.berr = 'Backup restored.'; V.bok = true; });
+  };
+  rd.readAsText(file);
+}
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]'); if (!el) return;
   const a = el.dataset.act, k = el.dataset.id ? BY[el.dataset.id] : null;
   switch (a) {
+    case 'up': case 'quit': backBtn(); break;
     case 'home': clearInterval(gTimer); clearInterval(spTimer); V = {view: 'home'}; save(); render(); break;
     case 'setname': { const n = $('#nm').value.trim(); if (n) { S.name = n; save(); V = {view: 'home'}; render(); } break; }
     case 'mode': S.mode = el.dataset.m; save(); render(); break;
-    case 'place': placeIntro(); break;
-    case 'placego': startPlacement(); break;
+    case 'place': placeIntro('fluency', FLUENCY_ORDER); break;
+    case 'gcheck': { const g = GROUPS.find(x => x.id === el.dataset.g); placeIntro('skills', g.t.filter(t => !S.chk[t])); break; }
+    case 'tcheck': startPlacement([el.dataset.st], 'area'); break;
+    case 'placego': startPlacement(V.areas || FLUENCY_ORDER, V.mode || 'fluency'); break;
     case 'plcont': V.inter = null; nextProbe(); break;
-    case 'trecheck': { const st = el.dataset.st; guard(`Recheck ${STR[st].name}? The student answers a short check now, and this area's level is set from it.`, () => startPlacement([st], true)); break; }
+    case 'trecheck': { const st = el.dataset.st; guard(`Recheck ${STR[st].name}? The student answers a short check now, and this area's level is set from it. Secure levels above the result go back into practice; the expected level stays as it is.`, () => startPlacement([st], 'single')); break; }
     case 'toolong': if (V.ask && $('#ans')) V.ask.val = $('#ans').value; guard('Stop the check here and start practising? Your teacher can move your levels later.', () => endPlacement(true), false); break;
     case 'skipplace': S.placed = true; save(); render(); break;
-    case 'go': startSkill(k); break;
-    case 'ladder': V = {view: 'ladder', st: el.dataset.st}; render(); window.scrollTo(0, 0); break;
+    case 'go': startSkill(k); window.scrollTo(0, 0); break;
+    case 'quiz': startQuiz(k); window.scrollTo(0, 0); break;
+    case 'qgo': runQuiz(); break;
+    case 'ladder': V = {view: 'ladder', st: el.dataset.st, back: V.view === 'group' ? {view: 'group', g: V.g} : null}; render(); window.scrollTo(0, 0); break;
     case 'group': V = {view: 'group', g: el.dataset.g}; render(); window.scrollTo(0, 0); break;
     case 'linked': startLinked(k); window.scrollTo(0, 0); break;
     case 'speed': startSpeed(k, +el.dataset.n); window.scrollTo(0, 0); break;
@@ -975,8 +1346,6 @@ document.addEventListener('click', e => {
     case 'myes': { const m = V.modal; if (m.pin && $('#mpin').value !== S.pin) { m.err = 'That PIN is not right.'; return render(); } if (m.pin) V.unlocked = true; V.modal = null; m.fn(); save(); render(); break; }
     case 'mno': V.modal = null; render(); break;
     case 'unit': V.ask.val = $('#ans').value; V.ask.unit = el.dataset.u; render(); break;
-    // The cross stops the round and goes back to the home screen. Nothing from an unfinished round is saved.
-    case 'quit': if (V.phase === 'done' || (V.phase === 'learn' && !V.sc.n)) { V = {view: 'home'}; render(); } else guard('Stop this round? It will not be saved.', () => { V = {view: 'home'}; }, false); break;
     case 'typed': startTyped(); break;
     case 'key': padKey(el.dataset.k); break;
     case 'focusans': $('#ans')?.focus(); break;
@@ -984,7 +1353,7 @@ document.addEventListener('click', e => {
     case 'choice': submitAns(V.ask.q.opts[+el.dataset.i]); break;
     case 'skip': skipAns(); break;
     case 'next': nextAsk(); break;
-    case 'tomark': V.phase = 'mark'; render(); window.scrollTo(0, 0); break;
+    case 'tomark': V.bsec = V.bt0 ? Math.round((Date.now() - V.bt0) / 1000) : undefined; V.phase = 'mark'; render(); window.scrollTo(0, 0); break;
     case 'mark': V.marks[+el.dataset.i] = el.dataset.v === '1'; render(); break;
     case 'marked': V.phase = 'rate'; render(); window.scrollTo(0, 0); break;
     case 'rate': finishRound(el.dataset.r); window.scrollTo(0, 0); break;
@@ -994,26 +1363,44 @@ document.addEventListener('click', e => {
     case 'gundo': if (V.g.hist.length) { V.g.t = V.g.hist.pop(); V.g.sel = null; V.g.op = null; V.g.msg = ''; render(); } break;
     case 'greset': V.g.t = V.g.orig.slice(); V.g.hist = []; V.g.sel = null; V.g.op = null; V.g.msg = ''; render(); break;
     case 'gskip': gNew(); render(); break;
-    case 'ttab': { const t = el.dataset.t; V.err = ''; if (['class', 'tools'].includes(t) && !V.unlocked) guard('Teacher tools', () => { V.tab = t; }); else { V.tab = t; render(); } break; }
+    case 'ttab': { const t = el.dataset.t; V.err = ''; if (['class', 'tools', 'sheets'].includes(t) && !V.unlocked) guard('Teacher tools', () => { V.tab = t; }); else { V.tab = t; render(); } break; }
     case 'celebrate': guard('Mark all trophies so far as celebrated?', () => { S.celebrated = today(); }); break;
-    case 'setexp': guard('Set the expected levels to where ' + S.name + ' is working now?', () => { for (const st in L) S.expected[st] = Math.min(L[st].length - 1, pos(st)); }); break;
-    case 'tstart': guard(`Are you sure? This moves ${S.name} to start at "${k.name}".`, () => { S.start[k.st] = k.idx; L[k.st].slice(k.idx).forEach(x => { const s = S.skills[x.id]; if (s) { s.st = 'new'; s.passes = []; s.fast = false; } }); L[k.st].slice(0, k.idx).forEach(x => { const s = S.skills[x.id]; if (s) s.support = false; }); syncMax(); }); break;
+    case 'setexp': guard('Set the expected levels to where ' + S.name + ' is working now?', () => { for (const st in L) S.exp[st] = idAt(st, Math.min(pos(st), L[st].length - 1)); }); break;
+    case 'tstart': guard(`Are you sure? This moves ${S.name} to start at "${k.name}".`, () => { setStart(k.st, k.idx); L[k.st].slice(0, k.idx).forEach(x => { const s = S.skills[x.id]; if (s) s.support = false; }); S.chk[k.st] = S.chk[k.st] || 'set by teacher'; syncMax(); }); break;
     case 'tsec': guard(`Are you sure? This marks "${k.name}" as secure.`, () => { const s = ss(k.id); s.st = 'secure'; s.support = false; s.fails = 0; s.wob = 0; s.fast = false; syncMax(); }); break;
-    case 'tsup': guard(`Are you sure? This puts "${k.name}" back into practice.`, () => { const s = ss(k.id); s.support = true; s.st = 'new'; s.passes = []; s.fast = false; }); break;
-    case 'texp': guard(`Set the expected level to "${k.name}"?`, () => { S.expected[k.st] = k.idx; }); break;
+    case 'tsup': guard(`Are you sure? This puts "${k.name}" back into practice.`, () => { const s = ss(k.id); s.support = true; s.st = 'new'; s.as = false; s.passes = []; s.fast = false; }); break;
+    case 'texp': guard(`Set the expected level to "${k.name}"?`, () => { S.exp[k.st] = k.id; }); break;
     case 'copy': copyEl(el.dataset.el); el.textContent = 'Copied'; break;
-    case 'cadd': try { const P = dec($('#cin').value); if (!P.n || !P.pos) throw 0; for (const st in L) { P.pos[st] ??= 0; P.st[st] ??= 0; P.ex[st] ??= 0; } S.cls[P.n] = P; V.err = ''; V.cv = P.n; save(); } catch (x) { V.err = 'That does not look like a progress code.'; } render(); break;
+    case 'cadd': try { const P = dec($('#cin').value); if (!P.n) throw 0; S.cls[P.n] = P; V.err = ''; V.cv = P.n; save(); } catch (x) { V.err = 'That does not look like a progress code.'; } render(); break;
+    case 'fcadd': {
+      const n = $('#fcn').value.trim(), fp = readFluencyCode($('#fcc').value);
+      if (!n || !fp) { V.err = !n ? "Type the student's name as well." : 'That does not look like a fluency code. It looks like A5 S4 X3 M6 D2.'; return render(); }
+      const P = S.cls[n] || {v: 2, n, light: true, days: {}, tr: [], fl: [], ex: {}, pos: {}};
+      Object.assign(P.pos, fp); P.d = today(); P.fc = FC_ORDER.filter(t => P.pos[t]).map(t => P.pos[t] === '#end' ? t + '*' : P.pos[t]).join(' ');
+      S.cls[n] = P; V.err = ''; V.cv = n; save(); render(); break;
+    }
     case 'cview': V.cv = el.dataset.n; render(); break;
+    case 'csheet': Object.assign(V, {tab: 'sheets', shSrc: 'cls:' + el.dataset.n, shT: null, shK: null, sheet: null, sherr: ''}); render(); window.scrollTo(0, 0); break;
     case 'cdel': { const n = el.dataset.n; guard('Remove ' + n + ' from the class list?', () => { delete S.cls[n]; }); break; }
     case 'cprint': $('#print').innerHTML = `<div class="pg"><h2>Maths practice report: ${esc(V.cv)}</h2>${overviewHTML(S.cls[V.cv])}</div>`; setTimeout(() => window.print(), 60); break;
-    case 'psheet': printSheet(BY[$('#pskill').value], +$('#pn').value); break;
+    case 'shmake': { const {k: sk_, type} = sheetLevel(), sh = makeSheet(sk_, type, sheetSrc().who); V.sheet = sh; V.sherr = sh ? '' : 'There are no earlier levels in this area to mix. Choose Level practice.'; render(); break; }
+    case 'shprint': if (V.sheet) { $('#print').innerHTML = V.sheet.page + V.sheet.ans; setTimeout(() => window.print(), 60); } break;
+    case 'backup': backup(); break;
     case 'padd': try { const arr = JSON.parse($('#pin_').value.replace(/^[^\[]*/, '').replace(/[^\]]*$/, '')); const good = arr.filter(p => p && p.id && p.q && typeof p.a === 'number' && p.level >= 1 && p.level <= 6 && !packs().some(x => x.id === p.id)); if (!good.length) throw 0; S.packs.push(...good); V.err = `Added ${good.length} problem${good.length > 1 ? 's' : ''}.`; V.pok = true; save(); } catch (x) { V.err = 'Could not read that. It needs to be the JSON list from the prompt.'; V.pok = false; } render(); break;
     case 'pclear': guard('Remove the extra problems saved on this device?', () => { S.packs = []; }); break;
     case 'ssave': S.name = $('#sname').value.trim() || S.name; S.pin = $('#spin').value.trim() || S.pin; S.set.games = $('#sg').checked; S.set.links = $('#sl').checked; save(); render(); break;
-    case 'wipe': guard('Erase all progress for ' + S.name + ' on this device? This cannot be undone.', () => { const cls = S.cls, pin = S.pin; S = fresh(); S.cls = cls; S.pin = pin; for (const st in L) { S.start[st] = 0; S.expected[st] = 1; S.maxPos[st] = 0; } S.totalT = 0; V = {view: 'home'}; }); break;
+    case 'wipe': guard('Erase all progress for ' + S.name + ' on this device? This cannot be undone.', () => { const cls = S.cls, pin = S.pin; S = fresh(); S.cls = cls; S.pin = pin; S.known = SK.map(x => x.id); syncMax(); V = {view: 'home'}; }); break;
   }
 });
-document.addEventListener('change', e => { if (e.target.id === 'plv') { V.plv = +e.target.value; render(); } });
+document.addEventListener('change', e => {
+  const id = e.target.id, v = e.target.value;
+  if (id === 'plv') { V.plv = +v; render(); }
+  else if (id === 'shsrc') { Object.assign(V, {shSrc: v, shT: null, shK: null, sheet: null, sherr: ''}); render(); }
+  else if (id === 'sht') { Object.assign(V, {shT: v, shK: null, sheet: null, sherr: ''}); render(); }
+  else if (id === 'shk') { Object.assign(V, {shK: v, sheet: null, sherr: ''}); render(); }
+  else if (id === 'shtype') { Object.assign(V, {shType: v, sheet: null, sherr: ''}); render(); }
+  else if (id === 'rfile' && e.target.files[0]) restore(e.target.files[0]);
+});
 document.addEventListener('keydown', e => {
   if (V.view === 'speed' && !V.modal) { if (!V.t0) { if (e.key === 'Enter') speedGo(); } else if (/^\d$/.test(e.key)) speedKey(e.key); else if (e.key === 'Backspace') speedKey('⌫'); return; }
   if (e.key !== 'Enter') return;
