@@ -52,6 +52,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .mast h1{font-size:clamp(1.6rem,4vw,2.3rem);font-weight:800;letter-spacing:-.01em}
 .mast h1 span{color:var(--gold)}
 .mast .brand{padding-bottom:14px}
+.mast .home{display:inline-block;margin-bottom:6px;color:var(--mast-muted);font-size:.85rem;text-decoration:none}
+.mast .home:hover{text-decoration:underline}
 .mast .sub{color:var(--mast-muted);font-size:.9rem;margin-top:4px}
 .tabs{display:flex;gap:4px;flex-wrap:wrap}
 .tabs a{display:block;padding:10px 14px;border-radius:var(--r) var(--r) 0 0;text-decoration:none;color:var(--mast-muted);font-weight:700}
@@ -179,7 +181,7 @@ footer{color:var(--muted);font-size:.8rem;padding:0 0 32px}
 </head>
 <body>
 <header class="mast"><div class="wrap">
-  <div class="brand"><h1 id="title"></h1><p class="sub" id="sub"></p></div>
+  <div class="brand"><a class="home" href="../">← Mr Sawyer's Maths</a><h1 id="title"></h1><p class="sub" id="sub"></p></div>
   <nav class="tabs" id="tabs" aria-label="Sections"></nav>
 </div></header>
 <main><div class="wrap" id="app"></div></main>
