@@ -907,11 +907,14 @@ function puzzle(hard) {
 }
 let gTimer = null;
 function gNew() { const P = puzzle(V.g.hard); Object.assign(V.g, {t: P.tiles.slice(), orig: P.tiles.slice(), target: P.target, sel: null, op: null, hist: [], msg: ''}); }
+/* The target game is free to play, as often as the student likes, on any day they have finished at least one round (Matt, 15 Nov 2026).
+   It used to cost a token per round finished; the old tokens field is no longer used. */
+const gameOpen = () => S.set.games && (S.days[today()]?.s || 0) >= 1;
 function startGame() {
-  if (S.tokens < 1) return;
+  if (!gameOpen()) return;
   V = {view: 'game', back: fromHere(), g: {hard: pos('M') > 5, solved: 0, end: Date.now() + CONFIG.gameSecs * 1000}}; gNew(); render();
   clearInterval(gTimer);
-  gTimer = setInterval(() => { if (V.view !== 'game') return clearInterval(gTimer); const left = Math.max(0, Math.ceil((V.g.end - Date.now()) / 1000)); const el = $('#gt'); if (el) el.textContent = Math.floor(left / 60) + ':' + pad2(left % 60); if (left <= 0) { clearInterval(gTimer); S.tokens--; S.best = Math.max(S.best, V.g.solved); const n = V.g.solved; V = {view: 'gameover', n, back: V.back}; save(); render(); } }, 500);
+  gTimer = setInterval(() => { if (V.view !== 'game') return clearInterval(gTimer); const left = Math.max(0, Math.ceil((V.g.end - Date.now()) / 1000)); const el = $('#gt'); if (el) el.textContent = Math.floor(left / 60) + ':' + pad2(left % 60); if (left <= 0) { clearInterval(gTimer); S.best = Math.max(S.best, V.g.solved); const n = V.g.solved; V = {view: 'gameover', n, back: V.back}; save(); render(); } }, 500);
 }
 function gTap(i) {
   const g = V.g; g.msg = '';
@@ -1040,8 +1043,8 @@ function homeHTML() {
     <div class="row"><button class="btn pri" data-act="go" data-id="${k.id}">Practise</button>${multi ? `<button class="btn" data-act="group" data-g="${g.id}">Choose an area</button>` : `<button class="btn" data-act="ladder" data-st="${t}">All levels</button>`}${unchecked ? `<button class="btn ghost" data-act="gcheck" data-g="${g.id}">Find my level</button>` : ''}</div></div>`;
   }
   if (wob.length) h += `<div class="card"><b>Worth another look</b><p class="muted small">These slipped in your warm-ups.</p>${wob.map(k => `<div class="row" style="margin:6px 0"><span>${esc(k.name)}</span><span class="sp"></span><button class="btn sm" data-act="go" data-id="${k.id}">Practise</button></div>`).join('')}</div>`;
-  if (S.set.games && S.tokens > 0) h += `<div class="card"><div class="row"><span>🎯 <b>Target game</b> earned (${S.tokens})</span><span class="sp"></span><button class="btn" data-act="game">Play 3 minutes</button></div></div>`;
   if (newT) h += `<p class="muted small center">${newT} new troph${newT === 1 ? 'y' : 'ies'} to show your teacher.</p>`;
+  if (S.set.games) h += gameOpen() ? `<div class="card"><div class="row"><span>🎯 <b>Target game</b> <span class="muted small">Open for today. Your best: ${S.best} solved.</span></span><span class="sp"></span><button class="btn" data-act="game">Play 3 minutes</button></div></div>` : `<p class="muted small center">🎯 The target game opens once you finish a round today.</p>`;
   return h;
 }
 function groupHTML() {
@@ -1125,7 +1128,7 @@ function doneHTML() {
     if (link) opts.push([`Use it: word problems with ${STR[st].name.toLowerCase()}`, k.id, false, 'linked']);
     others.forEach(o => opts.push([`${STR[o.st].g.name}: ${o.name}`, o.id, false]));
     h += `<div class="card"><b>Still in class? Choose what's next</b>${opts.map(btn).join('')}${speed ? speedRow(k) : ''}
-    ${S.set.games && S.tokens > 0 ? `<p><button class="btn" style="width:100%;text-align:left" data-act="game">🎯 Target game, 3 minutes (earned)</button></p>` : ''}
+    ${gameOpen() ? `<p><button class="btn" style="width:100%;text-align:left" data-act="game">🎯 Target game, 3 minutes</button></p>` : ''}
     ${S.set.links && top ? `<p class="muted small">You are working at the top levels. For a stretch, try one of these:</p>${CONFIG.links.map(l => `<p><a href="${esc(l[1])}" target="_blank" rel="noopener">${esc(l[0])}</a></p>`).join('')}` : ''}</div>`;
   } else {
     if (link) opts.push([`Use it: word problems with ${STR[st].name.toLowerCase()}`, k.id, false, 'linked']);
@@ -1180,7 +1183,7 @@ function teacherHTML() {
     <div class="row"><label>Level <select id="plv" style="width:auto">${[1, 2, 3, 4, 5, 6].map(i => `<option ${i === lv ? 'selected' : ''}>${i}</option>`).join('')}</select></label><button class="btn" data-act="copy" data-el="prompt">Copy prompt</button></div><textarea readonly id="prompt">${esc(llmPrompt(lv))}</textarea>
     <label class="f"><span>Paste the JSON it gives you</span><textarea id="pin_"></textarea></label><div class="fb ${V.pok ? 'ok' : 'no'}">${esc(V.err || '')}</div><div class="row"><button class="btn pri" data-act="padd">Add to this device</button><button class="btn" data-act="copy" data-el="pfile">Copy packs.js for all students</button><button class="btn ghost danger sm" data-act="pclear">Clear saved problems</button></div><textarea readonly id="pfile" style="display:none">${esc('window.MP_PACKS = ' + JSON.stringify(pk, null, 1) + ';')}</textarea></div>
     <div class="card"><b>Settings</b><label class="f"><span>Student name</span><input type="text" id="sname" value="${esc(S.name)}"></label><label class="f"><span>Teacher PIN</span><input type="text" id="spin" value="${esc(S.pin)}" inputmode="numeric"></label>
-    <p><label><input type="checkbox" id="sg" ${S.set.games ? 'checked' : ''}> Target game as a reward (one 3-minute game per finished round)</label></p><p><label><input type="checkbox" id="sl" ${S.set.links ? 'checked' : ''}> Show stretch links at the top levels</label></p>
+    <p><label><input type="checkbox" id="sg" ${S.set.games ? 'checked' : ''}> Target game (free to play on any day a round has been finished)</label></p><p><label><input type="checkbox" id="sl" ${S.set.links ? 'checked' : ''}> Show stretch links at the top levels</label></p>
     <div class="row"><button class="btn pri" data-act="ssave">Save settings</button><button class="btn" data-act="place">Redo the Fluency challenge</button><button class="btn danger" data-act="wipe">Erase this student's data</button></div></div>`;
   }
   return h;
