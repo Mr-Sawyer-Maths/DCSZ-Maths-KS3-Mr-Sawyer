@@ -102,22 +102,24 @@ T({id: 'nn-5a', type: 5, needs: ['N13'], areas: ['NN'], skel: 'neg-which-is-cold
     return W(`The temperature in ${c1} is ${n(a)}°C. The temperature in ${c2} is ${n(b)}°C. Which city is colder? How many degrees colder is it?`, diff,
       [`${n(lo)} is lower than ${n(hi)}, so ${cold} is colder`, `${n(hi)} − ${p(lo)} = ${diff}`], {suf: '°C', pick: {opts: [c1, c2], a: cold}});
   }});
-T({id: 'nn-5b', type: 5, needs: ['N15'], areas: ['NN'], skel: 'order-of-ops-find-the-error', ctx: 'school', style: 'aqa', cur: '', marks: 1,
-  desc: 'a student works left to right and is wrong: find the correct answer',
+T({id: 'nn-5b', type: 5, needs: ['N15'], areas: ['NN'], skel: 'order-of-ops-find-the-error', ctx: 'school', style: 'aqa', cur: '', marks: 2,
+  desc: 'a student works left to right: say what went wrong, then find the correct answer',
   gen: () => {
     const name = nm(), form = pick([1, 2, 3]);
-    let a, b, c, d, expr, wrong, right, steps;
+    let a, b, c, d, expr, wrong, right, steps, op;
     if (form === 1) {
-      a = ri(2, 12); b = ri(2, 9); c = ri(2, 9); expr = `${a} + ${b} × ${c}`; wrong = (a + b) * c; right = a + b * c;
-      steps = [`Multiplication first: ${b} × ${c} = ${b * c}`, `${a} + ${b * c} = ${right}`];
+      a = ri(2, 12); b = ri(2, 9); c = ri(2, 9); expr = `${a} + ${b} × ${c}`; wrong = (a + b) * c; right = a + b * c; op = 'addition';
+      steps = [`${name} did ${a} + ${b} first`, `Multiplication first: ${b} × ${c} = ${b * c}`, `${a} + ${b * c} = ${right}`];
     } else if (form === 2) {
       do { a = ri(15, 60); b = ri(2, 6); c = ri(2, 6); } while (b * c >= a - 2);
-      expr = `${a} − ${b} × ${c}`; wrong = (a - b) * c; right = a - b * c;
-      steps = [`Multiplication first: ${b} × ${c} = ${b * c}`, `${a} − ${b * c} = ${right}`];
+      expr = `${a} − ${b} × ${c}`; wrong = (a - b) * c; right = a - b * c; op = 'subtraction';
+      steps = [`${name} did ${a} − ${b} first`, `Multiplication first: ${b} × ${c} = ${b * c}`, `${a} − ${b * c} = ${right}`];
     } else {
       do { a = ri(2, 12); b = ri(2, 8); c = ri(2, 8); d = ri(2, 9); right = a + b * c - d; } while (right <= 0);
-      expr = `${a} + ${b} × ${c} − ${d}`; wrong = (a + b) * c - d;
-      steps = [`Multiplication first: ${b} × ${c} = ${b * c}`, `${a} + ${b * c} − ${d} = ${a + b * c} − ${d} = ${right}`];
+      expr = `${a} + ${b} × ${c} − ${d}`; wrong = (a + b) * c - d; op = 'addition';
+      steps = [`${name} did ${a} + ${b} first`, `Multiplication first: ${b} × ${c} = ${b * c}`, `${a} + ${b * c} − ${d} = ${a + b * c} − ${d} = ${right}`];
     }
-    return W(`${name} works out ${expr}. ${name}'s answer is ${wrong}. ${name} is wrong. Work out the correct answer.`, right, steps);
+    const good = `Did the ${op} before the multiplication`;
+    return W(`${name} works out ${expr}. ${name}'s answer is ${wrong}. ${name} is wrong. What did ${name} do wrong? Work out the correct answer.`, right, steps,
+      {pick: {opts: shuf([good, `Did the multiplication before the ${op}`, 'Got a times table fact wrong']), a: good}});
   }});
