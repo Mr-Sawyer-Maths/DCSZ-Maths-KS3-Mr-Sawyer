@@ -82,6 +82,21 @@ textarea{min-height:110px;font-family:ui-monospace,Menlo,Consolas,monospace;font
 .modal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
 .modal .card{max-width:420px;width:100%}
 #print{display:none}
+.fcard{border:2px solid var(--line);border-radius:16px;padding:18px 14px;background:var(--panel);text-align:center;max-width:460px;margin:12px auto}
+.fcard.right{border-color:var(--ok)}.fcard.wrong,.fcard.shown{border-color:var(--warn)}
+.fcbig{font-size:40px;font-weight:700;line-height:1.3}.fcslot{display:inline-block;min-width:1.6em;border-bottom:3px solid var(--accent)}
+.fcwin{height:6px;background:var(--soft);border-radius:3px;margin:12px auto 0;max-width:260px;overflow:hidden}.fcwin i{display:block;height:100%;background:var(--accent)}
+.fcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:10px 0}
+.fctile{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--panel);text-align:center}.fctile .q{font-size:22px}
+.fctile.learn{border-color:var(--warn)}.fctile.hard{border-color:var(--bad);border-width:2px}
+table.fg{border-collapse:collapse;margin:8px 0;width:auto}table.fg th{font-size:12px;padding:2px 4px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+table.fg td{width:30px;height:30px;min-width:30px;text-align:center;font-size:12px;border:1px solid var(--line);cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;padding:0}
+table.fg td.known,.fgk.known{background:var(--soft)}table.fg td.pile,.fgk.pile{background:var(--warn);color:#fff}table.fg td.hard,.fgk.hard{background:var(--bad);color:#fff}
+table.fg td.rev,.fgk.rev{background:#d9b44a;color:#1c2230}table.fg td.got,.fgk.got{background:var(--ok);color:#fff}table.fg td.none{background:transparent;border-color:transparent;cursor:default}
+table.fg td.sel{outline:3px solid var(--accent);outline-offset:-3px}
+.fgk{display:inline-block;width:12px;height:12px;border:1px solid var(--line);border-radius:2px;vertical-align:middle;margin:0 3px 0 10px}
+.sheet .cutgrid{display:grid;grid-template-columns:1fr 1fr;margin-top:4mm}.sheet .cut{display:flex;border:1px solid #000;height:24mm;font-size:22px;font-weight:700}
+.sheet .cut span{flex:1;display:flex;align-items:center;justify-content:center}.sheet .cut span+span{border-left:1.5px dashed #666}
 .sheet{width:186mm;color:#000;background:#fff;font-size:15px;line-height:1.35}
 .sheet h2{font-size:20px;margin:0}.sheet .sub{font-size:12px;color:#444}
 .sheet .shd{display:flex;gap:5mm;align-items:flex-end;font-size:14px;border-bottom:1.5px solid #000;padding-bottom:2mm}
@@ -439,7 +454,7 @@ SK.forEach(s => { s.eg = s.st === 'W' ? '' : s.gen().q; s.speedOK = isFacts(s) &
    - chk[area] = date that area's level check was done. known = level ids that existed when the data was last loaded.
    Version 1 (10-13 Nov 2026) stored list positions; migrate() converts it using OLD_LISTS. Keep migrate() able to read v1. */
 const KEY = 'mathsPractice.v1';      // the storage key stays the same so existing progress is found
-const fresh = () => ({v: 2, name: '', mode: 'class', pin: CONFIG.pin, placed: false, chk: {}, exp: {}, maxId: {}, known: null, skills: {}, days: {}, trophies: [], log: [], tokens: 0, best: 0, sessions: 0, wpSeen: [], packs: [], set: {games: true, links: true}, celebrated: '', cls: {}, lastBackup: ''});
+const fresh = () => ({v: 2, name: '', mode: 'class', pin: CONFIG.pin, placed: false, chk: {}, exp: {}, maxId: {}, known: null, skills: {}, days: {}, trophies: [], log: [], tokens: 0, best: 0, sessions: 0, wpSeen: [], packs: [], fc: {}, fcn: 0, set: {games: true, links: true}, celebrated: '', cls: {}, lastBackup: ''});
 // Saved data without a version number is version 1 (fresh() would otherwise stamp it as 2 and skip the conversion).
 const fromSaved = D => { if (D && typeof D === 'object' && Object.keys(D).length && !D.v) D.v = 1; return Object.assign(fresh(), D); };
 let S; try { S = fromSaved(JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = fresh(); }
@@ -545,7 +560,7 @@ function submitAns(val) {
   if (r.retry) { A.fb = r.retry; A.cls = 'warn'; return render(); }
   const unitWrong = r.ok && A.units && A.unit !== A.cu;
   if (unitWrong) r = {ok: false};
-  if (A.first === null) { A.first = r.ok; A.ms = Date.now() - A.t0; A.auto = r.ok && A.ms <= A.lim * 1000; }
+  if (A.first === null) { A.first = r.ok; A.ms = Date.now() - A.t0; A.auto = r.ok && A.ms <= A.lim * 1000; if (A.lim) fcNote(A.q, r.ok, A.ms, A.lim); }
   if (r.ok) {
     A.state = 'right'; A.cls = 'ok';
     A.fb = !A.lim || A.left < (A.q.tries || 1) ? '✓ Correct' : A.auto ? `✓ Correct · ${secsTxt(A.ms)}, automatic` : `✓ Correct · ${secsTxt(A.ms)}. Aim for under ${A.lim} s.`;
@@ -572,7 +587,7 @@ function padKey(c) {
 }
 function hintAns(t) { if (!V.ask) return; V.ask.fb = t; V.ask.cls = 'warn'; V.ask.val = $('#ans')?.value ?? V.ask.val; render(); }
 document.addEventListener('input', e => { if (e.target.id === 'ans') setAns(e.target.value); });
-function skipAns() { const A = V.ask; if (!A) return; A.first = false; A.skipped = true; A.state = 'wrong'; nextAsk(); }
+function skipAns() { const A = V.ask; if (!A) return; if (A.lim && A.first === null) fcNote(A.q, false); A.first = false; A.skipped = true; A.state = 'wrong'; nextAsk(); }
 function nextAsk() { const A = V.ask; if (!A) return; A.onDone(A.first === true, A.state === 'right', A.auto); }
 function askHTML() {
   const A = V.ask, Q = A.q, wp = !!Q.steps;
@@ -934,7 +949,7 @@ setInterval(() => {
   if (document.visibilityState !== 'visible') return;
   const slow = V.view === 'sess' && (['book', 'mark'].includes(V.phase) || V.sk?.st === 'W');   // writing in a book means long gaps between taps
   if (Date.now() - lastAct > (slow ? 300000 : 60000)) return;
-  if (V.view === 'game') day().g += 5; else if (['sess', 'place', 'speed'].includes(V.view)) day().t += 5; else return;
+  if (V.view === 'game') day().g += 5; else if (['sess', 'place', 'speed', 'fcs', 'fcstudy'].includes(V.view)) day().t += 5; else return;
   if (Math.random() < .2) save();
 }, 5000);
 
@@ -942,7 +957,7 @@ setInterval(() => {
 function snap() {
   const days = {}; Object.keys(S.days).filter(d => d >= dOff(27)).forEach(d => { const x = S.days[d]; days[d] = [x.t, x.q, +x.c.toFixed(1), x.s, x.g]; });
   const tm = {}; SK.forEach(k => { const t = S.skills[k.id]?.times; if (t?.length && t[t.length - 1].d >= dOff(27)) tm[k.id] = t[t.length - 1].med; });
-  return {v: 2, n: S.name, d: today(), pos: Object.fromEntries(Object.keys(L).map(t => [t, idAt(t, pos(t))])), ex: {...S.exp}, chk: Object.keys(S.chk), days, tr: S.trophies.slice(-30).map(t => [t.d, t.ic, t.text]), fl: flags().map(f => f[0] + ': ' + f[1].name), ses: S.sessions, cel: S.celebrated, fc: fluencyCode(), tm};
+  return {v: 2, n: S.name, d: today(), pos: Object.fromEntries(Object.keys(L).map(t => [t, idAt(t, pos(t))])), ex: {...S.exp}, chk: Object.keys(S.chk), days, tr: S.trophies.slice(-30).map(t => [t.d, t.ic, t.text]), fl: flags().map(f => f[0] + ': ' + f[1].name), ses: S.sessions, cel: S.celebrated, fc: fluencyCode(), tm, fcp: fcCounts().pile};
 }
 /* The fluency code: the next-up level in each number facts area, in the order addition, subtraction, extending, multiplication,
    division, written as level ids ("A5 S4 X3 M6 D2"); "A*" means every addition level is done. Short enough to read off a
@@ -977,7 +992,7 @@ const sumDays = (days, n, i) => Object.keys(days).filter(d => d >= dOff(n - 1)).
 function overviewHTML(P) {
   const ds_ = Object.keys(P.days).sort().reverse().slice(0, 14), tracks = P.light ? FC_ORDER : Object.keys(L);
   const lvl = t => { const i = posOf(t, P); return i >= L[t].length ? 'All secure' : `<b>${lvNum(L[t][i])}</b> of ${real(t).length}: ${esc(L[t][i].name)}`; };
-  return (P.fc ? `<p>Fluency code: <b style="font-size:20px;letter-spacing:1px">${esc(P.fc)}</b> <span class="muted small">Type it into Sheets or Class on the teacher's device.</span></p>` : '') +
+  return (P.fc ? `<p>Fluency code: <b style="font-size:20px;letter-spacing:1px">${esc(P.fc)}</b> <span class="muted small">Type it into Sheets or Class on the teacher's device.</span></p>` : '') + (P.fcp != null ? `<p class="small">Fact cards: <b>${P.fcp}</b> fact${P.fcp === 1 ? '' : 's'} on the pile to learn.</p>` : '') +
   (P.light ? '<p class="muted small">Added from a fluency code, so only the number facts levels are known.</p>' : `<div class="row"><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Active practice, last 7 days</div><b style="font-size:24px">${Math.round(sumDays(P.days, 7, 0) / 60)} min</b></div><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Rounds, last 7 days</div><b style="font-size:24px">${sumDays(P.days, 7, 3)}</b></div><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Last 28 days</div><b style="font-size:24px">${Math.round(sumDays(P.days, 28, 0) / 60)} min</b></div></div>`) +
   `<h3>Levels</h3><table><tr><th>Area</th><th>Working at</th><th>Expected</th></tr>${tracks.map(t => { const e = P.ex?.[t] && BY[P.ex[t]]; return `<tr><td>${STR[t].name}</td><td>${lvl(t)}</td><td>${e ? lvNum(e) : ''}</td></tr>`; }).join('')}</table>` +
   (P.light ? '' : `<h3>Things to look at</h3>${P.fl.length ? P.fl.map(f => `<div class="flag">${esc(f)}</div>`).join('') : '<p class="muted">Nothing flagged.</p>'}
@@ -987,12 +1002,282 @@ function overviewHTML(P) {
 
 S = migrate(S); syncMax();
 
+// ---------- Learn with fact cards ----------
+/* For facts a student doesn't know by heart yet (Matt, 16 Nov 2026; design in claude/fact-cards-brief.md, from Pershan's and
+   Kane's routines). Five sets of cards: addition, subtraction, number bonds, multiplication, division.
+   A session: study 3 new facts with their answers → cover, copy, compare → a mix of about 30 cards where the 3 new ones come
+   round at growing gaps (2, 4, 8 cards) among facts the student knows → each new fact once more, cold.
+   The answer window: no answer within the time shows the answer (it counts as "shown", not wrong) and the card comes back
+   two later. The window starts at 5 seconds and tightens by half a second a session to the app's automatic goal.
+   Over the next days a fact comes back after 1 day, then 3 days; recalled on three different days it leaves the pile.
+   A slip anywhere puts it back at the start. Fact cards never secure a level and don't open the games.
+   Saved per fact in S.fc[key] = {s: 'learn'|'got', st: 0 (not started) | 1 | 2, due, days: [dates recalled], h (student
+   marked hard), src: 'app'|'me'|'teacher'|'card', at, n (times asked), shown, slow}. Missing means never touched. */
+const FCD = {
+  A: {name: 'Addition', track: 'A', eg: '7 + 8'},
+  S: {name: 'Subtraction', track: 'S', eg: '15 − 7'},
+  B: {name: 'Number bonds', track: 'X', eg: '7 + □ = 10'},
+  M: {name: 'Multiplication', track: 'M', eg: '7 × 8'},
+  D: {name: 'Division', track: 'D', eg: '56 ÷ 7'},
+};
+const FC_ORDER_M = [2, 10, 5, 4, 3, 11, 9, 6, 8, 7, 12];
+const FCF = {}, FCL = {A: [], S: [], B: [], M: [], D: []};
+(function buildFacts() {
+  const add = f => { FCF[f.k] = f; FCL[f.d].push(f); };
+  for (let a = 1; a <= 10; a++) for (let b = a; b <= 10; b++) {
+    const lv = a === 1 ? 'A1' : a === 2 ? 'A2' : a === b ? 'A4' : b - a === 1 ? 'A5' : a <= 4 ? 'A6' : 'A7';
+    const hint = a === b ? '' : b - a === 1 ? `${a} + ${a} = ${2 * a}, and one more` : a + b > 10 && b < 10 ? `${b} + ${10 - b} = 10, then ${a - (10 - b)} more` : '';
+    add({k: `A${a}+${b}`, d: 'A', q: `${a} + ${b}`, alt: a === b ? '' : `${b} + ${a}`, a: a + b, lv, hint, g: [a, b], sym: true});
+  }
+  for (let b = 1; b <= 10; b++) for (let ans = 1; ans <= 10; ans++) {
+    const m = ans + b; if (m === 10 || m === 20) continue;        // 10 − b and 20 − b are number bonds
+    const lv = b === 10 ? 'S6' : b <= 2 ? 'S1' : ans <= 2 ? 'S2' : b <= 4 ? 'S4' : ans <= 4 ? 'S5' : b === 9 ? 'S6' : b <= 6 ? 'S7' : 'S8';
+    const hint = b === 9 ? `${m} − 10 = ${m - 10}, then add 1 back` : m > 10 && b > m - 10 ? `${m} − ${m - 10} = 10, then take ${b - (m - 10)} more` : '';
+    add({k: `S${m}-${b}`, d: 'S', q: `${m} − ${b}`, alt: `${ans} + ${b} = ${m}`, a: ans, lv, hint, g: [b, ans]});
+  }
+  for (let a = 1; a <= 9; a++) add({k: `B10:${a}`, d: 'B', q: `${a} + □ = 10`, alt: `10 − ${a} = ${10 - a}`, a: 10 - a, lv: 'X1', hint: '', g: [0, a]});
+  for (let a = 1; a <= 19; a++) if (a !== 10) add({k: `B20:${a}`, d: 'B', q: `${a} + □ = 20`, alt: `20 − ${a} = ${20 - a}`, a: 20 - a, lv: 'X2', hint: a > 10 ? `${a - 10} + ${20 - a} = 10` : `${a} + ${10 - a} = 10, and 10 more`, g: [a < 10 ? 1 : 2, a % 10]});
+  for (let a = 1; a <= 9; a++) add({k: `B100:${a}`, d: 'B', q: `${a * 10} + □ = 100`, alt: `100 − ${a * 10} = ${100 - a * 10}`, a: 100 - a * 10, lv: 'N4', hint: `${a} + ${10 - a} = 10`, g: [3, a]});
+  const famOf = (a, b) => FC_ORDER_M.find(t => t === a || t === b);
+  const mh = (t, o) => ({2: `Double ${o}`, 10: '', 5: `Half of 10 × ${o} = ${10 * o}`, 4: `Double 2 × ${o} = ${2 * o}`, 3: `2 × ${o} = ${2 * o}, and one more ${o}`, 11: o < 10 ? `${o} and ${o} side by side` : `10 × ${o} = ${10 * o}, and one more ${o}`, 9: `10 × ${o} = ${10 * o}, take away ${o}`, 6: `5 × ${o} = ${5 * o}, and one more ${o}`, 8: `Double 4 × ${o} = ${4 * o}`, 7: `5 × ${o} = ${5 * o} and 2 × ${o} = ${2 * o}`, 12: `10 × ${o} = ${10 * o} and 2 × ${o} = ${2 * o}`})[t];
+  for (let a = 2; a <= 12; a++) for (let b = a; b <= 12; b++) { const t = famOf(a, b), o = t === a ? b : a; add({k: `M${a}x${b}`, d: 'M', q: `${a} × ${b}`, alt: a === b ? '' : `${b} × ${a}`, a: a * b, lv: 'M' + t, hint: mh(t, o), g: [a, b], sym: true}); }
+  for (const t of [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) for (let o = 2; o <= 12; o++) add({k: `D${t * o}/${t}`, d: 'D', q: `${t * o} ÷ ${t}`, alt: `${t} × ${o} = ${t * o}`, a: o, lv: 'D' + t, hint: '', g: [t, o]});
+})();
+// Which card a typed question is, if it is one. Only exact single-fact forms count.
+function factOf(text) {
+  const s = String(text).trim(); let m;
+  if ((m = s.match(/^(\d+) × (\d+)$/))) { const a = Math.min(+m[1], +m[2]), b = Math.max(+m[1], +m[2]); return FCF[`M${a}x${b}`] || null; }
+  if ((m = s.match(/^(\d+) ÷ (\d+)$/))) return FCF[`D${m[1]}/${m[2]}`] || null;
+  if ((m = s.match(/^(\d+) \+ (\d+)$/))) { const a = Math.min(+m[1], +m[2]), b = Math.max(+m[1], +m[2]); return FCF[`A${a}+${b}`] || null; }
+  if ((m = s.match(/^(\d+) \+ □ = (10|20|100)$/))) return FCF[m[2] === '100' ? `B100:${+m[1] / 10}` : `B${m[2]}:${m[1]}`] || null;
+  if ((m = s.match(/^(10|20|100) − (\d+)$/))) { const x = +m[2], tot = +m[1]; return FCF[tot === 100 ? `B100:${(100 - x) / 10}` : `B${tot}:${tot - x}`] || null; }
+  if ((m = s.match(/^(\d+) − (\d+)$/))) return FCF[`S${m[1]}-${m[2]}`] || null;
+  return null;
+}
+const fcRec = k => S.fc[k];
+const inPile = k => S.fc[k]?.s === 'learn';
+const fcDue = k => { const r = S.fc[k]; return r?.s === 'learn' && r.st > 0 && (r.due || '') <= today(); };
+const dAhead = n => dOff(-n);
+const fcKnown = f => S.fc[f.k]?.s === 'got' || (!inPile(f.k) && BY[f.lv] && done(BY[f.lv]));
+function toPile(k, src) {
+  const r = S.fc[k] || (S.fc[k] = {});
+  if (r.s !== 'learn') Object.assign(r, {s: 'learn', st: 0, days: [], at: today(), src: src || r.src || 'app'});
+  else if (r.st > 0) Object.assign(r, {st: 0, days: []});      // a slip puts it back at the start
+  return r;
+}
+// Every clocked typed answer in a round, a check or a quiz comes here. Wrong, skipped, or slow twice puts the fact on the pile.
+function fcNote(Q, ok, ms, lim) {
+  const f = factOf(Q.q); if (!f) return;
+  const fast = ok && ms != null && lim && ms <= lim * 1000;
+  if (fast) return;
+  if (ok) { const r = S.fc[f.k] || (S.fc[f.k] = {}); r.slow = (r.slow || 0) + 1; if (r.slow < 2) return; r.slow = 0; }
+  toPile(f.k, 'app');
+  if (V.view === 'sess') { V.fcHit = V.fcHit || []; if (!V.fcHit.includes(f.k)) V.fcHit.push(f.k); }
+}
+const levelIdx = f => { const k = BY[f.lv]; return k ? k.idx : 99; };
+// The cards a student "has" in a set: the families they know, the family they are on, and anything on their pile.
+function fcCards(d) {
+  const all = FCL[d], next = all.filter(f => !fcKnown(f)).sort((x, y) => levelIdx(x) - levelIdx(y));
+  const firstLv = next.length ? next[0].lv : null;
+  const grp = f => inPile(f.k) ? 0 : f.lv === firstLv ? 1 : 2;          // the pile first, then the family they're on, then known ones
+  return all.filter(f => fcKnown(f) || inPile(f.k) || f.lv === firstLv).sort((x, y) => grp(x) - grp(y) || levelIdx(x) - levelIdx(y) || x.a - y.a);
+}
+function fcTargets(d) {
+  const pile = FCL[d].filter(f => inPile(f.k) && !S.fc[f.k].st), rank = f => { const r = S.fc[f.k]; return (r.h ? 0 : r.src === 'teacher' ? 1 : 2) * 1000 + levelIdx(f) * 10; };
+  let out = pile.sort((x, y) => rank(x) - rank(y)).slice(0, 3);
+  if (out.length < 3) {
+    const fresh_ = FCL[d].filter(f => !fcKnown(f) && !S.fc[f.k]?.s).sort((x, y) => levelIdx(x) - levelIdx(y) || Math.random() - .5);
+    out = out.concat(fresh_.slice(0, 3 - out.length));
+  }
+  return out;
+}
+const fcCounts = d => { const fs = d ? FCL[d] : Object.values(FCF); return {pile: fs.filter(f => inPile(f.k)).length, due: fs.filter(f => fcDue(f.k)).length, hard: fs.filter(f => S.fc[f.k]?.h && inPile(f.k)).length}; };
+const fcWindow = f => Math.max(autoLimit({q: f.q}) * 1000, 5000 - 500 * (S.fcn || 0));
+const fcFace = (q, s) => q.includes('□') ? fmt(q).replace('□', s) : fmt(q) + ' = ' + s;
+const fcAsk = f => (f.sym && f.alt && Math.random() < .5) ? f.alt : f.q;     // turnarounds asked both ways
+
+// --- screens ---
+function fcHomeCard() {
+  const c = fcCounts();
+  return `<div class="card strand" style="--c:var(--k)"><div class="row"><b>Learn with fact cards</b><span class="sp"></span><span class="lvl">${c.pile ? `${c.pile} to learn` : 'Nothing on your pile'}${c.due ? ` · ${c.due} due today` : ''}</span></div>
+  <p class="muted small">For facts you don't know by heart yet: see them with the answer, then remember them. About 5 minutes.</p><button class="btn" data-act="fchome">Learn with fact cards</button></div>`;
+}
+function fcMenuHTML() {
+  return head('Learn with fact cards') + `<p class="muted small">Pick a set. Each time you learn <b>3 new facts</b>, mixed in with ones you already know. Facts you learn come back over the next few days until they stick.</p>` +
+    Object.keys(FCD).map(d => { const c = fcCounts(d), D = FCD[d]; return `<div class="card"><div class="row"><b>${D.name}</b><span class="eg">${fmt(D.eg)}</span><span class="sp"></span><span class="muted small">${c.pile} to learn${c.due ? ` · ${c.due} due today` : ''}${c.hard ? ` · ${c.hard} marked hard` : ''}</span></div><div class="row" style="margin-top:8px"><button class="btn pri" data-act="fcdeck" data-d="${d}">Choose</button></div></div>`; }).join('');
+}
+function fcDeckHTML() {
+  const d = V.d, D = FCD[d], tg = fcTargets(d), c = fcCounts(d);
+  return head('Fact cards: ' + D.name) + `<div class="card"><p><b>Today's new facts</b> ${tg.length ? tg.map(f => `<span class="chip">${fmt(f.q)}</span>`).join(' ') : '<span class="muted">none: every card in this set is known for now.</span>'}</p>
+    ${c.due ? `<p class="small">Plus <b>${c.due}</b> from earlier days to check.</p>` : ''}
+    <p class="muted small">1. <b>Look through your cards</b> (optional): take off the ones you know, and mark any you aren't happy with as hard. Hard ones become your next new facts.</p>
+    <p class="muted small">2. <b>Practise</b>: study the new facts, type them, then a quick mix. If you don't answer in time, the card turns over and shows you. That's fine: it comes back soon.</p>
+    <div class="row"><button class="btn" data-act="fcstudy">Look through your cards</button><button class="btn pri" data-act="fcstart">${tg.length ? 'Practise' : 'Practise a mix anyway'}</button></div></div>`;
+}
+function fcStudyHTML() {
+  const d = V.d, hid = V.hid || [], cards = fcCards(d).filter(f => !hid.includes(f.k));
+  return head('Your cards: ' + FCD[d].name) + `<p class="muted small">Read each card. Tap <b>Know it</b> to take it off, or <b>Hard</b> if you aren't happy with it yet. Then start practising.</p>
+    <div id="fcwarn" class="fb warn" style="display:${V.warn ? 'block' : 'none'}">You've looked for over 30 seconds without taking a card off. Looking doesn't make a fact stick; remembering it does. Take off the ones you know, mark the hard ones, then practise.</div>
+    <div class="fcgrid">${cards.map(f => { const r = S.fc[f.k]; return `<div class="fctile ${r?.h ? 'hard' : inPile(f.k) ? 'learn' : ''}"><div class="q">${fcFace(f.q, `<b>${f.a}</b>`)}</div>${f.alt ? `<div class="muted small">${fmt(f.alt.includes('=') ? f.alt : f.alt + ' = ' + f.a)}</div>` : ''}<div class="row" style="justify-content:center;margin-top:6px"><button class="btn sm" data-act="fcknow" data-k="${f.k}">✓ Know it</button><button class="btn sm ghost danger" data-act="fchard" data-k="${f.k}">${r?.h ? 'Hard ✓' : 'Hard'}</button></div></div>`; }).join('') || '<p class="muted">All taken off.</p>'}</div>
+    <p class="center"><button class="btn pri big" data-act="fcstart">Start practising</button></p>`;
+}
+let fcTimer;
+function fcTick() {
+  clearInterval(fcTimer);
+  fcTimer = setInterval(() => {
+    if (V.view === 'fcstudy') { if (!V.warn && Date.now() - V.st0 > 30000) { V.warn = true; const w = $('#fcwarn'); if (w) w.style.display = 'block'; } return; }
+    if (V.view !== 'fcs') return clearInterval(fcTimer);
+    const c = V.cur; if (!c || c.state !== 'open' || !c.win) return;
+    const left = c.win - (Date.now() - c.t0), bar = $('#fcbar');
+    if (bar) bar.style.width = Math.max(0, 100 * left / c.win) + '%';
+    if (left <= 0) fcAnswer(null);
+  }, 100);
+}
+function fcStudy(d) { V = {view: 'fcstudy', d, hid: [], st0: Date.now(), warn: false, back: {view: 'fcdeck', d, back: V.back}}; render(); fcTick(); window.scrollTo(0, 0); }
+function fcStart(d) {
+  const tg = fcTargets(d), due = FCL[d].filter(f => fcDue(f.k)).slice(0, 8);
+  const tgk = tg.map(f => f.k), dk = due.map(f => f.k);
+  let known = shuf(FCL[d].filter(f => fcKnown(f) && !tgk.includes(f.k) && !dk.includes(f.k))).slice(0, 12);
+  if (known.length < 6) known = known.concat(FCL[d].filter(f => !tgk.includes(f.k) && !dk.includes(f.k) && !known.includes(f)).sort((x, y) => levelIdx(x) - levelIdx(y) || x.a - y.a).slice(0, 6 - known.length));
+  const plan = [];
+  tg.forEach(f => plan.push({f, ph: 'study'}));
+  [0, 1].forEach(() => tg.forEach(f => plan.push({f, ph: 'copy'})));
+  const back = V.view === 'fcdeck' ? V.back : V.back?.back || null;
+  V = {view: 'fcs', d, plan, i: 0, tg, due, known, kq: [], mixN: tg.length ? 30 : 20, mixI: 0, sched: {}, res: {}, first: {}, ok1: 0, n: 0, t0: Date.now(), back: {view: 'fcdeck', d, back}};
+  tg.forEach((f, j) => { V.sched[f.k] = {gap: 2, next: j * 2 + 1, kind: 't'}; });
+  due.forEach((f, j) => { V.sched[f.k] = {gap: 4, next: j * 3 + 2, kind: 'r'}; });
+  fcNext(); fcTick(); window.scrollTo(0, 0);
+}
+function fcPickMix() {
+  const step = V.mixI, ready = Object.keys(V.sched).filter(k => V.sched[k].next <= step).sort((a, b) => V.sched[a].next - V.sched[b].next);
+  const last = V.cur?.f?.k;
+  const r = ready.find(k => k !== last); if (r) return FCF[r];
+  if (!V.kq.length) V.kq = shuf(V.known.map(f => f.k));
+  let k = V.kq.shift(); if (k === last && V.kq.length) { V.kq.push(k); k = V.kq.shift(); }
+  return FCF[k] || FCF[r || last];
+}
+function fcNext() {
+  let item;
+  if (V.i < V.plan.length) item = V.plan[V.i++];
+  else if (V.mixI < V.mixN) { V.mixI++; item = {f: fcPickMix(), ph: 'mix'}; }
+  else if (!V.endDone) { V.endDone = true; V.plan.push(...shuf(V.tg).map(f => ({f, ph: 'end'}))); return fcNext(); }
+  else return fcFinish();
+  const f = item.f;
+  V.cur = {f, ph: item.ph, q: item.ph === 'study' ? f.q : fcAsk(f), val: '', state: item.ph === 'study' ? 'study' : 'open', t0: Date.now(), win: ['mix', 'end'].includes(item.ph) ? fcWindow(f) : 0};
+  render();
+}
+function fcKey(c) {
+  const C = V.cur; if (V.view !== 'fcs' || !C || C.state !== 'open') return;
+  C.val = c === '⌫' ? C.val.slice(0, -1) : (C.val + c).slice(0, 4);
+  const tgt = String(C.f.a);
+  if (C.val.length >= tgt.length) return fcAnswer(C.val);
+  render();
+}
+function fcAnswer(val) {
+  const C = V.cur; if (!C || C.state !== 'open') return;
+  const ms = Date.now() - C.t0, ok = val !== null && val === String(C.f.a), good = ok && (!C.win || ms <= C.win), k = C.f.k;
+  C.state = val === null ? 'shown' : ok ? 'right' : 'wrong'; C.ms = ms;
+  const r = S.fc[k] || (S.fc[k] = {}); r.n = (r.n || 0) + 1; if (!good) r.shown = (r.shown || 0) + 1;
+  if (C.ph !== 'copy') { V.n++; if (!(k in V.first)) { V.first[k] = good; if (good) V.ok1++; } }
+  const sc = V.sched[k];
+  if (C.ph === 'mix') {
+    if (sc) { if (!good) sc.gap = 2; sc.next = V.mixI + sc.gap; if (good) sc.gap = Math.min(sc.gap * 2, 16); if (sc.kind === 'r' && !('cold' in sc)) sc.cold = good; }   // right: back after 2, then 4, then 8; missed or shown: back after 2
+    else if (!good) { V.sched[k] = {gap: 2, next: V.mixI + 2, kind: 'k'}; toPile(k, 'card'); }   // a known fact that slipped
+  }
+  if (C.ph === 'end') V.res[k] = good;
+  render();
+  if (C.ph === 'copy') return;                                   // cover, copy, compare: the student looks, then taps Next
+  setTimeout(() => { if (V.cur === C) fcNext(); }, good ? 450 : 1800);
+}
+function fcFinish() {
+  clearInterval(fcTimer);
+  const t = today(), learnt = [], notYet = [], checked = [];
+  V.tg.forEach(f => { const r = S.fc[f.k] || (S.fc[f.k] = {}); if (r.s !== 'learn') Object.assign(r, {s: 'learn', st: 0, days: [], at: t, src: r.src || 'next'});
+    if (V.res[f.k]) { Object.assign(r, {st: 1, days: [t], due: dAhead(1), h: false}); learnt.push(f); } else { r.st = 0; notYet.push(f); } });
+  V.due.forEach(f => { const r = S.fc[f.k], sc = V.sched[f.k]; if (!r) return;
+    if (sc && sc.cold) { r.days = [...new Set([...(r.days || []), t])]; if (r.days.length >= 3) Object.assign(r, {s: 'got', st: 3, h: false}); else Object.assign(r, {st: 2, due: dAhead(3)}); checked.push([f, true]); }
+    else { Object.assign(r, {st: 0, days: []}); checked.push([f, false]); } });
+  S.fcn = (S.fcn || 0) + 1;
+  const secs = Math.round((Date.now() - V.t0) / 1000), dd = day(); dd.q += V.n; dd.c += V.ok1;
+  logRound({d: t, nm: 'Fact cards: ' + FCD[V.d].name, fc: true, sc: V.ok1, n: V.n, rate: `${learnt.length} of ${V.tg.length} new facts remembered`, pass: false, above: false, secs});
+  V = {view: 'fcdone', d: V.d, learnt, notYet, checked, ok1: V.ok1, n: V.n, secs, back: V.back?.back || null}; save(); render(); window.scrollTo(0, 0);
+}
+function fcSessHTML() {
+  const C = V.cur, f = C.f, total = V.plan.length + V.mixN + (V.endDone ? 0 : V.tg.length), at = Math.min(total, V.i + V.mixI);
+  const lab = {study: 'Study', copy: 'Cover, copy, compare', mix: 'Mixed with ones you know', end: 'Last check'}[C.ph];
+  let h = `<div class="top"><button class="btn sm ghost" data-act="up" aria-label="Back">✕</button><b>Fact cards: ${esc(FCD[V.d].name)}</b><span class="sp"></span><span class="muted small">${at} of ${total}</span></div><div class="muted small center">${lab}</div>`;
+  if (C.ph === 'study') return h + `<div class="fcard"><div class="fcbig">${fcFace(f.q, f.a)}</div>${f.alt ? `<div class="muted" style="font-size:20px">${fmt(f.alt.includes('=') ? f.alt : f.alt + ' = ' + f.a)}</div>` : ''}${f.hint ? `<p class="small" style="margin-top:10px">${esc(f.hint)}</p>` : ''}</div>
+    <p class="muted small center">Say it to yourself a couple of times. Then tap Next.</p><p class="center"><button class="btn pri big" data-act="fcnext">Next</button></p>`;
+  const shownAns = C.state !== 'open';
+  h += `<div class="fcard ${C.state}"><div class="fcbig">${fcFace(C.q, shownAns ? `<span>${f.a}</span>` : `<span class="fcslot">${esc(C.val) || '&nbsp;'}</span>`)}</div>
+    ${C.win && C.state === 'open' ? '<div class="fcwin"><i id="fcbar" style="width:100%"></i></div>' : ''}
+    <div class="fb ${C.state === 'right' ? 'ok' : C.state === 'open' ? '' : 'no'}">${C.state === 'right' ? '✓' : C.state === 'wrong' ? `You typed ${esc(C.val)}. It's ${f.a}.` : C.state === 'shown' ? `It's ${f.a}. This one comes back soon.` : ''}</div></div>`;
+  if (C.ph === 'copy' && shownAns) return h + `<p class="muted small center">Check yours against the card, then tap Next.</p><p class="center"><button class="btn pri big" data-act="fcnext">Next</button></p>`;
+  return h + `<div class="pad" style="grid-template-columns:repeat(3,1fr)">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0'].map(c => `<button data-act="fckey" data-k="${c}">${c}</button>`).join('')}</div>`;
+}
+function fcDoneHTML() {
+  return head('Fact cards: ' + FCD[V.d].name) + `<div class="card center"><div style="font-size:40px">🃏</div><h2>Done for today</h2><p>Right first time: <b>${V.ok1} of ${V.n}</b> cards. Time: ${mmss(V.secs)}.</p></div>
+  <div class="card">${V.learnt.length ? `<p><b>Remembered today</b> (they come back tomorrow to check): ${V.learnt.map(f => `<span class="chip secure">${fcFace(f.q, f.a)}</span>`).join(' ')}</p>` : ''}
+  ${V.notYet.length ? `<p><b>Not yet</b> (they'll be new facts again next time): ${V.notYet.map(f => `<span class="chip learning">${fcFace(f.q, f.a)}</span>`).join(' ')}</p>` : ''}
+  ${V.checked.length ? `<p><b>From earlier days:</b> ${V.checked.map(([f, ok]) => `<span class="chip ${ok ? 'secure' : 'learning'}">${fmt(f.q)} ${ok ? '✓' : 'again'}</span>`).join(' ')}</p>` : ''}
+  <p class="muted small">Once a fact is remembered on three different days it leaves your pile.</p></div>
+  <div class="row" style="justify-content:center"><button class="btn" data-act="fchome">Another set</button><button class="btn pri big" data-act="up">Finish</button></div>
+  <p class="center muted small" style="margin-top:18px">Prefer paper some days? <button class="btn sm ghost" data-act="fcprint">Print these as cut-out cards</button></p>`;
+}
+// Fold cards: question on the left half, answer on the right, fold down the middle. The day's new facts plus ten known ones.
+function fcPrint() {
+  const tg = (V.learnt || []).concat(V.notYet || []), d = V.d, known = shuf(FCL[d].filter(f => fcKnown(f) && !tg.includes(f))).slice(0, 10);
+  const cards = tg.concat(known);
+  $('#print').innerHTML = `<div class="pg sheet"><div class="shd"><div style="flex:1"><h2>Fact cards: ${esc(FCD[d].name)}</h2><div class="sub">Cut along the solid lines, fold on the dashed line. Practise the ★ ones with the others mixed in.</div></div></div>
+    <div class="cutgrid">${cards.map(f => `<div class="cut"><span>${tg.includes(f) ? '★ ' : ''}${fmt(f.q)}</span><span>${f.a}</span></div>`).join('')}</div></div>`;
+  setTimeout(() => window.print(), 60);
+}
+
+// --- teacher: choose facts for a student (⚙ → Fact cards) ---
+function fcGridSpec(d) {
+  if (d === 'A') return {rows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], cols: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], rl: r => r + ' +', cl: c => '+ ' + c, key: (r, c) => `A${Math.min(r, c)}+${Math.max(r, c)}`};
+  if (d === 'S') return {rows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], cols: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], rl: r => '− ' + r, cl: c => '= ' + c, key: (r, c) => `S${r + c}-${r}`, note: 'Rows: the number taken away. Columns: the answer. (10 − 3 and 20 − 3 are in Number bonds.)'};
+  if (d === 'B') return {rows: [0, 1, 2, 3], cols: [1, 2, 3, 4, 5, 6, 7, 8, 9], rl: r => ['□ to 10', '1–9 to 20', '11–19 to 20', 'tens to 100'][r], cl: c => c, key: (r, c) => r === 0 ? `B10:${c}` : r === 1 ? `B20:${c}` : r === 2 ? `B20:${c + 10}` : `B100:${c}`};
+  if (d === 'M') return {rows: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], cols: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], rl: r => r + ' ×', cl: c => '× ' + c, key: (r, c) => `M${Math.min(r, c)}x${Math.max(r, c)}`};
+  return {rows: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], cols: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], rl: r => '÷ ' + r, cl: c => '= ' + c, key: (r, c) => `D${r * c}/${r}`, note: 'Rows: the number you divide by. Columns: the answer.'};
+}
+const fcCellCls = k => { const r = S.fc[k]; if (!FCF[k]) return 'none'; if (r?.s === 'got') return 'got'; if (r?.s === 'learn') return r.st > 0 ? 'rev' : r.h ? 'hard' : 'pile'; return fcKnown(FCF[k]) ? 'known' : ''; };
+function fcTeacherHTML() {
+  const d = V.fcT || 'M', G = fcGridSpec(d), sel = V.fcSel || [], c = fcCounts(d);
+  const pile = FCL[d].filter(f => S.fc[f.k]?.s === 'learn');
+  return `<p class="muted small">Choose facts for <b>${esc(S.name)}</b> to learn with fact cards on this device. Tap facts, drag across them, or tap a row or column heading to select a whole table. Then add them to the pile. Useful for a student who knows nearly everything but a few.</p>
+  <div class="row"><div class="seg">${Object.keys(FCD).map(x => `<button class="${x === d ? 'on' : ''}" data-act="fctdeck" data-d="${x}">${FCD[x].name}</button>`).join('')}</div></div>
+  ${G.note ? `<p class="muted small">${G.note}</p>` : ''}
+  <div style="overflow:auto"><table class="fg" id="fcgrid"><tr><th></th>${G.cols.map(cc => `<th data-act="fccol" data-c="${cc}">${G.cl(cc)}</th>`).join('')}</tr>${G.rows.map(r => `<tr><th data-act="fcrow" data-r="${r}">${G.rl(r)}</th>${G.cols.map(cc => { const k = G.key(r, cc), f = FCF[k]; return f ? `<td class="${fcCellCls(k)} ${sel.includes(k) ? 'sel' : ''}" data-fk="${k}" title="${esc(f.q)} = ${f.a}">${f.a}</td>` : '<td class="none"></td>'; }).join('')}</tr>`).join('')}</table></div>
+  <p class="small"><span class="fgk"></span> not reached yet <span class="fgk known"></span> known (level done) <span class="fgk pile"></span> on the pile <span class="fgk hard"></span> marked hard by the student <span class="fgk rev"></span> being checked over the next days <span class="fgk got"></span> learnt with fact cards</p>
+  <p class="small"><b>${sel.length}</b> selected · ${c.pile} on the pile in ${FCD[d].name.toLowerCase()}</p>
+  <div class="row"><button class="btn sm" data-act="fcsall">Select all</button><button class="btn sm" data-act="fcsnk">Select all not known</button><button class="btn sm" data-act="fcsnone">Clear selection</button></div>
+  <div class="row" style="margin-top:8px"><button class="btn pri" data-act="fcpadd" ${sel.length ? '' : 'disabled'}>Add to the pile</button><button class="btn" data-act="fcpgot" ${sel.length ? '' : 'disabled'}>Mark as known</button><button class="btn ghost" data-act="fcpoff" ${sel.length ? '' : 'disabled'}>Take off the pile</button></div>
+  ${pile.length ? `<h3>On the pile</h3><table><tr><th>Fact</th><th>From</th><th>Stage</th><th>Answer shown</th><th>Added</th></tr>${pile.map(f => { const r = S.fc[f.k]; return `<tr><td>${fcFace(f.q, f.a)}${r.h ? ' <span class="chip support">hard</span>' : ''}</td><td>${{app: 'slow or missed in practice', me: 'student marked it hard', teacher: 'you', card: 'slipped in fact cards', next: 'next in order'}[r.src] || ''}</td><td>${r.st ? `checking, due ${nice(r.due)}` : 'new'}</td><td>${r.shown || 0}</td><td>${r.at ? nice(r.at) : ''}</td></tr>`; }).join('')}</table>` : ''}`;
+}
+// Painting across the grid with a finger or mouse: the first cell sets whether the drag selects or clears.
+let fcPaint = null;
+document.addEventListener('pointerdown', e => { const td = e.target.closest?.('#fcgrid td[data-fk]'); if (!td) return; e.preventDefault(); V.fcSel = V.fcSel || []; fcPaint = !V.fcSel.includes(td.dataset.fk); fcPaintCell(td); });
+document.addEventListener('pointermove', e => { if (fcPaint === null) return; const el = document.elementFromPoint(e.clientX, e.clientY), td = el?.closest?.('#fcgrid td[data-fk]'); if (td) fcPaintCell(td); });
+document.addEventListener('pointerup', () => { if (fcPaint === null) return; fcPaint = null; render(); });
+function fcPaintCell(td) {
+  const k = td.dataset.fk, has = V.fcSel.includes(k);
+  if (fcPaint && !has) V.fcSel.push(k); else if (!fcPaint && has) V.fcSel = V.fcSel.filter(x => x !== k);
+  document.querySelectorAll(`#fcgrid td[data-fk="${k}"]`).forEach(x => x.classList.toggle('sel', !!fcPaint));
+}
+function fcSuggest() {
+  const ks = (V.fcHit || []).filter(k => inPile(k)); if (!ks.length) return '';
+  const d = FCF[ks[0]].d, same = ks.filter(k => FCF[k].d === d);
+  return `<div class="card"><b>Not automatic yet:</b> ${same.slice(0, 6).map(k => `<span class="chip">${fmt(FCF[k].q)}</span>`).join(' ')}<p class="muted small">They're on your fact cards pile.</p><button class="btn" data-act="fcdeck" data-d="${d}">Learn them with fact cards</button></div>`;
+}
+const FC_OF_TRACK = {A: 'A', S: 'S', X: 'B', M: 'M', D: 'D'};
+
 // ---------- navigation ----------
 /* ✕, and the browser or iPad Back gesture, go up one step: a round or check returns to the screen it was started from,
    an area's levels return to its group, everything else to the home screen. The app keeps one extra history entry while a
    student is inside it, so Back never unloads the page. A round in progress asks before stopping. */
 function goUp() {
-  clearInterval(gTimer); clearInterval(spTimer);
+  clearInterval(gTimer); clearInterval(spTimer); clearInterval(fcTimer);
   const b = V.back;
   if (b) V = {...b};
   else if (V.view === 'ladder' && STR[V.st].g.t.length > 1) V = {view: 'group', g: STR[V.st].g.id};
@@ -1006,6 +1291,7 @@ function backBtn() {
     if (V.ask && $('#ans')) V.ask.val = $('#ans').value;
     return guard(V.quiz ? 'Stop the quiz? It will not be saved.' : 'Stop this round? It will not be saved.', () => { V.ask = null; goUp(); }, false);
   }
+  if (V.view === 'fcs') { if (!V.n && V.cur?.ph === 'study') return goUp(); return guard("Stop now? Today's fact cards won't be saved.", () => goUp(), false); }
   if (V.view === 'place') { if (V.ask && $('#ans')) V.ask.val = $('#ans').value; return guard('Stop the check here? The levels it has found so far are kept.', () => endPlacement(true), false); }
   goUp();
 }
@@ -1018,7 +1304,7 @@ addEventListener('popstate', () => { if (V.view === 'home' || V.view === 'welcom
 // ---------- screens ----------
 function render() {
   const app = $('#app');
-  const views = {home: homeHTML, welcome: welcomeHTML, placed: placedHTML, place: placeHTML, placeintro: placeIntroHTML, sess: sessHTML, ladder: ladderHTML, me: meHTML, teacher: teacherHTML, game: gameHTML, group: groupHTML, speed: speedHTML, speeddone: speedDoneHTML, gameover: () => head('Time is up') + `<div class="card center"><div style="font-size:48px">🎯</div><h2>${V.n} solved</h2><p class="muted">Your best is ${S.best}.</p><button class="btn pri big" data-act="up">Back to practice</button></div>`};
+  const views = {home: homeHTML, welcome: welcomeHTML, placed: placedHTML, place: placeHTML, placeintro: placeIntroHTML, sess: sessHTML, ladder: ladderHTML, me: meHTML, teacher: teacherHTML, game: gameHTML, group: groupHTML, fc: fcMenuHTML, fcdeck: fcDeckHTML, fcstudy: fcStudyHTML, fcs: fcSessHTML, fcdone: fcDoneHTML, speed: speedHTML, speeddone: speedDoneHTML, gameover: () => head('Time is up') + `<div class="card center"><div style="font-size:48px">🎯</div><h2>${V.n} solved</h2><p class="muted">Your best is ${S.best}.</p><button class="btn pri big" data-act="up">Back to practice</button></div>`};
   if (!S.name && V.view === 'home') V.view = 'welcome';
   const m = V.modal;
   app.innerHTML = (views[V.view] || homeHTML)() + (m ? `<div class="modal"><div class="card"><p><b>${esc(m.msg)}</b></p>${m.pin ? `<label class="f"><span>Teacher PIN</span><input type="password" id="mpin" inputmode="numeric" autocomplete="off"></label>` : ''}<div class="fb no">${esc(m.err)}</div><div class="row"><button class="btn pri" data-act="myes">${m.pin ? 'Confirm' : 'Yes'}</button><button class="btn" data-act="mno">Cancel</button></div></div></div>` : '');
@@ -1041,6 +1327,7 @@ function homeHTML() {
     h += `<div class="card strand" style="--c:var(${g.col})"><div class="row"><b>${g.name}</b><span class="sp"></span><span class="lvl">${multi ? `${got} of ${tot} levels` : `Level ${Math.min(got + 1, tot)} of ${tot}`}</span></div><div class="pbar"><i style="width:${Math.round(100 * got / tot)}%"></i></div>
     <p>${all ? 'Every level is secure. Keep it fresh:' : 'Next up:'} ${multi ? `<span class="muted">${STR[t].name}:</span> ` : ''}<b>${esc(k.name)}</b>${k.eg ? `<span class="eg">${fmt(k.eg)}</span>` : ''}</p>
     <div class="row"><button class="btn pri" data-act="go" data-id="${k.id}">Practise</button>${multi ? `<button class="btn" data-act="group" data-g="${g.id}">Choose an area</button>` : `<button class="btn" data-act="ladder" data-st="${t}">All levels</button>`}${unchecked ? `<button class="btn ghost" data-act="gcheck" data-g="${g.id}">Find my level</button>` : ''}</div></div>`;
+    if (g.id === 'K') h += fcHomeCard();
   }
   if (wob.length) h += `<div class="card"><b>Worth another look</b><p class="muted small">These slipped in your warm-ups.</p>${wob.map(k => `<div class="row" style="margin:6px 0"><span>${esc(k.name)}</span><span class="sp"></span><button class="btn sm" data-act="go" data-id="${k.id}">Practise</button></div>`).join('')}</div>`;
   if (newT) h += `<p class="muted small center">${newT} new troph${newT === 1 ? 'y' : 'ies'} to show your teacher.</p>`;
@@ -1062,6 +1349,7 @@ function ladderHTML() {
   const st = V.st, p = pos(st), lf = st !== 'W' ? linkFns(st) : [];
   let h = head(STR[st].name) + `<p class="muted small">Pick any level. The app suggests the one marked "next up".${st !== 'W' ? ' Done a printed sheet? The <b>quick quiz</b> on that level can secure it.' : ''}</p>`;
   if (!S.chk[st] && st !== 'W' && p < L[st].length) h += `<div class="card"><div class="row"><span><b>Not sure where to start?</b> <span class="muted small">A short check of this area.</span></span><span class="sp"></span><button class="btn" data-act="tcheck" data-st="${st}">Find my level</button></div></div>`;
+  if (FC_OF_TRACK[st]) h += `<div class="card"><div class="row"><span><b>Learn with fact cards</b> <span class="muted small">for the ones you don't know by heart yet</span></span><span class="sp"></span><button class="btn" data-act="fcdeck" data-d="${FC_OF_TRACK[st]}">${FCD[FC_OF_TRACK[st]].name} cards</button></div></div>`;
   if (lf.length >= 2) h += `<div class="card strand" style="--c:var(--w)"><div class="row"><b>In context</b><span class="sp"></span><span class="muted small">${lf.length} kinds of word problem use this area</span></div><p class="muted small">Using a skill in a problem is how it sticks. A bonus: it doesn't change your levels.</p><button class="btn" data-act="linked" data-id="${rec(st).id}">Word problems with ${esc(STR[st].name.toLowerCase())}</button></div>`;
   return h + L[st].map(k => {
     const s = status(k), r = S.skills[k.id], nx = k.idx === p;
@@ -1112,11 +1400,11 @@ function doneHTML() {
     const opts = [];
     if (R.secured && nxt.id !== k.id) opts.push([`Next level: ${nxt.name}`, nxt.id, true]);
     if (!R.pass) opts.push(['Practise this level on screen', k.id, true]);
-    return `<div class="card center"><div style="font-size:44px">${R.secured ? '🏅' : R.pass ? '👏' : '💪'}</div><h2>Quiz done, ${esc(S.name)}</h2><p><b>${nstr(V.sc.c)} out of ${V.sc.n}</b> (${pct}%)</p><p>${msg}</p>${auHTML}<p class="muted small">Time on the quiz: ${mmss(R.secs)}</p></div>` + troHTML +
+    return `<div class="card center"><div style="font-size:44px">${R.secured ? '🏅' : R.pass ? '👏' : '💪'}</div><h2>Quiz done, ${esc(S.name)}</h2><p><b>${nstr(V.sc.c)} out of ${V.sc.n}</b> (${pct}%)</p><p>${msg}</p>${auHTML}<p class="muted small">Time on the quiz: ${mmss(R.secs)}</p></div>` + troHTML + fcSuggest() +
       (opts.length ? `<div class="card">${opts.map(btn).join('')}</div>` : '') + `<p class="center"><button class="btn big" data-act="up">Finish</button></p>`;
   }
   const msg = k.bonus ? 'Bonus round done. Using a skill in a problem is how it sticks.' : R.slow ? 'Accurate, well done. Some answers took longer than the goal, so they are not automatic yet. Practise this level again, or try a speed round. This round did not count towards securing it.' : R.secured ? `You've secured this level.` : R.pass ? 'A strong round. One more good round on another day will secure this level.' : R.acc >= .5 ? 'Good effort. This one needs a bit more practice, and that is normal.' : 'Good effort for sticking with it. This is a tough one right now.';
-  let h = `<div class="card center"><div style="font-size:44px">${R.secured ? '🏅' : R.pass ? '👏' : '💪'}</div><h2>Well done, ${esc(S.name)}</h2><p><b>${nstr(V.sc.c)} out of ${V.sc.n}</b> (${pct}%)</p><p>${msg}</p>${auHTML}<p class="muted small">Time on this round: ${mmss(R.secs)}</p></div>` + troHTML;
+  let h = `<div class="card center"><div style="font-size:44px">${R.secured ? '🏅' : R.pass ? '👏' : '💪'}</div><h2>Well done, ${esc(S.name)}</h2><p><b>${nstr(V.sc.c)} out of ${V.sc.n}</b> (${pct}%)</p><p>${msg}</p>${auHTML}<p class="muted small">Time on this round: ${mmss(R.secs)}</p></div>` + troHTML + fcSuggest();
   const others = GROUPS.filter(x => x.id !== g.id).map(x => rec(recTrack(x))), opts = [];
   const nonW = Object.keys(L).filter(t => t !== 'W'), top = nonW.reduce((a, t) => a + pos(t), 0) / nonW.reduce((a, t) => a + L[t].length, 0) >= .85;
   const levelRound = !k.bonus && st !== 'W', link = levelRound && R.pass && linkFns(st).length >= 2, speed = levelRound && k.speedOK;
@@ -1157,7 +1445,7 @@ function gameHTML() {
 // ---------- teacher ----------
 const chkTxt = d => !d ? 'not checked' : /^\d{4}-/.test(d) ? 'checked ' + nice(d) : 'checked ' + d;
 function teacherHTML() {
-  const lk = V.unlocked ? '' : ' 🔒', tabs = [['over', 'Overview'], ['levels', 'Levels'], ['log', 'Log'], ['sheets', 'Sheets' + lk], ['class', 'Class' + lk], ['tools', 'Tools' + lk]], t = V.tab || 'over';
+  const lk = V.unlocked ? '' : ' 🔒', tabs = [['over', 'Overview'], ['levels', 'Levels'], ['log', 'Log'], ['sheets', 'Sheets' + lk], ['cards', 'Fact cards' + lk], ['class', 'Class' + lk], ['tools', 'Tools' + lk]], t = V.tab || 'over';
   let h = head('Progress: ' + S.name) + `<div class="tabs">${tabs.map(x => `<button class="${t === x[0] ? 'on' : ''}" data-act="ttab" data-t="${x[0]}">${x[1]}</button>`).join('')}</div>`;
   if (t === 'over') h += overviewHTML(snap()) + `<p class="row"><button class="btn" data-act="celebrate">Mark trophies as celebrated</button><button class="btn" data-act="setexp">Set expected levels to where they are now</button></p><p class="muted small">⭐ trophies are given for securing levels beyond the expected level, so resetting expected every few weeks keeps them meaningful.</p>
     <p class="muted small">Last backup of this device: ${S.lastBackup ? nice(S.lastBackup) : 'never'} (Tools tab).</p>
@@ -1167,6 +1455,7 @@ function teacherHTML() {
     return `<tr><td>${k.easy ? '·' : lvNum(k)}${k.id === S.exp[st] ? ' <span title="expected level">◆</span>' : ''}</td><td><b>${esc(k.name)}</b> <span class="muted small">${k.id}</span><br><span class="chip ${s}">${STLAB[s]}</span> <span class="muted small">${r?.rounds ? `${r.rounds} round${r.rounds > 1 ? 's' : ''}, last ${Math.round(r.last.acc * 100)}% (${esc(r.last.rate)})` : ''}${r?.auto ? ` · automatic ${r.auto.f}/${r.auto.n}, average ${secsTxt(r.auto.avg)}` : ''}${tm ? ` · typed: ${tm}` : ''}${r?.quizSecured ? ` · secured by quick quiz ${nice(r.quizSecured)}` : ''}${r?.place ? ` · level check: ${esc(r.place)}` : ''}</span></td><td>${k.easy ? '<span class="muted small">Mixed into later levels</span>' : `<button class="btn sm" data-act="tstart" data-id="${k.id}">Start here</button> <button class="btn sm" data-act="tsec" data-id="${k.id}">Secure</button> <button class="btn sm" data-act="tsup" data-id="${k.id}">Needs support</button> <button class="btn sm ghost" data-act="texp" data-id="${k.id}">Expected ◆</button>`}</td></tr>`; }).join('')}</table>`).join('');
   if (t === 'log') h += S.log.length ? `<table><tr><th>Day</th><th>Skill</th><th>Score</th><th>Felt</th><th>Time</th><th></th></tr>${S.log.slice().reverse().slice(0, 60).map(l => `<tr><td>${nice(l.d)}</td><td>${esc(l.nm || BY[l.id]?.name || l.id)}${l.speed ? ' ⚡ speed round' : ''}${l.quiz ? ' 📝 quick quiz' : ''}</td><td>${l.sc}/${l.n}${l.au ? `<br><span class="muted small">${l.au} automatic</span>` : ''}</td><td>${esc(l.rate)}</td><td>${l.secs != null ? mmss(l.secs) : (l.mins || 0) + ' min'}${l.tmed ? `<br><span class="muted small">typed ${secsTxt(l.tmed)} each</span>` : ''}${l.bsec ? `<br><span class="muted small">book ${mmss(l.bsec)}</span>` : ''}</td><td>${l.pass ? '<span class="chip secure">pass</span>' : ''}${l.above ? ' <span class="chip">above level</span>' : ''}</td></tr>`).join('')}</table>` : '<p class="muted">No rounds yet.</p>';
   if (t === 'sheets') h += sheetsHTML();
+  if (t === 'cards') h += fcTeacherHTML();
   if (t === 'class') {
     const cs = Object.values(S.cls).sort((a, b) => a.n.localeCompare(b.n));
     h += `<p class="muted small">For your own device. Nothing is sent anywhere.</p>
@@ -1341,6 +1630,23 @@ document.addEventListener('click', e => {
     case 'skipplace': S.placed = true; save(); render(); break;
     case 'go': startSkill(k); window.scrollTo(0, 0); break;
     case 'quiz': startQuiz(k); window.scrollTo(0, 0); break;
+    case 'fchome': clearInterval(fcTimer); V = {view: 'fc', back: V.view === 'fcdone' ? V.back : fromHere()}; render(); window.scrollTo(0, 0); break;
+    case 'fcdeck': V = {view: 'fcdeck', d: el.dataset.d, back: V.view === 'fc' ? {view: 'fc', back: V.back} : fromHere()}; render(); window.scrollTo(0, 0); break;
+    case 'fcstudy': fcStudy(V.d); break;
+    case 'fcknow': V.hid.push(el.dataset.k); V.st0 = Date.now(); V.warn = false; render(); break;
+    case 'fchard': { const r = toPile(el.dataset.k, 'me'); r.h = true; r.st = 0; V.hid.push(el.dataset.k); V.st0 = Date.now(); V.warn = false; save(); render(); break; }
+    case 'fcstart': fcStart(V.d); break;
+    case 'fcnext': if (V.view === 'fcs') fcNext(); break;
+    case 'fckey': fcKey(el.dataset.k); break;
+    case 'fcprint': fcPrint(); break;
+    case 'fctdeck': V.fcT = el.dataset.d; V.fcSel = []; render(); break;
+    case 'fcrow': case 'fccol': { const G = fcGridSpec(V.fcT || 'M'), v = +el.dataset[a === 'fcrow' ? 'r' : 'c'], ks = (a === 'fcrow' ? G.cols.map(c => G.key(v, c)) : G.rows.map(r => G.key(r, v))).filter(x => FCF[x]); V.fcSel = V.fcSel || []; const all = ks.every(x => V.fcSel.includes(x)); V.fcSel = all ? V.fcSel.filter(x => !ks.includes(x)) : [...new Set([...V.fcSel, ...ks])]; render(); break; }
+    case 'fcsall': V.fcSel = FCL[V.fcT || 'M'].map(f => f.k); render(); break;
+    case 'fcsnk': V.fcSel = FCL[V.fcT || 'M'].filter(f => !['known', 'got'].includes(fcCellCls(f.k))).map(f => f.k); render(); break;
+    case 'fcsnone': V.fcSel = []; render(); break;
+    case 'fcpadd': (V.fcSel || []).forEach(x => { const r = toPile(x, 'teacher'); r.src = 'teacher'; }); V.fcSel = []; save(); render(); break;
+    case 'fcpgot': (V.fcSel || []).forEach(x => { S.fc[x] = Object.assign(S.fc[x] || {}, {s: 'got', st: 3, h: false}); }); V.fcSel = []; save(); render(); break;
+    case 'fcpoff': (V.fcSel || []).forEach(x => { delete S.fc[x]; }); V.fcSel = []; save(); render(); break;
     case 'qgo': runQuiz(); break;
     case 'ladder': V = {view: 'ladder', st: el.dataset.st, back: V.view === 'group' ? {view: 'group', g: V.g} : null}; render(); window.scrollTo(0, 0); break;
     case 'group': V = {view: 'group', g: el.dataset.g}; render(); window.scrollTo(0, 0); break;
@@ -1370,7 +1676,7 @@ document.addEventListener('click', e => {
     case 'gundo': if (V.g.hist.length) { V.g.t = V.g.hist.pop(); V.g.sel = null; V.g.op = null; V.g.msg = ''; render(); } break;
     case 'greset': V.g.t = V.g.orig.slice(); V.g.hist = []; V.g.sel = null; V.g.op = null; V.g.msg = ''; render(); break;
     case 'gskip': gNew(); render(); break;
-    case 'ttab': { const t = el.dataset.t; V.err = ''; if (['class', 'tools', 'sheets'].includes(t) && !V.unlocked) guard('Teacher tools', () => { V.tab = t; }); else { V.tab = t; render(); } break; }
+    case 'ttab': { const t = el.dataset.t; V.err = ''; if (['class', 'tools', 'sheets', 'cards'].includes(t) && !V.unlocked) guard('Teacher tools', () => { V.tab = t; }); else { V.tab = t; render(); } break; }
     case 'celebrate': guard('Mark all trophies so far as celebrated?', () => { S.celebrated = today(); }); break;
     case 'setexp': guard('Set the expected levels to where ' + S.name + ' is working now?', () => { for (const st in L) S.exp[st] = idAt(st, Math.min(pos(st), L[st].length - 1)); }); break;
     case 'tstart': guard(`Are you sure? This moves ${S.name} to start at "${k.name}".`, () => { setStart(k.st, k.idx); L[k.st].slice(0, k.idx).forEach(x => { const s = S.skills[x.id]; if (s) s.support = false; }); S.chk[k.st] = S.chk[k.st] || 'set by teacher'; syncMax(); }); break;
@@ -1409,6 +1715,7 @@ document.addEventListener('change', e => {
   else if (id === 'rfile' && e.target.files[0]) restore(e.target.files[0]);
 });
 document.addEventListener('keydown', e => {
+  if (V.view === 'fcs' && !V.modal) { if (/^\d$/.test(e.key)) fcKey(e.key); else if (e.key === 'Backspace') fcKey('⌫'); else if (e.key === 'Enter') $('[data-act=fcnext]')?.click(); return; }
   if (V.view === 'speed' && !V.modal) { if (!V.t0) { if (e.key === 'Enter') speedGo(); } else if (/^\d$/.test(e.key)) speedKey(e.key); else if (e.key === 'Backspace') speedKey('⌫'); return; }
   if (e.key !== 'Enter') return;
   if (V.modal) { e.preventDefault(); return $('[data-act=myes]')?.click(); }
