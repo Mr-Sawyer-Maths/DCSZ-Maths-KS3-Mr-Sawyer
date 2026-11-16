@@ -8,9 +8,9 @@
 <title>Maths Practice</title>
 <style>
 :root{--bg:#f4f2ec;--panel:#fff;--ink:#1c2230;--muted:#646c7a;--line:#dedad0;--accent:#274c77;--accent-ink:#fff;
---k:#3d7a5a;--n:#2f6f8f;--f:#8a5a9e;--w:#b4682a;--ok:#2f8a53;--warn:#b97a14;--bad:#c2482f;--soft:#eef2f7;--gold:#c99a1d;
+--k:#3d7a5a;--n:#2f6f8f;--f:#8a5a9e;--w:#b4682a;--r:#1f7a78;--ok:#2f8a53;--warn:#b97a14;--bad:#c2482f;--soft:#eef2f7;--gold:#c99a1d;
 --font:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15181e;--panel:#1f242d;--ink:#eceef2;--muted:#9aa3b2;--line:#343b48;--accent:#7fb0e6;--accent-ink:#0f1620;--soft:#262d39;--k:#7cc79c;--n:#6bb3d6;--f:#c29ad6;--w:#e3a063;--ok:#5cc487;--warn:#e6b455;--bad:#ef8a73}}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15181e;--panel:#1f242d;--ink:#eceef2;--muted:#9aa3b2;--line:#343b48;--accent:#7fb0e6;--accent-ink:#0f1620;--soft:#262d39;--k:#7cc79c;--n:#6bb3d6;--f:#c29ad6;--w:#e3a063;--r:#6cc6c0;--ok:#5cc487;--warn:#e6b455;--bad:#ef8a73}}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -35,6 +35,8 @@ p{margin:6px 0}.muted{color:var(--muted)}.small{font-size:14px}.center{text-alig
 .eg{display:inline-block;background:var(--soft);border-radius:8px;padding:1px 8px;margin-left:4px}
 .chip{display:inline-block;border-radius:99px;padding:1px 9px;font-size:13px;font-weight:600;background:var(--soft)}
 .chip.secure{background:var(--ok);color:#fff}.chip.learning{background:var(--warn);color:#fff}.chip.support{background:var(--bad);color:#fff}.chip.assumed,.chip.mixed{background:var(--soft);color:var(--muted)}
+.chip.stretch{background:transparent;border:1.5px solid var(--gold);color:var(--gold);padding:0 8px;margin-left:6px;vertical-align:middle}
+.qpic{max-width:420px;margin:4px auto 10px}.qpic>div{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:6px 0}.qpic svg{width:26px;height:26px}
 .chip.timer{font-variant-numeric:tabular-nums;min-width:56px;text-align:center}.chip.timer.over{background:var(--warn);color:#fff}
 .steps{display:flex;gap:6px;margin:6px 0 12px}.steps i{flex:1;height:6px;border-radius:9px;background:var(--line)}.steps i.on{background:var(--accent)}
 .qbig{font-size:38px;font-weight:700;text-align:center;margin:18px 0 10px;line-height:1.3}
@@ -186,7 +188,45 @@ function parseVal(s) {
   if (/^-?\d+$/.test(s)) return {n: +s, d: 1, form: 'int'};
   return null;
 }
+/* Ratio answers (16 Nov 2026). A question's answer is a ratio when Q.a is a string with a colon, stored without spaces: '3:4', '8:12:15'.
+   It must be in its simplest form (whole numbers, no common factor) unless Q.form says otherwise: 'one1' wants 1 : n, 'n1' wants n : 1,
+   'any' accepts any equivalent ratio. Right but not in the form asked for gets a second try, as with fractions. Parts in the wrong
+   order are a miss, with a note. Any question can carry notes: {'2/3': 'text'}, shown when that wrong answer is typed (still a miss). */
+const isRatio = a => typeof a === 'string' && a.includes(':');
+const ratioTxt = a => a.split(':').join(' : ');
+const qText = Q => Q.qw || Q.q;      // a question in words: drawn questions (Q.pic) carry a words version for sheets
+const near = (x, y) => Math.abs(x - y) <= 1e-9 * Math.max(1, Math.abs(x), Math.abs(y));
+const propTo = (v, t) => v.length === t.length && v.every((x, i) => near(x * t[0], t[i] * v[0]));
+const perms = a => a.length < 2 ? [a] : a.flatMap((x, i) => perms([...a.slice(0, i), ...a.slice(i + 1)]).map(r => [x, ...r]));
+function checkRatio(Q, inp) {
+  const s = String(inp).trim().replace(/[−–]/g, '-').replace(/\s+/g, '');
+  if (!s.includes(':')) return parseVal(s) ? {retry: 'Write it as a ratio: a number, the : key, then the next number.'} : {bad: true, ratio: true};
+  const ps = s.split(':');
+  if (ps.some(x => x === '')) return {retry: 'Finish the ratio: type a number after the : key.'};
+  if (!ps.every(x => /^\d*\.?\d+$/.test(x))) return {bad: true, ratio: true};
+  const v = ps.map(Number), t = Q.a.split(':').map(Number);
+  if (v.length !== t.length) return {ok: false};
+  if (v.some(x => x === 0)) return {ok: false};
+  if (propTo(v, t)) {
+    const f = Q.form || 'simplest';
+    if (f === 'one1' && v[0] !== 1) return {retry: 'Right ratio. Now make the first part 1.'};
+    if (f === 'n1' && v[v.length - 1] !== 1) return {retry: 'Right ratio. Now make the last part 1.'};
+    if (f === 'simplest') {
+      if (!v.every(Number.isInteger)) return {retry: 'Right ratio. Now make every part a whole number.'};
+      if (v.reduce(gcd) > 1) return {retry: 'Right, now simplify it.'};
+    }
+    return {ok: true};
+  }
+  if (perms(t).some(p => p.some((x, i) => x !== t[i]) && propTo(v, p))) return {ok: false, note: 'Check the order: the parts go in the order the question names them.'};
+  return {ok: false};
+}
 function check(Q, inp) {
+  const r = checkBase(Q, inp);
+  if (r.ok === false && !r.note && Q.notes) { const n = Q.notes[String(inp).replace(/\s+/g, '').replace(/[−–]/g, '-')]; if (n) r.note = n; }
+  return r;
+}
+function checkBase(Q, inp) {
+  if (isRatio(Q.a)) return checkRatio(Q, inp);
   const v = parseVal(inp); if (!v) return {bad: true};
   const t = parseVal(typeof Q.a === 'number' ? nstr(Q.a) : Q.a);
   if (v.n * t.d !== t.n * v.d) return {ok: false};
@@ -200,7 +240,8 @@ function check(Q, inp) {
 }
 function ansHTML(Q) {
   let s;
-  if (Q.kind === 'choice') s = fmt(Q.a);
+  if (Q.kind === 'choice' || Q.self) s = fmt(Q.a);
+  else if (isRatio(Q.a)) s = esc(ratioTxt(Q.a));
   else if (typeof Q.a === 'number') s = (Q.pre === '£' && !Number.isInteger(Q.a) ? Q.a.toFixed(2) : nstr(Q.a)).replace('-', '−');
   else s = fmt(Q.a.includes('/') ? `{${Q.a}}` : Q.a);
   return esc(Q.pre || '') + s + esc(Q.suf || '');
@@ -321,6 +362,14 @@ sk('F18', 'F', 'Percentage increase and decrease', 'Find the percentage, then ad
 sk('F19', 'F', 'Percentage multipliers', 'An increase of 15% means you have 115% of it, which is × 1.15. A decrease of 30% leaves 70%, which is × 0.7.', () => { const p = pick([5, 10, 12, 15, 20, 25, 30, 35, 40, 50, 8, 3]); return pick([q(`Write the multiplier for an increase of ${p}%`, +nstr(1 + p / 100)), q(`Write the multiplier for a decrease of ${p}%`, +nstr(1 - p / 100)), q(`A multiplier of ${nstr(1 + p / 100)} is an increase of what percentage?`, p, {suf: '%'})]); });
 sk('F20', 'F', 'Reverse percentages', 'The new price is not 100%. After a 20% increase, the new price is 120% of the original. Find 1%, then 100%.', () => { const O = ri(2, 20) * 20, p = pick([10, 20, 25, 50]); return pick([q(`After a ${p}% increase, a price is £${O * (100 + p) / 100}. What was the original price?`, O, {pre: '£'}), q(`After a ${p}% decrease, a price is £${O * (100 - p) / 100}. What was the original price?`, O, {pre: '£'})]); });
 
+/* ---- Ratio (group R, area RA). Plan: claude/section-ratio-outline.md. Ids R1 to R11 are fixed by that outline.
+   Step C (16 Nov 2026) ships R3 only, with the group marked draft: it shows only with ?draft in the address. Step D adds the rest. ---- */
+const COPRIME = [[1, 2], [1, 3], [2, 3], [1, 4], [3, 4], [1, 5], [2, 5], [3, 5], [4, 5], [1, 6], [5, 6], [2, 7], [3, 7], [4, 7], [5, 7], [3, 8], [5, 8], [7, 8], [2, 9], [4, 9], [5, 9], [7, 9]];
+const rord = ([a, b]) => Math.random() < .5 ? [a, b] : [b, a];
+sk('R3', 'RA', 'Simplifying ratios', 'Divide both parts by the same number. Keep going until nothing else divides into both. 18 : 24: divide by 6 to get 3 : 4. Dividing by the highest common factor does it in one go.',
+  () => { const [a, b] = rord(pick(COPRIME)), m = ri(2, 12); return q(`Simplify ${a * m} : ${b * m}`, `${a}:${b}`); },
+  {chain: () => { const [a, b] = rord(pick(COPRIME.filter(([x, y]) => y <= 5))); return [2, 4, 8].map(m => q(`Simplify ${a * m} : ${b * m}`, `${a}:${b}`)).concat(q(`Simplify ${b * 8} : ${a * 8}`, `${b}:${a}`)); }});
+
 /* ---- Strand W: word problems (templates with random numbers) ---- */
 const NAMES = ['Aisha', 'Ben', 'Chloe', 'Dev', 'Ella', 'Femi', 'Grace', 'Hamza', 'Isla', 'Jack', 'Kai', 'Leah', 'Maya', 'Noah', 'Olivia', 'Priya', 'Ravi', 'Sam', 'Tia', 'Zara'];
 const nm = () => pick(NAMES);
@@ -414,10 +463,17 @@ const GROUPS = [
     ['FD', 'Decimals', ['F5', 'F15', 'F16']],
     ['FE', 'Fraction, decimal, percentage equivalence', ['F6', 'F9']],
     ['FP', 'Percentages', ['F7', 'F8', 'F17', 'F18', 'F19', 'F20']]]},
+  {id: 'R', name: 'Ratio and proportion', short: 'Ratio', col: '--r', draft: true, tracks: [
+    ['RA', 'Ratio', ['R3'], {mixBook: 2}]]},
   {id: 'W', name: 'Word problems', short: 'Problems', col: '--w', tracks: [['W', 'Word problems', ['W1', 'W2', 'W3', 'W4', 'W5', 'W6']]]},
 ];
+// A group marked draft is built but not on the home screen yet, unless the address has ?draft (for testing a section before it is finished).
+const SHOW_DRAFT = /[?&]draft\b/.test(location.search);
+const shownGroups = () => GROUPS.filter(g => !g.draft || SHOW_DRAFT);
+// GCSE-stretch levels (stretch: true in their sk line) carry a chip. They are open to everyone; nothing else changes.
+const strChip = k => k.stretch ? '<span class="chip stretch">Stretch</span>' : '';
 const STR = {}, L = {};
-GROUPS.forEach(g => { g.t = g.tracks.map(x => x[0]); g.tracks.forEach(([t, name, ids]) => { STR[t] = {name, col: g.col, g}; L[t] = ids.map((id, i) => { const s_ = BY[id]; s_.st = t; s_.idx = i; return s_; }); }); });
+GROUPS.forEach(g => { g.t = g.tracks.map(x => x[0]); g.tracks.forEach(([t, name, ids, o]) => { STR[t] = {name, col: g.col, g, ...(o || {})}; L[t] = ids.map((id, i) => { const s_ = BY[id]; s_.st = t; s_.idx = i; return s_; }); }); });
 SK.forEach(s_ => { if (!STR[s_.st]) console.error('Skill not placed in a track: ' + s_.id); });
 // The simplest families (+1, +0, take away all or nothing, ×0 and ×1, ÷1) are never practised on their own: they are mixed into every later level.
 ['A1', 'A3', 'S3', 'M01', 'D01'].forEach(id => { BY[id].easy = true; });
@@ -448,7 +504,7 @@ for (const t in OLD_LISTS) OLD_LISTS[t] = OLD_LISTS[t].split(' ');
 const real = t => L[t].filter(k => !k.easy);
 const lvNum = k => real(k.st).indexOf(k) + 1;
 const UNITS = ['£', 'p', 'cm', 'm', 'km', 'g', 'kg', '%', '°C', 'ml', 'minutes'];
-SK.forEach(s => { s.eg = s.st === 'W' ? '' : s.gen().q; s.speedOK = isFacts(s) && Array.from({length: 40}, () => s.gen()).every(isWholeQ); });
+SK.forEach(s => { s.eg = s.st === 'W' ? '' : qText(s.gen()); s.speedOK = isFacts(s) && Array.from({length: 40}, () => s.gen()).every(isWholeQ); });
 
 // ---------- state ----------
 /* Saved data, version 2 (14 Nov 2026). Everything about a level is stored under its id, never its position in a list,
@@ -559,6 +615,7 @@ function submitAns(val) {
   if (A.q.kind !== 'choice' && (/\/\s*$/.test(val) || /^-?\d+ \d*$/.test(val))) { A.val = val; A.fb = 'Finish the fraction: tap the fraction key, then type the bottom number.'; A.cls = 'warn'; return render(); }
   let r = A.q.kind === 'choice' ? {ok: val === A.q.a} : check(A.q, val);
   A.val = val;
+  if (r.bad && r.ratio) { A.fb = 'Type the ratio: a number, tap the : key, then the next number.'; A.cls = 'warn'; return render(); }
   if (r.bad) { A.fb = 'Type a number. For a fraction, type the top, tap the fraction key, then type the bottom.'; A.cls = 'warn'; return render(); }
   if (A.units && A.unit === null) { A.fb = 'Choose the units as well.'; A.cls = 'warn'; return render(); }
   if (r.retry) { A.fb = r.retry; A.cls = 'warn'; return render(); }
@@ -570,11 +627,12 @@ function submitAns(val) {
     A.fb = !A.lim || A.left < (A.q.tries || 1) ? '✓ Correct' : A.auto ? `✓ Correct · ${secsTxt(A.ms)}, automatic` : `✓ Correct · ${secsTxt(A.ms)}. Aim for under ${A.lim} s.`;
     if (A.steps) return render(); render(); setTimeout(() => { if (V.ask === A) nextAsk(); }, A.lim && !A.auto ? 1300 : 700);
   }
-  else { A.left--; if (A.left > 0) { A.fb = unitWrong ? 'The number is right. Check the units.' : 'Not yet. Check your working and try again.'; A.cls = 'no'; if (!unitWrong) A.val = ''; render(); } else { A.state = 'wrong'; if (A.quiet) return nextAsk(); render(); } }
+  else { A.note = r.note || ''; A.left--; if (A.left > 0) { A.fb = unitWrong ? 'The number is right. Check the units.' : r.note || 'Not yet. Check your working and try again.'; A.cls = 'no'; if (!unitWrong) A.val = ''; render(); } else { A.state = 'wrong'; if (A.quiet) return nextAsk(); render(); } }
 }
 // The answer is typed as plain text (3/4, 2 3/4, 30%) but shown stacked, the way fractions are entered on a computer or calculator.
 function ansView(v) {
   const caret = '<i class="caret"></i>', box = '<span class="box"></span>';
+  if (v.includes(':')) return esc(ratioTxt(v)) + caret;
   const part = (x, on) => (x ? esc(x) : (on ? '' : box)) + (on ? caret : '');
   const m = v.match(/^(-?\d+) (\d*)(?:\/(\d*))?$/) || v.match(/^()(-?\d*)\/(\d*)$/);
   if (!m) return esc(v) + caret;
@@ -586,6 +644,7 @@ function padKey(c) {
   const v = $('#ans')?.value ?? '';
   if (c === '⌫') return setAns(v.slice(0, -1));
   if (c === 'frac') { if (v.includes('/')) return; if (!/\d$/.test(v)) return hintAns('Type the top number first, then tap the fraction key.'); return setAns(v + '/'); }
+  if (c === ':') { if (!/\d$/.test(v)) return hintAns('Type a number first, then tap the : key.'); if ((v.match(/:/g) || []).length >= 2) return; return setAns(v + ':'); }
   if (c === 'mixed') { if (!/^-?\d+$/.test(v)) return hintAns('Type the whole number first, then tap the mixed number key.'); return setAns(v + ' '); }
   setAns(v + c);
 }
@@ -595,17 +654,17 @@ function skipAns() { const A = V.ask; if (!A) return; if (A.lim && A.first === n
 function nextAsk() { const A = V.ask; if (!A) return; A.onDone(A.first === true, A.state === 'right', A.auto); }
 function askHTML() {
   const A = V.ask, Q = A.q, wp = !!Q.steps;
-  let h = `${A.label ? `<div class="muted small center">${esc(A.label)}</div>` : ''}<div class="qbig ${wp ? 'wp' : ''}">${fmt(Q.q)}</div>${A.hint && A.state === 'open' ? `<p class="muted small center">${esc(A.hint)}</p>` : ''}${A.state === 'open' ? (A.lim ? `<p class="center small"><span class="chip">⏱ Timed</span> <span id="qt" class="chip timer">${secsTxt(Date.now() - A.t0)}</span> <span class="muted">Automatic goal: under ${A.lim} s</span></p>` : wp ? `<p class="center small"><span class="chip">Not timed</span> <span class="muted">Take your time</span></p>` : `<p class="center small"><span class="chip">No time goal</span> <span class="muted">Take your time</span></p>`) : ''}`;
+  let h = `${A.label ? `<div class="muted small center">${esc(A.label)}</div>` : ''}${qHTML(Q, wp)}${A.hint && A.state === 'open' ? `<p class="muted small center">${esc(A.hint)}</p>` : ''}${A.state === 'open' ? (A.lim ? `<p class="center small"><span class="chip">⏱ Timed</span> <span id="qt" class="chip timer">${secsTxt(Date.now() - A.t0)}</span> <span class="muted">Automatic goal: under ${A.lim} s</span></p>` : wp ? `<p class="center small"><span class="chip">Not timed</span> <span class="muted">Take your time</span></p>` : `<p class="center small"><span class="chip">No time goal</span> <span class="muted">Take your time</span></p>`) : ''}`;
   if (A.state === 'open') {
     h += `<div class="fb ${A.cls}">${esc(A.fb)}</div>`;
     if (Q.kind === 'choice') h += `<div class="row" style="justify-content:center">${Q.opts.map((o, i) => `<button class="btn big" data-act="choice" data-i="${i}">${fmt(o)}</button>`).join('')}</div>`;
     else h += `<div style="max-width:420px;margin:0 auto;position:relative"><div class="ansbox" data-act="focusans">${Q.pre && !A.units ? `<span class="pre">${esc(Q.pre)}</span>` : ''}<span id="ansview">${ansView(A.val)}</span></div><input id="ans" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your answer" value="${esc(A.val)}"></div>
       ${A.units ? `<div class="row" style="justify-content:center;margin-top:10px"><span class="muted small">Units</span>${A.units.map(u => `<button class="btn sm ${A.unit === u ? 'pri' : ''}" data-act="unit" data-u="${esc(u)}">${esc(u)}</button>`).join('')}</div>` : ''}
-      <div class="pad">${PADKEYS.map(([k, lab, aria]) => `<button data-act="key" data-k="${k}"${aria ? ` aria-label="${aria}"` : ''}>${lab}</button>`).join('')}<button class="go wide" data-act="submit">Check</button></div>
-      ${typeof Q.a === 'string' && /\d/.test(Q.a) && Q.kind !== 'choice' ? `<p class="center muted small">Fraction: type the top number, tap <span class="ic">${FRAC_IC}</span>, type the bottom. Mixed number: type the whole number, tap <span class="ic">${MIXED_IC}</span>, then the fraction.</p>` : ''}`;
+      <div class="pad">${padKeys(Q).map(([k, lab, aria]) => `<button data-act="key" data-k="${k}"${aria ? ` aria-label="${aria}"` : ''}>${lab}</button>`).join('')}<button class="go wide" data-act="submit">Check</button></div>
+      ${isRatio(Q.a) ? `<p class="center muted small">Ratio: type the first number, tap <b>:</b>, then type the next one.</p>` : typeof Q.a === 'string' && /\d/.test(Q.a) && Q.kind !== 'choice' ? `<p class="center muted small">Fraction: type the top number, tap <span class="ic">${FRAC_IC}</span>, type the bottom. Mixed number: type the whole number, tap <span class="ic">${MIXED_IC}</span>, then the fraction.</p>` : ''}`;
     if (A.skip) h += `<p class="center"><button class="btn ghost sm" data-act="skip">I haven't learned this yet</button></p>`;
   } else {
-    h += `<div class="fb ${A.state === 'right' ? 'ok' : 'no'}">${A.state === 'right' ? '✓ Correct' : 'The answer is ' + ansHTML(Q)}</div>`;
+    h += `<div class="fb ${A.state === 'right' ? 'ok' : 'no'}">${A.state === 'right' ? '✓ Correct' : 'The answer is ' + ansHTML(Q)}</div>${A.state === 'wrong' && A.note ? `<p class="center small">${esc(A.note)}</p>` : ''}`;
     if (A.steps && Q.steps?.length) h += `<div class="sol"><b>Worked solution</b><br>${Q.steps.map(fmt).join('<br>')}<br><b>Answer: ${ansHTML(Q)}</b></div><p class="muted small">Compare this with the working in your book. Fix anything that is different.</p>`;
     if (A.state === 'wrong' || A.steps) h += `<p class="center"><button class="btn pri big" data-act="next">Next</button></p>`;
   }
@@ -614,6 +673,14 @@ function askHTML() {
 
 const FRAC_IC = '<span class="fr"><span><i class="sq"></i></span><span><i class="sq"></i></span></span>';
 const MIXED_IC = '<i class="sq"></i>' + FRAC_IC;
+// Ratio answers swap the mixed-number key for the : key, so the keypad stays 4 by 4.
+const padKeys = Q => isRatio(Q.a) ? PADKEYS.map(x => x[0] === 'mixed' ? [':', '<b>:</b>', 'Ratio colon'] : x) : PADKEYS;
+/* Drawn counters (R1): Q.pic = [[3, 'circle'], [7, 'triangle']]. Shapes differ as well as colours, so they read in black and white.
+   Q.qw is the same question in words, used on printed sheets, in the ladder and in the log. */
+const PIC = {circle: ['--n', '<circle cx="12" cy="12" r="9"/>'], triangle: ['--w', '<path d="M12 3 L21 20 L3 20 Z"/>'], square: ['--k', '<rect x="4" y="4" width="16" height="16" rx="2"/>'], star: ['--f', '<path d="M12 2 l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7-5.4-4.7 7.1-.6z"/>']};
+const PLURAL = {circle: 'circles', triangle: 'triangles', square: 'squares', star: 'stars'};
+const picHTML = pic => `<div class="qpic" role="img" aria-label="${pic.map(([n, sh]) => n + ' ' + (n === 1 ? sh : PLURAL[sh])).join(', ')}">${pic.map(([n, sh]) => '<div>' + Array.from({length: n}, () => `<svg viewBox="0 0 24 24" aria-hidden="true" style="fill:var(${PIC[sh][0]})">${PIC[sh][1]}</svg>`).join('') + '</div>').join('')}</div>`;
+const qHTML = (Q, wp) => (Q.pic ? picHTML(Q.pic) : '') + `<div class="qbig ${wp ? 'wp' : ''}">${fmt(Q.q)}</div>`;
 const PADKEYS = [['7', '7'], ['8', '8'], ['9', '9'], ['⌫', '⌫', 'Delete'], ['4', '4'], ['5', '5'], ['6', '6'], ['−', '−', 'Minus'], ['1', '1'], ['2', '2'], ['3', '3'], ['%', '%', 'Percent'],
   ['0', '0'], ['.', '.', 'Decimal point'], ['frac', `<span class="ic">${FRAC_IC}</span>`, 'Fraction'], ['mixed', `<span class="ic">${MIXED_IC}</span>`, 'Mixed number']];
 
@@ -651,6 +718,24 @@ function noteTime(it, auto) {
   V.tt.push(ms);
   if (it.timed) { V.auto.n++; if (auto) V.auto.f++; V.auto.ms += ms; }
 }
+/* Book questions for skill levels. A level's book generator (k.book), if it has one, writes questions that are only self-marked,
+   such as "give both shares" (Q.self: the answer is display text). An area with mixBook (Ratio, 16 Nov 2026) puts that many questions
+   from its earlier levels into the book, recent levels more often, after the chain and spread among this level's own questions. */
+const bookGen = k => k.book || k.gen;
+function earlierQs(k, n) {
+  const pool = L[k.st].filter(x => x.idx < k.idx && !x.easy); if (!pool.length || !n) return [];
+  const out = [], seen = new Set();
+  for (let t = 0; out.length < n && t < 60; t++) { let r = Math.random() * pool.reduce((a, x) => a + x.idx + 1, 0), i = 0; while ((r -= pool[i].idx + 1) > 0) i++; const Q = bookGen(pool[i])(); if (!seen.has(Q.q)) { seen.add(Q.q); out.push(Q); } }
+  return out;
+}
+function bookQs(k, bn, ch) {
+  const od = earlierQs(k, STR[k.st].mixBook || 0), own = [], seen = new Set(ch.map(x => x.q)), g = bookGen(k);
+  for (let t = 0; own.length < bn - ch.length - od.length && t < 200; t++) { const x = g(); if (!seen.has(x.q)) { seen.add(x.q); own.push(x); } }
+  V.earlierN = od.length;
+  const gap = Math.max(1, Math.floor(own.length / (od.length + 1)));
+  const mixed = own.slice(); od.forEach((x, i) => mixed.splice(Math.min(mixed.length, gap * (i + 1) + i), 0, x));
+  return [...ch, ...mixed];
+}
 function startTyped() {
   const k = V.sk;
   V.phase = 'typed';
@@ -662,7 +747,8 @@ function startTyped() {
   },
     () => {
       V.phase = 'book'; V.bt0 = Date.now(); const ch = k.chain ? k.chain() : []; V.chainN = ch.length; V.mixed = isFacts(k) && !!k.olds?.length;
-      V.book = V.mixed ? (() => { const nw = distinct(k, bn / 2), od = oldQs(k, bn / 2); return nw.flatMap((x, i) => od[i] ? [x, od[i]] : [x]); })() : distinct(k, bn, ch);
+      V.earlierN = 0;
+      V.book = V.mixed ? (() => { const nw = distinct(k, bn / 2), od = oldQs(k, bn / 2); return nw.flatMap((x, i) => od[i] ? [x, od[i]] : [x]); })() : bookQs(k, bn, ch);
       V.marks = V.book.map(() => null); render();
     });
 }
@@ -926,7 +1012,7 @@ function placeHTML() {
 }
 // Facts strong enough that the other areas are worth checking straight away: addition, subtraction and multiplication all at the top.
 const factsStrong = () => ['A', 'S', 'M'].every(t => pos(t) >= L[t].length - 1);
-const skillsUnchecked = () => GROUPS.filter(g => !['K', 'W'].includes(g.id)).flatMap(g => g.t).filter(t => !S.chk[t] && pos(t) < L[t].length);
+const skillsUnchecked = () => shownGroups().filter(g => !['K', 'W'].includes(g.id)).flatMap(g => g.t).filter(t => !S.chk[t] && pos(t) < L[t].length);
 function placedHTML() {
   const done_ = V.done || [], notDone = (V.areas || []).filter(t => !done_.includes(t) && !(t === 'D' && V.skipD));
   return head(V.mode === 'fluency' ? 'Your starting levels' : 'Your levels', false) + `<div class="card">${done_.map(t => { const p = pos(t), n = real(t).length; return `<p><b style="color:var(${STR[t].col})">${STR[t].name}</b><br>${p >= L[t].length ? 'Every level is secure already.' : p === L[t].length - 1 && p > 0 ? `Top level: ${esc(L[t][p].name)}. Secure it to earn the trophy.` : `Level ${lvNum(L[t][p])} of ${n}: ${esc(L[t][p].name)}`}</p>`; }).join('')}
@@ -1208,7 +1294,7 @@ function readCode(P) {
 }
 const sumDays = (days, n, i) => Object.keys(days).filter(d => d >= dOff(n - 1)).reduce((a, d) => a + days[d][i], 0);
 function overviewHTML(P) {
-  const ds_ = Object.keys(P.days).sort().reverse().slice(0, 14), tracks = P.light ? FC_ORDER : Object.keys(L);
+  const ds_ = Object.keys(P.days).sort().reverse().slice(0, 14), tracks = P.light ? FC_ORDER : Object.keys(L).filter(t => !STR[t].g.draft || SHOW_DRAFT);
   const lvl = t => { const i = posOf(t, P); return i >= L[t].length ? 'All secure' : `<b>${lvNum(L[t][i])}</b> of ${real(t).length}: ${esc(L[t][i].name)}`; };
   return (P.fc ? `<p>Fluency code: <b style="font-size:20px;letter-spacing:1px">${esc(P.fc)}</b> <span class="muted small">Type it into Sheets or Class on the teacher's device.</span></p>` : '') + (P.fcp != null ? `<p class="small">Fact cards: <b>${P.fcp}</b> fact${P.fcp === 1 ? '' : 's'} on the pile to learn.</p>` : '') +
   (P.light ? '<p class="muted small">Added from a fluency code, so only the number facts levels are known.</p>' : `<div class="row"><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Active practice, last 7 days</div><b style="font-size:24px">${Math.round(sumDays(P.days, 7, 0) / 60)} min</b></div><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Rounds, last 7 days</div><b style="font-size:24px">${sumDays(P.days, 7, 3)}</b></div><div class="card" style="flex:1;margin:4px 0"><div class="muted small">Last 28 days</div><b style="font-size:24px">${Math.round(sumDays(P.days, 28, 0) / 60)} min</b></div></div>`) +
@@ -1541,11 +1627,11 @@ function homeHTML() {
   <div class="row"><div class="seg" role="group" aria-label="Where are you working"><button class="${S.mode === 'class' ? 'on' : ''}" data-act="mode" data-m="class">In class</button><button class="${S.mode === 'home' ? 'on' : ''}" data-act="mode" data-m="home">At home</button></div><span class="muted small">${d ? `Today: ${Math.round(d.t / 60)} min, ${d.s} round${d.s === 1 ? '' : 's'}` : 'Nothing yet today'}</span></div>`;
   if (S.placed && factsStrong() && skillsUnchecked().length) h += `<div class="card" style="border-color:var(--accent);border-width:2px"><div class="row"><span><b>Your number facts are strong.</b> <span class="muted small">Find your level in the other areas so they don't start at level 1. About 10 minutes, no time goal.</span></span><span class="sp"></span><button class="btn pri" data-act="skillscheck">Find my level</button></div></div>`;
   if (!S.placed) h += `<div class="card"><b>Start with the Fluency challenge</b><p class="muted small">A timed check of your number facts: multiplication, subtraction, addition, then bigger facts like bonds to 100. It moves up quickly when you know things. Fractions, percentages and other skills have their own short checks later, with no time goal.</p><div class="row"><button class="btn pri" data-act="place">Start the challenge</button><button class="btn ghost" data-act="skipplace">Skip, I'll choose</button></div></div>`;
-  for (const g of GROUPS) {
+  for (const g of shownGroups()) {
     const t = recTrack(g), k = rec(t), tot = gTot(g), got = gGot(g), multi = g.t.length > 1, all = got >= tot;
     const unchecked = S.placed && !['K', 'W'].includes(g.id) && g.t.some(x => !S.chk[x]);
     h += `<div class="card strand" style="--c:var(${g.col})"><div class="row"><b>${g.name}</b><span class="sp"></span><span class="lvl">${multi ? `${got} of ${tot} levels` : `Level ${Math.min(got + 1, tot)} of ${tot}`}</span></div><div class="pbar"><i style="width:${Math.round(100 * got / tot)}%"></i></div>
-    <p>${all ? 'Every level is secure. Keep it fresh:' : 'Next up:'} ${multi ? `<span class="muted">${STR[t].name}:</span> ` : ''}<b>${esc(k.name)}</b>${k.eg ? `<span class="eg">${fmt(k.eg)}</span>` : ''}</p>
+    <p>${all ? 'Every level is secure. Keep it fresh:' : 'Next up:'} ${multi ? `<span class="muted">${STR[t].name}:</span> ` : ''}<b>${esc(k.name)}</b>${strChip(k)}${k.eg ? `<span class="eg">${fmt(k.eg)}</span>` : ''}</p>
     <div class="row"><button class="btn pri" data-act="go" data-id="${k.id}">Practise</button>${multi ? `<button class="btn" data-act="group" data-g="${g.id}">Choose an area</button>` : `<button class="btn" data-act="ladder" data-st="${t}">All levels</button>`}${unchecked ? `<button class="btn ghost" data-act="gcheck" data-g="${g.id}">Find my level</button>` : ''}</div></div>`;
     if (g.id === 'K') h += fcHomeCard();
   }
@@ -1563,7 +1649,7 @@ function groupHTML() {
   g.t.forEach(t => {
     const p = pos(t), n = real(t).length, k = rec(t), fin = p >= L[t].length, got = realBefore(t, p);
     h += `<div class="card strand" style="--c:var(${g.col})"><div class="row"><b>${STR[t].name}</b>${t === r && !fin ? '<span class="chip learning">Suggested</span>' : ''}<span class="sp"></span><span class="lvl">${fin ? '🏆 Trophy earned' : `Level ${lvNum(k)} of ${n}`}</span></div><div class="pbar"><i style="width:${Math.round(100 * got / n)}%"></i></div>
-    <p>${fin ? 'Keep it fresh:' : 'Next up:'} <b>${esc(k.name)}</b>${k.eg ? `<span class="eg">${fmt(k.eg)}</span>` : ''}</p>${fin ? '' : `<p class="muted small">You haven't earned your ${STR[t].name.toLowerCase()} trophy yet.</p>`}
+    <p>${fin ? 'Keep it fresh:' : 'Next up:'} <b>${esc(k.name)}</b>${strChip(k)}${k.eg ? `<span class="eg">${fmt(k.eg)}</span>` : ''}</p>${fin ? '' : `<p class="muted small">You haven't earned your ${STR[t].name.toLowerCase()} trophy yet.</p>`}
     <div class="row"><button class="btn ${t === r ? 'pri' : ''}" data-act="go" data-id="${k.id}">Practise</button><button class="btn" data-act="ladder" data-st="${t}">All levels</button>${!S.chk[t] && t !== 'W' && !fin ? `<button class="btn ghost" data-act="tcheck" data-st="${t}">Find my level</button>` : ''}</div></div>`;
   });
   return h;
@@ -1578,7 +1664,7 @@ function ladderHTML() {
     const s = status(k), r = S.skills[k.id], nx = k.idx === p;
     if (k.easy) return `<div class="card" style="margin:8px 0"><div class="row"><span class="muted small">·</span><b>${esc(k.name)}</b><span class="sp"></span><span class="chip mixed">${STLAB.mixed}</span></div><div class="muted small" style="margin-top:4px">Not practised on its own: these come up inside the other levels.</div></div>`;
     const uses = k.wl ? [...new Set(WP[k.wl].flatMap(t => t[2]))].map(t => STR[t].name.toLowerCase()).join(', ') : '';
-    return `<div class="card" style="margin:8px 0;${nx ? `border-color:var(${STR[st].col});border-width:2px` : ''}"><div class="row"><span class="muted small">${lvNum(k)}</span><b>${esc(k.name)}</b><span class="sp"></span><span class="chip ${s}">${nx ? 'Next up' : STLAB[s]}</span></div>${k.eg ? `<div class="muted" style="margin:4px 0">${fmt(k.eg)}</div>` : ''}${uses ? `<div class="muted small" style="margin:4px 0">Uses: ${esc(uses)}</div>` : ''}<div class="row"><button class="btn sm ${nx ? 'pri' : ''}" data-act="go" data-id="${k.id}">Practise</button>${st !== 'W' && (nx || ['learning', 'support'].includes(s)) ? `<button class="btn sm ghost" data-act="quiz" data-id="${k.id}">I did a sheet: quick quiz</button>` : ''}${r?.last ? `<span class="muted small">Last time ${Math.round(r.last.acc * 100)}%</span>` : ''}</div>${k.speedOK && (r?.rounds || done(k)) ? speedRow(k) : ''}</div>`;
+    return `<div class="card" style="margin:8px 0;${nx ? `border-color:var(${STR[st].col});border-width:2px` : ''}"><div class="row"><span class="muted small">${lvNum(k)}</span><b>${esc(k.name)}</b>${strChip(k)}<span class="sp"></span><span class="chip ${s}">${nx ? 'Next up' : STLAB[s]}</span></div>${k.eg ? `<div class="muted" style="margin:4px 0">${fmt(k.eg)}</div>` : ''}${uses ? `<div class="muted small" style="margin:4px 0">Uses: ${esc(uses)}</div>` : ''}<div class="row"><button class="btn sm ${nx ? 'pri' : ''}" data-act="go" data-id="${k.id}">Practise</button>${st !== 'W' && (nx || ['learning', 'support'].includes(s)) ? `<button class="btn sm ghost" data-act="quiz" data-id="${k.id}">I did a sheet: quick quiz</button>` : ''}${r?.last ? `<span class="muted small">Last time ${Math.round(r.last.acc * 100)}%</span>` : ''}</div>${k.speedOK && (r?.rounds || done(k)) ? speedRow(k) : ''}</div>`;
   }).join('');
 }
 function sessHTML() {
@@ -1596,7 +1682,7 @@ function sessHTML() {
     const typedLine = isFacts(k)
       ? `<div class="tline"><span class="chip">⏱ Timed</span><span class="small"><b>${tn} quick questions on screen.</b> Goal: each one straight away, without counting: under ${CONFIG.autoSecs} seconds for small numbers, longer for bigger ones.${k.old ? ' They mix these facts with ones from earlier levels.' : ''}${k.speedOK ? '' : ' Questions with decimals have no clock.'}</span></div>`
       : `<div class="tline"><span class="chip">No time goal</span><span class="small"><b>${tn} quick questions on screen.</b> No clock to beat; how long you take is noted for your teacher.${k.written ? ' Use your book for the working.' : ''}</span></div>`;
-    h += `<div class="card"><h2 style="margin-top:0">${wp ? 'Before you start' : 'Study this first'}</h2><p>${esc(k.tip)}</p>${ex ? `<div class="sol"><span class="muted small">Example</span><div style="font-size:26px;font-weight:700">${fmt(ex.q)}</div><div style="font-size:22px">Answer: <b>${ansHTML(ex)}</b></div></div>` : ''}
+    h += `<div class="card"><h2 style="margin-top:0">${wp ? 'Before you start' : 'Study this first'}${strChip(k)}</h2><p>${esc(k.tip)}</p>${ex ? `<div class="sol"><span class="muted small">Example</span>${ex.pic ? picHTML(ex.pic) : ''}<div style="font-size:26px;font-weight:700">${fmt(ex.q)}</div><div style="font-size:22px">Answer: <b>${ansHTML(ex)}</b></div></div>` : ''}
     ${wp ? `<div class="tline"><span class="chip">Not timed</span><span class="small">3 problems. Do your working in your book, then type the final answer. You get two tries.</span></div>`
       : typedLine + `<div class="tline"><span class="chip">No time goal</span><span class="small"><b>${bn} questions in your book.</b> Take care with these.</span></div>`}<button class="btn pri big" data-act="typed">${wp ? 'Start' : 'Got it, start'}</button></div>`;
   } else if (V.phase === 'book' || V.phase === 'mark') {
@@ -1604,7 +1690,8 @@ function sessHTML() {
     h += `<div class="card"><h2 style="margin-top:0">${mk ? 'Mark your work' : 'Now in your book'} ${mk ? '' : '<span class="chip">No time goal</span>'}</h2><p class="muted small">${mk ? 'Tick or cross each one. If it was wrong, write the correct answer next to it.' : 'Write the question number and your answer. Show your working where it helps. No typing for these.'}</p>
     ${!mk && V.chainN ? `<p class="small" style="color:var(--accent)">Questions 1 to ${V.chainN} change one thing at a time. Think about what changes before you work each one out.</p>` : ''}
     ${!mk && V.mixed ? `<p class="small" style="color:var(--accent)">These mix the new facts with ones from earlier levels.</p>` : ''}
-    <ul class="blist">${V.book.map((x, i) => `<li><span class="n">${i + 1}</span><span>${fmt(x.q)}</span>${mk ? `<span class="a">${ansHTML(x)}</span><span class="mk"><button class="y ${V.marks[i] === true ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="1" aria-label="Correct">✓</button><button class="x ${V.marks[i] === false ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="0" aria-label="Wrong">✗</button></span>` : ''}</li>`).join('')}</ul>
+    ${!mk && V.earlierN ? `<p class="small" style="color:var(--accent)">${V.earlierN === 1 ? 'One of these is' : V.earlierN + ' of these are'} from earlier levels, to keep them fresh.</p>` : ''}
+    <ul class="blist">${V.book.map((x, i) => `<li><span class="n">${i + 1}</span><span>${x.pic ? picHTML(x.pic) : ''}${fmt(x.q)}</span>${mk ? `<span class="a">${ansHTML(x)}</span><span class="mk"><button class="y ${V.marks[i] === true ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="1" aria-label="Correct">✓</button><button class="x ${V.marks[i] === false ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="0" aria-label="Wrong">✗</button></span>` : ''}</li>`).join('')}</ul>
     ${mk ? `<button class="btn pri big" data-act="marked" ${V.marks.includes(null) ? 'disabled' : ''}>Done</button>` : `<button class="btn pri big" data-act="tomark">I've finished, show the answers</button>`}</div>`;
   } else if (V.phase === 'rate') {
     h += `<div class="card"><h2 style="margin-top:0">How did that feel?</h2><p class="muted small">Be honest. This helps choose what you practise next.</p><div class="rate"><button class="btn" data-act="rate" data-r="hard">😓<br>Tough</button><button class="btn" data-act="rate" data-r="ok">🙂<br>OK</button><button class="btn" data-act="rate" data-r="easy">😎<br>Easy</button></div></div>`;
@@ -1628,7 +1715,7 @@ function doneHTML() {
   }
   const msg = k.bonus ? 'Bonus round done. Using a skill in a problem is how it sticks.' : R.slow ? 'Accurate, well done. Some answers took longer than the goal, so they are not automatic yet. Practise this level again, or try a speed round. This round did not count towards securing it.' : R.secured ? `You've secured this level.` : R.pass ? 'A strong round. One more good round on another day will secure this level.' : R.acc >= .5 ? 'Good effort. This one needs a bit more practice, and that is normal.' : 'Good effort for sticking with it. This is a tough one right now.';
   let h = `<div class="card center"><div style="font-size:44px">${R.secured ? '🏅' : R.pass ? '👏' : '💪'}</div><h2>Well done, ${esc(S.name)}</h2><p><b>${nstr(V.sc.c)} out of ${V.sc.n}</b> (${pct}%)</p><p>${msg}</p>${auHTML}<p class="muted small">Time on this round: ${mmss(R.secs)}</p></div>` + troHTML + fcSuggest();
-  const others = GROUPS.filter(x => x.id !== g.id).map(x => rec(recTrack(x))), opts = [];
+  const others = shownGroups().filter(x => x.id !== g.id).map(x => rec(recTrack(x))), opts = [];
   const nonW = Object.keys(L).filter(t => t !== 'W'), top = nonW.reduce((a, t) => a + pos(t), 0) / nonW.reduce((a, t) => a + L[t].length, 0) >= .85;
   const levelRound = !k.bonus && st !== 'W', link = levelRound && R.pass && linkFns(st).length >= 2, speed = levelRound && k.speedOK;
   const prev = k.idx > 0 ? L[st][k.idx - 1] : null;
@@ -1685,7 +1772,7 @@ function teacherHTML() {
     <div class="card"><b>Add a progress code</b><p class="muted small">The full picture. The student copies it from ⚙ on their device and sends it to you.</p><textarea id="cin" placeholder="MP2:..."></textarea><p><button class="btn pri" data-act="cadd">Add progress code</button></p></div>
     <div class="card"><b>Or add a fluency code</b><p class="muted small">Quicker: the student reads out the short code on their 🏆 screen. It gives the number facts levels only, enough to print the right sheet.</p><div class="row"><input type="text" id="fcn" placeholder="Name" style="flex:1;min-width:120px"><input type="text" id="fcc" placeholder="A5 S4 X3 M6 D2" style="flex:2;min-width:160px" autocapitalize="characters"></div><p><button class="btn" data-act="fcadd">Add fluency code</button></p></div>
     <div class="fb no">${esc(V.err || '')}</div>
-    ${cs.length ? `<table><tr><th>Student</th><th>Updated</th><th>7 days</th><th>28 days</th>${GROUPS.map(g => `<th>${g.short}</th>`).join('')}<th>New 🏆</th><th>Flags</th><th></th></tr>${cs.map(P => `<tr><td><b>${esc(P.n)}</b></td><td>${nice(P.d)}</td><td>${P.light ? '–' : Math.round(sumDays(P.days, 7, 0) / 60) + ' min'}</td><td>${P.light ? '–' : Math.round(sumDays(P.days, 28, 0) / 60) + ' min'}</td>${GROUPS.map(g => `<td>${P.light && g.id !== 'K' ? '–' : `${gGot(g, P)}/${gTot(g)}`}</td>`).join('')}<td>${P.tr.filter(x => !P.cel || x[0] > P.cel).length}</td><td>${P.fl.length}</td><td><button class="btn sm" data-act="cview" data-n="${esc(P.n)}">View</button> <button class="btn sm" data-act="csheet" data-n="${esc(P.n)}">Sheet</button> <button class="btn sm ghost danger" data-act="cdel" data-n="${esc(P.n)}">✕</button></td></tr>`).join('')}</table>` : ''}
+    ${cs.length ? `<table><tr><th>Student</th><th>Updated</th><th>7 days</th><th>28 days</th>${shownGroups().map(g => `<th>${g.short}</th>`).join('')}<th>New 🏆</th><th>Flags</th><th></th></tr>${cs.map(P => `<tr><td><b>${esc(P.n)}</b></td><td>${nice(P.d)}</td><td>${P.light ? '–' : Math.round(sumDays(P.days, 7, 0) / 60) + ' min'}</td><td>${P.light ? '–' : Math.round(sumDays(P.days, 28, 0) / 60) + ' min'}</td>${shownGroups().map(g => `<td>${P.light && g.id !== 'K' ? '–' : `${gGot(g, P)}/${gTot(g)}`}</td>`).join('')}<td>${P.tr.filter(x => !P.cel || x[0] > P.cel).length}</td><td>${P.fl.length}</td><td><button class="btn sm" data-act="cview" data-n="${esc(P.n)}">View</button> <button class="btn sm" data-act="csheet" data-n="${esc(P.n)}">Sheet</button> <button class="btn sm ghost danger" data-act="cdel" data-n="${esc(P.n)}">✕</button></td></tr>`).join('')}</table>` : ''}
     ${V.cv && S.cls[V.cv] ? `<div class="card"><div class="row"><h2 style="margin:0">${esc(V.cv)}</h2><span class="sp"></span><button class="btn sm" data-act="cprint">Print report</button></div>${overviewHTML(S.cls[V.cv])}</div>` : ''}`;
   }
   if (t === 'tools') {
@@ -1766,16 +1853,16 @@ function sheetSections(k, type) {
       {h: 'New ones ★', qs: fillQs(k.gen, 6)},
       {h: 'Mixed', qs: (() => { const u = uniq(shuf([...fillQs(k.gen, 45), ...fillQs(knowns(B), 20), ...(k.olds?.length ? fillQs(weighted(k.olds), 25) : [])])); return u.length >= 30 ? u : shuf([...fillQs(k.gen, 45), ...fillQs(knowns(B), 20)]); })()}];
   }
-  if (!(isFacts(k) && k.olds?.length)) { const ch = k.chain ? k.chain() : []; return [...(ch.length ? [{h: 'One change at a time: think about what changes', qs: ch}] : []), {h: ch.length ? 'Practice' : '', qs: fillQs(k.gen, N)}]; }
+  if (!(isFacts(k) && k.olds?.length)) { const ch = k.chain ? k.chain() : []; return [...(ch.length ? [{h: 'One change at a time: think about what changes', qs: ch}] : []), {h: ch.length ? 'Practice' : '', qs: fillQs(bookGen(k), N)}]; }
   const nw = fillQs(k.gen, 54), od = fillQs(weighted(k.olds), 36);
   return [{h: 'New facts mixed with earlier ones', qs: nw.flatMap((x, i) => od[i] ? [x, od[i]] : [x])}];
 }
 const eqs = s => /[=A-Za-z]/.test(s) ? fmt(s) : fmt(s) + ' =';
 function makeSheet(k, type, who) {
   const secs = sheetSections(k, type); if (!secs) return null;
-  const long = Math.max(...Array.from({length: 15}, () => String(k.gen().q).length)), cols = k.written ? 2 : long > 22 ? 1 : long > 11 ? 2 : 3;
+  const long = Math.max(...Array.from({length: 15}, () => String(qText(bookGen(k)())).length)), cols = k.written ? 2 : long > 22 ? 1 : long > 11 ? 2 : 3;
   let n = 0; const ans = [];
-  const cell = (x, cls = '') => { n++; ans.push([n, x]); return `<div class="${cls}" data-n="${n}"><b>${n}</b><span>${eqs(x.q)}</span></div>`; };
+  const cell = (x, cls = '') => { n++; ans.push([n, x]); return `<div class="${cls}" data-n="${n}"><b>${n}</b><span>${eqs(qText(x))}</span></div>`; };
   const body = secs.map(s => `<div class="sect">${s.h ? `<div class="sec">${esc(s.h)}</div>` : ''}${s.tip ? `<div class="stip">${esc(s.tip)}</div>` : ''}` +
     (s.pairs ? `<div class="sq" style="grid-template-columns:1fr 1fr">${s.pairs.map(p => `<div class="pair">${p.map((x, i) => cell(x, i < p.length - 1 ? 'known' : 'new')).join('')}</div>`).join('')}</div>`
       : `<div class="sq${k.written ? ' tall' : ''}" style="grid-template-columns:repeat(${cols},1fr)">${s.qs.map(x => cell(x)).join('')}</div>`) + '</div>').join('');
