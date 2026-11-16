@@ -815,32 +815,51 @@ function beginArea() {
   if (V.inter) return render();
   nextProbe();
 }
+/* The ceiling (Matt, 16 Nov 2026: strong students found the challenge slow and easy all the way). In a fluency area, the first
+   time a student passes a level quickly (both answers in under half the goal), the next probe is the area's three hardest
+   levels, one question each. All right and automatic: the area is done. Once that has happened in one area, every later
+   area in the challenge starts with its ceiling. A student who isn't quick never sees it, so the gentle climb is unchanged
+   for weaker students. A wrong or skipped ceiling answer caps the area at that level; a slow one just carries on climbing. */
+const CEIL_N = 3;
 function nextProbe() {
   const p = V.pl, len = p.list.length, cap = p.fx ? CONFIG.checkCap.fluency : CONFIG.checkCap.skill;
   if (p.hi - p.lo <= 1 || p.lo >= len - 1 || p.n >= cap) return finishArea();
+  if (p.fx && p.ceil === undefined && len > CEIL_N + 1 && p.lo < len - CEIL_N && p.hi >= len && (V.strong || p.lastQuick)) {
+    p.ceil = 'asking'; p.cur = 'ceil'; p.qn = 0; p.ok = true; p.quick = true; p.hard = false;
+    V.note = V.strong ? 'You were quick before, so this starts with the hardest ones.' : "You're quick at these, so here are the hardest ones.";
+    return askPlace();
+  }
   let c;
   const big = V.big; V.big = false;
-  if (p.cur === null) c = big ? Math.max(p.p0, Math.floor((len - 1) / 2)) : p.p0;      // after 10 in a row, the next area starts half-way up
+  if (p.cur === null || (p.cur === 'ceil' && p.lo < 0)) c = big ? Math.max(p.p0, Math.floor((len - 1) / 2)) : p.p0;      // after 10 in a row, the next area starts half-way up
   else if (p.pends.length) { const pm = Math.min(...p.pends); c = pm === p.lo + 1 ? pm : Math.max(p.lo + 1, pm - 2); }      // drop down a little, then recheck
   else { const step = big ? Math.max(3, Math.ceil((p.hi - 1 - p.lo) / 2)) : p.fast ? 3 : 2; c = Math.min(p.lo + step, p.hi - 1, len - 1); }
   p.cur = c; p.qn = 0; p.ok = true; p.quick = true; p.hard = false;
   askPlace();
 }
 function askPlace() {
-  const p = V.pl, k = p.list[p.cur], Q = k.gen(), timed = showClock(k, Q);
+  const p = V.pl, ceil = p.cur === 'ceil', k = ceil ? p.list[p.list.length - CEIL_N + p.qn] : p.list[p.cur], Q = k.gen(), timed = showClock(k, Q);
   ask(Q, {label: `Finding your level: ${STR[p.st].name}`, quiet: true, skip: true, timed, kind: k.kind, onDone: (first, fin, auto) => {
     const A = V.ask, d = day(); V.asked++; p.n++; d.q++; if (first) d.c++;
     const good = first && (!timed || auto);      // a fluency answer that is correct but slow isn't automatic yet
     if (timed && first && !auto) ss(k.id).place = 'correct but slow';
     if (A?.skipped) p.hard = true;
     if (!(timed && good && A.ms <= A.lim * 500)) p.quick = false;
-    V.note = '';
+    if (!ceil) V.note = '';
     V.run = good ? (V.run || 0) + 1 : 0;
+    if (ceil) {      // the three hardest levels, easiest of them first; stop at the first one that isn't right and automatic
+      p.qn++;
+      if (good && p.qn < CEIL_N) return askPlace();
+      V.note = '';
+      if (good) { p.ceil = true; V.strong = true; p.lo = p.list.length - 1; V.note = 'All three right and quick: this area is done.'; }
+      else { p.ceil = false; if (!first || A?.skipped) p.hi = Math.min(p.hi, p.list.length - CEIL_N + p.qn - 1); }
+      return nextProbe();
+    }
     if (V.run >= 10) { V.big = true; V.run = 0; V.note = 'Ten right in a row, so we are jumping ahead.'; }
     p.ok = p.ok && good; p.qn++;
     if (good && p.qn < (p.fx ? 2 : 1)) return askPlace();
     const X = p.cur;
-    if (p.ok) { p.lo = Math.max(p.lo, X); p.pends = p.pends.filter(v => v !== X); p.fast = p.quick; }
+    if (p.ok) { p.lo = Math.max(p.lo, X); p.pends = p.pends.filter(v => v !== X); p.fast = p.quick; p.lastQuick = p.quick && timed; }
     else {
       p.fast = false;
       if (p.hard || !p.fx || p.pends.includes(X)) { p.hi = Math.min(p.hi, X); p.pends = p.pends.filter(v => v < p.hi); }
@@ -901,12 +920,15 @@ function placeHTML() {
   return head(title) + (V.note ? `<div class="fb ok">${esc(V.note)}</div>` : '') + askHTML() + `<p class="center muted small">Question ${V.asked + 1}. It stops in each area when it finds your level.</p>` +
     (V.longShown && ['fluency', 'skills'].includes(V.mode) ? `<p class="center"><button class="btn" data-act="toolong">These questions take me too long</button></p>` : '');
 }
+// Facts strong enough that the other areas are worth checking straight away: addition, subtraction and multiplication all at the top.
+const factsStrong = () => ['A', 'S', 'M'].every(t => pos(t) >= L[t].length - 1);
+const skillsUnchecked = () => GROUPS.filter(g => !['K', 'W'].includes(g.id)).flatMap(g => g.t).filter(t => !S.chk[t] && pos(t) < L[t].length);
 function placedHTML() {
   const done_ = V.done || [], notDone = (V.areas || []).filter(t => !done_.includes(t) && !(t === 'D' && V.skipD));
-  return head(V.mode === 'fluency' ? 'Your starting levels' : 'Your levels', false) + `<div class="card">${done_.map(t => { const p = pos(t), n = real(t).length; return `<p><b style="color:var(${STR[t].col})">${STR[t].name}</b><br>${p >= L[t].length ? 'Every level is secure already.' : `Level ${lvNum(L[t][p])} of ${n}: ${esc(L[t][p].name)}`}</p>`; }).join('')}
+  return head(V.mode === 'fluency' ? 'Your starting levels' : 'Your levels', false) + `<div class="card">${done_.map(t => { const p = pos(t), n = real(t).length; return `<p><b style="color:var(${STR[t].col})">${STR[t].name}</b><br>${p >= L[t].length ? 'Every level is secure already.' : p === L[t].length - 1 && p > 0 ? `Top level: ${esc(L[t][p].name)}. Secure it to earn the trophy.` : `Level ${lvNum(L[t][p])} of ${n}: ${esc(L[t][p].name)}`}</p>`; }).join('')}
   ${V.skipD ? `<p><b style="color:var(--k)">Division facts</b><br>Not checked yet. Division joins once your multiplication reaches ${esc(BY[CONFIG.divAfter].name.replace('Multiplication: ', ''))}. Until then, it starts at the beginning.</p>` : ''}
   ${notDone.length ? `<p class="small">Not checked: ${notDone.map(t => esc(STR[t].name)).join(', ')}. You can check ${notDone.length > 1 ? 'these' : 'this'} later from the home screen, or just start practising.</p>` : ''}
-  ${V.mode === 'fluency' ? '<p class="small">Fractions, percentages and other skills have their own short checks, on the home screen, with no time goal.</p>' : ''}
+  ${V.mode === 'fluency' && factsStrong() && skillsUnchecked().length ? `<div class="card" style="border-color:var(--accent);border-width:2px"><b>Your number facts are strong.</b><p class="small">Find your level in Number skills and Fractions, decimals, percentages now, so you don't start at level 1. No time goal, about 10 minutes, and you can stop part way.</p><button class="btn pri" data-act="skillscheck">Find my level in the other areas</button></div>` : V.mode === 'fluency' ? '<p class="small">Fractions, percentages and other skills have their own short checks, on the home screen, with no time goal.</p>' : ''}
   <p class="muted small">These are a starting point. You can pick any level, and your teacher can change them.</p><button class="btn pri big" data-act="up">Let's go</button></div>`;
 }
 
@@ -1320,6 +1342,7 @@ function homeHTML() {
   const wob = SK.filter(k => (S.skills[k.id]?.wob || 0) >= 2);
   let h = `<a class="homelink" href="../">← Mr Sawyer's Maths</a><div class="top"><h1 style="margin:0">Hi ${esc(S.name)}</h1><span class="sp"></span><button class="btn sm" data-act="me">🏆 ${S.trophies.length}</button><button class="btn sm" data-act="prog" aria-label="Progress and options">⚙</button></div>
   <div class="row"><div class="seg" role="group" aria-label="Where are you working"><button class="${S.mode === 'class' ? 'on' : ''}" data-act="mode" data-m="class">In class</button><button class="${S.mode === 'home' ? 'on' : ''}" data-act="mode" data-m="home">At home</button></div><span class="muted small">${d ? `Today: ${Math.round(d.t / 60)} min, ${d.s} round${d.s === 1 ? '' : 's'}` : 'Nothing yet today'}</span></div>`;
+  if (S.placed && factsStrong() && skillsUnchecked().length) h += `<div class="card" style="border-color:var(--accent);border-width:2px"><div class="row"><span><b>Your number facts are strong.</b> <span class="muted small">Find your level in the other areas so they don't start at level 1. About 10 minutes, no time goal.</span></span><span class="sp"></span><button class="btn pri" data-act="skillscheck">Find my level</button></div></div>`;
   if (!S.placed) h += `<div class="card"><b>Start with the Fluency challenge</b><p class="muted small">A timed check of your number facts: multiplication, subtraction, addition, then bigger facts like bonds to 100. It moves up quickly when you know things. Fractions, percentages and other skills have their own short checks later, with no time goal.</p><div class="row"><button class="btn pri" data-act="place">Start the challenge</button><button class="btn ghost" data-act="skipplace">Skip, I'll choose</button></div></div>`;
   for (const g of GROUPS) {
     const t = recTrack(g), k = rec(t), tot = gTot(g), got = gGot(g), multi = g.t.length > 1, all = got >= tot;
@@ -1621,6 +1644,7 @@ document.addEventListener('click', e => {
     case 'setname': { const n = $('#nm').value.trim(); if (n) { S.name = n; save(); V = {view: 'home'}; render(); } break; }
     case 'mode': S.mode = el.dataset.m; save(); render(); break;
     case 'place': placeIntro('fluency', FLUENCY_ORDER); break;
+    case 'skillscheck': placeIntro('skills', skillsUnchecked()); break;
     case 'gcheck': { const g = GROUPS.find(x => x.id === el.dataset.g); placeIntro('skills', g.t.filter(t => !S.chk[t])); break; }
     case 'tcheck': startPlacement([el.dataset.st], 'area'); break;
     case 'placego': startPlacement(V.areas || FLUENCY_ORDER, V.mode || 'fluency'); break;
