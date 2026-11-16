@@ -52,6 +52,10 @@ p{margin:6px 0}.muted{color:var(--muted)}.small{font-size:14px}.center{text-alig
 .ic{display:inline-flex;align-items:center;gap:3px;font-size:16px;vertical-align:middle}.ic .fr{font-size:15px}.ic .fr span{border-color:currentColor}.ic .sq{display:inline-block;width:11px;height:11px;border:1.5px solid currentColor;border-radius:2px}
 p .ic{font-size:12px}p .ic .fr{font-size:11px}p .ic .sq{width:8px;height:8px}
 .pad .wide{grid-column:span 4}
+.rcv{display:block;width:100%;max-width:720px;margin:6px auto 0;image-rendering:crisp-edges;image-rendering:pixelated;border:1px solid var(--line);border-radius:10px}
+.rpad button{touch-action:manipulation}
+.rkey{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.rv{max-width:420px;margin:0 auto;font-size:28px;text-align:center;padding:8px;min-height:56px;border:2px solid var(--line);border-radius:12px;background:var(--panel)}
 .tline{display:flex;gap:10px;align-items:center;margin:6px 0}.tline .chip{white-space:nowrap}
 .pad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;max-width:420px;margin-left:auto;margin-right:auto}
 .pad button{font-size:22px;padding:10px 0;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;min-height:50px}
@@ -454,7 +458,7 @@ SK.forEach(s => { s.eg = s.st === 'W' ? '' : s.gen().q; s.speedOK = isFacts(s) &
    - chk[area] = date that area's level check was done. known = level ids that existed when the data was last loaded.
    Version 1 (10-13 Nov 2026) stored list positions; migrate() converts it using OLD_LISTS. Keep migrate() able to read v1. */
 const KEY = 'mathsPractice.v1';      // the storage key stays the same so existing progress is found
-const fresh = () => ({v: 2, name: '', mode: 'class', pin: CONFIG.pin, placed: false, chk: {}, exp: {}, maxId: {}, known: null, skills: {}, days: {}, trophies: [], log: [], tokens: 0, best: 0, sessions: 0, wpSeen: [], packs: [], fc: {}, fcn: 0, set: {games: true, links: true}, celebrated: '', cls: {}, lastBackup: ''});
+const fresh = () => ({v: 2, name: '', mode: 'class', pin: CONFIG.pin, placed: false, chk: {}, exp: {}, maxId: {}, known: null, skills: {}, days: {}, trophies: [], log: [], tokens: 0, best: 0, sessions: 0, wpSeen: [], packs: [], fc: {}, fcn: 0, set: {games: true, links: true, race: false}, celebrated: '', cls: {}, lastBackup: ''});
 // Saved data without a version number is version 1 (fresh() would otherwise stamp it as 2 and skip the conversion).
 const fromSaved = D => { if (D && typeof D === 'object' && Object.keys(D).length && !D.v) D.v = 1; return Object.assign(fresh(), D); };
 let S; try { S = fromSaved(JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = fresh(); }
@@ -964,6 +968,198 @@ function gTap(i) {
   render();
 }
 
+// ---------- game: the race ----------
+/* A timed race against one computer car (Matt, 15-16 Nov 2026). Off until the teacher ticks it in Tools → Settings; once on,
+   it opens on any day a round has been finished. A teacher can try it from Settings while it is off; a try saves nothing.
+   Each right answer moves the student's car one step; a wrong answer shows the right one and holds the car for 2 seconds.
+   A lap is 10 questions. The opponents are a ladder (CONFIG.race.opp): beat one to unlock the next.
+   "Race a friend": both devices count down to the same 15-second mark on their own clocks. Nothing leaves the device.
+   Race answers never count towards a level and are not logged as practice; the minutes show as game time.
+   Saved: S.race = {st, best: {opponent index: {secs, right, slips, d, won}}, fr: {questions: best secs}}. Missing = never raced. */
+CONFIG.race = {
+  lap: 10, holdMs: 2000, friendMark: 15000, friendLead: 5000, soloCount: 3000,
+  // nm: name, q: questions, s: the opponent's time in seconds, after: the opponent whose defeat unlocks this one
+  opp: [['Tractor', 20, 240], ['Milk float', 20, 210], ['Camper van', 20, 180], ['Taxi', 20, 150], ['Hatchback', 20, 120], ['Rally car', 20, 90],
+    ['Pickup', 30, 120], ['Sports car', 30, 90], ['Racer', 30, 60], ['Turbo', 30, 45], ['Rocket', 30, 30],
+    ['Endurance', 60, 120, 8], ['Grand tourer', 60, 90], ['Hypercar', 60, 60]].map(([nm, q, s, after], i) => ({nm, q, s, after: after ?? i - 1}))
+};
+const RC = CONFIG.race;
+let rClock = () => Date.now();                 // the tests swap this for a scripted clock
+const raceOpen = () => !!S.set.race && (S.days[today()]?.s || 0) >= 1;
+const rData = () => S.race || {st: raceStartIdx(), best: {}, fr: {}};
+const tSecs = (s, dp = 0) => { const m = Math.floor(s / 60), r = s - m * 60; return m + ':' + (dp ? r.toFixed(dp).padStart(3 + dp, '0') : pad2(Math.round(r))); };
+// The student's pace in seconds a question: median of their recent typed medians on fluency levels they have done,
+// plus the 2-second hold for their usual share of misses. Used once, to choose where a first-time racer starts.
+function racePace() {
+  const ks = SK.filter(k => k.speedOK && done(k) && S.skills[k.id]?.times?.length); if (!ks.length) return null;
+  const med = median(ks.map(k => { const t = S.skills[k.id].times; return t[t.length - 1].med; })) / 1000;
+  const miss = Math.min(.3, Math.max(0, 1 - median(ks.map(k => S.skills[k.id].last?.acc ?? .9))));
+  return med + miss * RC.holdMs / 1000;
+}
+// A first-time racer starts with every short-track opponent unlocked down to the first one slower than their own pace.
+function raceStartIdx() {
+  const p = racePace(); if (p == null) return 0;
+  let st = 0; RC.opp.forEach((o, i) => { if (o.q < 60 && o.s / o.q >= p) st = i; }); return st;
+}
+const rBeaten = (D, i) => i >= 0 && (D.best[i]?.won || i < D.st);
+const rUnlocked = (D, i, tr) => tr || i === 0 || i <= D.st || rBeaten(D, RC.opp[i].after);
+// Questions: whole-number fluency only. About 70% from levels done (recent ones more often), 30% from the next-up levels.
+function racePool() {
+  const dn = SK.filter(k => k.speedOK && !k.easy && done(k)), cur = [];
+  for (const t in L) { const k = L[t][pos(t)]; if (k && k.speedOK && !k.easy) cur.push(k); }
+  if (!dn.length && !cur.length) for (const t in L) { const k = L[t].find(x => x.speedOK && !x.easy); if (k) cur.push(k); }
+  return {dn, cur};
+}
+function raceQ(R) {
+  const {dn, cur} = R.pool;
+  for (let t = 0; t < 40; t++) {
+    let k;
+    if (cur.length && (!dn.length || Math.random() < .3)) k = pick(cur);
+    else { let tot = dn.reduce((a, x) => a + x.idx + 1, 0), r = Math.random() * tot, i = 0; while ((r -= dn[i].idx + 1) > 0) i++; k = dn[i]; }
+    const Q = k.gen(); if (!isWholeQ(Q) || (R.seen.has(Q.q) && t < 30)) continue;
+    R.seen.add(Q.q); return Q;
+  }
+  return {q: '2 × 3', a: 6};
+}
+// The pick screen: the list of opponents.
+function racePick(o = {}) { const old = V.view === 'race' ? V.r : {}; return {ph: 'pick', tr: o.tr ?? old.tr, friend: o.friend ?? old.friend ?? false}; }
+function raceMenu(tr) {
+  if (!tr && !raceOpen()) return;
+  V = {view: 'race', back: tr ? {view: 'teacher', tab: 'tools', unlocked: true} : fromHere(), r: racePick({tr, friend: false})};
+  if (!tr && !S.race) { S.race = rData(); save(); }
+  render(); window.scrollTo(0, 0);
+}
+// When the race starts: a short countdown alone, or the next 15-second mark (at least 5 seconds away) with a friend.
+const raceStartAt = (now, friend) => friend ? Math.ceil((now + RC.friendLead) / RC.friendMark) * RC.friendMark : now + RC.soloCount;
+function raceStart(i, n) {
+  const P = V.r, o = i >= 0 ? RC.opp[i] : null, N = o ? o.q : n;
+  V.r = {ph: 'count', tr: P.tr, friend: P.friend, i, N, oppS: o ? o.s : null, t0: raceStartAt(rClock(), P.friend), right: 0, slips: 0, val: '', hold: 0, cur: null, seen: new Set(), pool: racePool(), pd: 0, w: innerWidth < 600 ? 160 : 240};
+  render(); raceLoop();
+}
+function raceTick() {             // moves the race on: countdown to start, end of a hold
+  const R = V.r, now = rClock();
+  if (R.ph === 'count' && now >= R.t0) { R.ph = 'run'; R.cur = raceQ(R); raceDom(); }
+  if (R.ph === 'run' && R.hold && now >= R.hold) { R.hold = 0; R.val = ''; R.cur = raceQ(R); raceDom(); }
+}
+function raceKey(c) {
+  const R = V.r; if (V.view !== 'race' || R.ph !== 'run') return;
+  raceTick(); if (R.hold) return;
+  R.val = c === '⌫' ? R.val.slice(0, -1) : R.val + c;
+  const tgt = nstr(R.cur.a);
+  if (R.val.length >= tgt.length) {
+    if (R.val === tgt) { R.right++; if (R.right >= R.N) return raceEnd(); R.val = ''; R.cur = raceQ(R); }
+    else { R.slips++; R.hold = rClock() + RC.holdMs; R.val = tgt; }
+  }
+  raceDom();
+}
+function raceEnd() {
+  const R = V.r, secs = (rClock() - R.t0) / 1000, won = R.oppS == null ? null : secs < R.oppS;
+  const res = {secs: +secs.toFixed(1), right: R.N, slips: R.slips, won, i: R.i, N: R.N, newU: [], best: false, prev: null};
+  if (!R.tr) {
+    const D = S.race = rData(), before = RC.opp.map((_, j) => rUnlocked(D, j));
+    if (R.i >= 0) {
+      const b = D.best[R.i]; res.prev = b ? b.secs : null;
+      if (!b || secs < b.secs) { D.best[R.i] = {secs: res.secs, right: R.N, slips: R.slips, d: today(), won: !!(won || b?.won)}; res.best = !!b; }
+      else if (won) b.won = true;
+      RC.opp.forEach((o, j) => { if (!before[j] && rUnlocked(D, j)) res.newU.push(j); });
+    } else { const p = D.fr[R.N]; res.prev = p ?? null; if (p == null || secs < p) { D.fr[R.N] = res.secs; res.best = p != null; } }
+    save();
+  }
+  V.r = {ph: 'done', tr: R.tr, friend: R.friend, res};
+  render(); window.scrollTo(0, 0);
+}
+// Only the moving parts of the race screen are updated while it runs, so the road keeps drawing.
+function raceDom() {
+  const R = V.r, q = $('#rq'), v = $('#rv'), lp = $('#rlap'); if (!q) return;
+  if (R.ph === 'count') return;
+  q.innerHTML = fmt(R.cur.q);
+  v.textContent = R.hold ? '= ' + R.val : R.val; v.style.borderColor = R.hold ? 'var(--bad)' : 'var(--line)'; v.style.color = R.hold ? 'var(--bad)' : '';
+  if (lp) lp.textContent = `Lap ${Math.min(R.N / RC.lap, Math.floor(R.right / RC.lap) + 1)} of ${R.N / RC.lap}`;
+}
+// The road: a pixel-art strip drawn on a small canvas and scaled up. Two wheel frames, scrolling dashes, a puff when held.
+const CAR = ['....bbbbbb......', '...bwwbbwwb.....', '..bbwwbbwwbbb...', 'bbbbbbbbbbbbbbbb', 'bbbbbbbbbbbbbbbl', 'bbbTTbbbbbbTTbbb', '...TT......TT...'];
+const RH = 52, R_SX = 6;           // the road is 240 pixels wide (160 on a phone, so the cars come out bigger), scaled up
+const reduceMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+let raceRaf = 0, raceFrames = 0;
+function raceLoop() {
+  cancelAnimationFrame(raceRaf);
+  const R0 = V.r;
+  const frame = () => {
+    if (V.view !== 'race' || V.r !== R0 || !['count', 'run'].includes(R0.ph)) { raceRaf = 0; return; }
+    raceFrames++; raceTick(); raceDraw(); raceRaf = requestAnimationFrame(frame);
+  };
+  raceRaf = requestAnimationFrame(frame);
+}
+function raceDraw() {
+  const R = V.r, cv = $('#rcv'); if (!cv) return;
+  const RW = R.w, R_FX = RW - 10;
+  const c = cv.getContext('2d'), cs = getComputedStyle(document.documentElement), col = n => cs.getPropertyValue(n).trim() || '#888', now = rClock();
+  const still = reduceMotion(), el = Math.max(0, (now - R.t0) / 1000);
+  const tp = R.right / R.N; R.pd = still ? tp : R.pd + (tp - R.pd) * .25;
+  const op = R.oppS == null ? null : still ? Math.floor(Math.min(1, el / R.oppS) * R.N) / R.N : Math.min(1, el / R.oppS);
+  c.fillStyle = col('--panel'); c.fillRect(0, 0, RW, RH);
+  c.fillStyle = col('--soft'); c.fillRect(0, 4, RW, RH - 8);
+  c.fillStyle = col('--line'); c.fillRect(0, 4, RW, 1); c.fillRect(0, RH - 5, RW, 1);
+  const off = still ? 0 : Math.floor(R.pd * R.N * 6) % 8;           // dashes scroll with the student's car
+  c.fillStyle = col('--muted'); for (let x = -off; x < RW; x += 8) c.fillRect(x, 26, 4, 1);
+  for (let l = 1; l < R.N / RC.lap; l++) { const x = Math.round(R_SX + 16 + (R_FX - R_SX - 16) * l * RC.lap / R.N); c.fillRect(x, 5, 1, 3); c.fillRect(x, RH - 8, 1, 3); }
+  for (let y = 5; y < RH - 5; y += 2) for (let x = 0; x < 4; x += 2) { c.fillStyle = ((y - 5) / 2 + x / 2) % 2 ? '#111' : '#fff'; c.fillRect(R.w - 10 + x, y, 2, 2); }
+  c.fillStyle = col('--muted'); c.fillRect(R_SX + 16, 5, 1, RH - 10);
+  const car = (p, y, body, fr) => {
+    const x0 = Math.round(R_SX + p * (R_FX - R_SX - 16));
+    CAR.forEach((row, j) => [...row].forEach((ch, i) => {
+      if (ch === '.') return;
+      let f = ch === 'b' ? body : ch === 'w' ? '#d6e8f7' : ch === 'l' ? '#ffd34d' : '#16181c';
+      if (ch === 'T' && fr && (i + j) % 2) f = '#8a8f98';               // second wheel frame
+      c.fillStyle = f; c.fillRect(x0 + i, y + j, 1, 1);
+    }));
+    return x0;
+  };
+  if (op != null) car(op, 11, col(R.i >= 0 ? ['--w', '--k', '--f', '--n', '--bad', '--gold'][R.i % 6] : '--w'), Math.floor(op * R.N * 2) % 2);
+  const px = car(R.pd, 33, col('--accent'), Math.floor(R.pd * R.N * 2) % 2);
+  if (R.hold) { c.fillStyle = col('--muted'); const f = Math.floor(now / 150) % 2; [[-2, 37], [-4, 35 + f], [-5, 38 - f], [-7, 36]].forEach(([dx, y]) => { if (px + dx >= 0) c.fillRect(px + dx, y, 2, 2); }); }
+  const ck = $('#rclk');
+  if (ck) ck.textContent = R.ph === 'count' ? '0:00.0' : tSecs(el, 1);
+  if (R.ph === 'count') {
+    const left = Math.ceil((R.t0 - now) / 1000), q = $('#rq');
+    if (q && q.dataset.n !== String(left)) { q.dataset.n = left; q.textContent = left > 0 ? left : 'Go'; }
+  }
+}
+function raceHTML() {
+  const R = V.r, D = rData(), tr = R.tr;
+  const banner = tr ? `<p class="fb warn">Teacher try: every race is open and nothing is saved.</p>` : '';
+  if (R.ph === 'pick') {
+    const p = racePace(), row = (o, i) => {
+      const b = !tr && D.best[i], open = rUnlocked(D, i, tr), won = !tr && D.best[i]?.won;
+      return `<div class="row" style="margin:6px 0;padding:6px 0;border-bottom:1px solid var(--line)"><span>${won ? '🏁' : open ? '🚗' : '🔒'} <b>${esc(o.nm)}</b> <span class="muted small">${o.q} questions in ${tSecs(o.s)}</span>${b ? `<br><span class="muted small">Your best: ${tSecs(b.secs, 1)}${b.won ? ', beaten' : ''}</span>` : ''}</span><span class="sp"></span>${open ? `<button class="btn sm${won ? '' : ' pri'}" data-act="rgo" data-i="${i}">Race</button>` : `<span class="muted small">Beat the ${esc(RC.opp[o.after].nm)} first</span>`}</div>`;
+    };
+    const grp = (t, f) => `<div class="card"><b>${t}</b>${RC.opp.map((o, i) => f(o) ? row(o, i) : '').join('')}</div>`;
+    return head('Race') + banner + `<div class="card"><p style="margin-top:0">Answer number facts as fast as you can. Each right answer moves your car on. <b>A wrong answer shows the right one and holds your car for 2 seconds</b>, so think before you tap. A lap is 10 questions.</p><p class="muted small">Beat a car to unlock the next one. Races don't change your levels.</p>
+      <div class="seg" role="group" aria-label="Who are you racing"><button class="${R.friend ? '' : 'on'}" data-act="rfriend" data-f="0">On my own</button><button class="${R.friend ? 'on' : ''}" data-act="rfriend" data-f="1">With a friend</button></div>
+      ${R.friend ? `<p class="small">Sit next to your friend. You both choose the same race and tap it at about the same time. <b>Both screens count down to the same moment</b> and show the start time, so check they match. Compare your times at the end.</p>` : ''}
+      ${p ? `<p class="muted small">Your recent pace: about ${p.toFixed(1)} seconds a question.</p>` : ''}</div>
+      ${R.friend ? `<div class="card"><b>Just you and your friend, no computer car</b><div class="row" style="margin-top:6px">${[20, 30, 60].map(n => `<button class="btn" data-act="rgo" data-i="-1" data-n="${n}">${n} questions</button>`).join('')}</div>${!tr && Object.keys(D.fr).length ? `<p class="muted small">Your best: ${Object.entries(D.fr).map(([n, s]) => `${n} in ${tSecs(s, 1)}`).join(', ')}</p>` : ''}</div>` : ''}
+      ${grp('Short races: 2 laps', o => o.q === 20)}${grp('Longer races: 3 laps', o => o.q === 30)}${grp('The long track: 6 laps', o => o.q === 60)}`;
+  }
+  if (R.ph === 'done') {
+    const x = R.res, o = x.i >= 0 ? RC.opp[x.i] : null;
+    const title = o ? (x.won ? `You beat the ${esc(o.nm)}!` : `The ${esc(o.nm)} won this time`) : `${x.N} questions`;
+    return head('Race') + banner + `<div class="card center"><div style="font-size:44px">${o ? (x.won ? '🏁' : '🚗') : '⏱'}</div><h2>${title}</h2>
+      <p style="font-size:26px;font-weight:700;margin:6px 0">${tSecs(x.secs, 1)}</p>${o ? `<p class="muted">The ${esc(o.nm)}: ${tSecs(o.s)}</p>` : ''}
+      <p>${x.right} right, ${x.slips} slip${x.slips === 1 ? '' : 's'}.</p>
+      ${!tr ? `<p class="muted small">${x.prev == null ? 'Your first time for this race.' : x.best ? `A new best. It was ${tSecs(x.prev, 1)}.` : `Your best is ${tSecs(Math.min(x.prev, x.secs), 1)}.`}</p>` : ''}
+      ${x.newU.length ? `<p class="fb ok">Unlocked: ${x.newU.map(j => 'the ' + esc(RC.opp[j].nm)).join(' and ')}</p>` : ''}
+      <div class="row" style="justify-content:center"><button class="btn pri" data-act="rgo" data-i="${x.i}" data-n="${x.N}">Race again</button><button class="btn" data-act="rlist">All races</button><button class="btn" data-act="up">Back</button></div></div>`;
+  }
+  const o = R.i >= 0 ? RC.opp[R.i] : null, at = new Date(R.t0);
+  return `<div class="top"><button class="btn sm ghost" data-act="up" aria-label="Back">✕</button><b>${o ? esc(o.nm) : R.N + ' questions'}</b><span class="sp"></span><span id="rlap" class="small" style="white-space:nowrap">Lap 1 of ${R.N / RC.lap}</span><span id="rclk" class="chip">0:00.0</span></div>
+  <canvas id="rcv" class="rcv" width="${R.w}" height="${RH}" aria-label="The race track"></canvas>
+  <div class="row small muted" style="justify-content:center;gap:14px;margin:4px 0"><span><i class="rkey" style="background:var(--accent)"></i>You</span>${o ? `<span><i class="rkey" style="background:var(${['--w', '--k', '--f', '--n', '--bad', '--gold'][R.i % 6]})"></i>The ${esc(o.nm)}: ${o.q} in ${tSecs(o.s)}</span>` : ''}</div>
+  ${R.friend && R.ph === 'count' ? `<p class="center small">Starts at <b>${pad2(at.getHours())}:${pad2(at.getMinutes())}:${pad2(at.getSeconds())}</b>. Check your friend's screen says the same.</p>` : ''}
+  <div class="qbig" id="rq">${R.ph === 'count' ? 'Get ready' : fmt(R.cur.q)}</div><div id="rv" class="rv"></div>
+  <div class="pad rpad" style="grid-template-columns:repeat(3,1fr)">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0'].map(c => `<button data-act="rkey" data-k="${c}">${c}</button>`).join('')}</div>`;
+}
+
 // ---------- time tracking ----------
 let lastAct = Date.now();
 ['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, () => { lastAct = Date.now(); }, true));
@@ -971,7 +1167,7 @@ setInterval(() => {
   if (document.visibilityState !== 'visible') return;
   const slow = V.view === 'sess' && (['book', 'mark'].includes(V.phase) || V.sk?.st === 'W');   // writing in a book means long gaps between taps
   if (Date.now() - lastAct > (slow ? 300000 : 60000)) return;
-  if (V.view === 'game') day().g += 5; else if (['sess', 'place', 'speed', 'fcs', 'fcstudy'].includes(V.view)) day().t += 5; else return;
+  if (V.view === 'game' || (V.view === 'race' && !V.r.tr && ['count', 'run'].includes(V.r.ph))) day().g += 5; else if (['sess', 'place', 'speed', 'fcs', 'fcstudy'].includes(V.view)) day().t += 5; else return;
   if (Math.random() < .2) save();
 }, 5000);
 
@@ -1313,6 +1509,7 @@ function backBtn() {
     if (V.ask && $('#ans')) V.ask.val = $('#ans').value;
     return guard(V.quiz ? 'Stop the quiz? It will not be saved.' : 'Stop this round? It will not be saved.', () => { V.ask = null; goUp(); }, false);
   }
+  if (V.view === 'race' && V.r.ph !== 'pick') { V.r = racePick(); render(); window.scrollTo(0, 0); return; }
   if (V.view === 'fcs') { if (!V.n && V.cur?.ph === 'study') return goUp(); return guard("Stop now? Today's fact cards won't be saved.", () => goUp(), false); }
   if (V.view === 'place') { if (V.ask && $('#ans')) V.ask.val = $('#ans').value; return guard('Stop the check here? The levels it has found so far are kept.', () => endPlacement(true), false); }
   goUp();
@@ -1326,7 +1523,7 @@ addEventListener('popstate', () => { if (V.view === 'home' || V.view === 'welcom
 // ---------- screens ----------
 function render() {
   const app = $('#app');
-  const views = {home: homeHTML, welcome: welcomeHTML, placed: placedHTML, place: placeHTML, placeintro: placeIntroHTML, sess: sessHTML, ladder: ladderHTML, me: meHTML, teacher: teacherHTML, game: gameHTML, group: groupHTML, fc: fcMenuHTML, fcdeck: fcDeckHTML, fcstudy: fcStudyHTML, fcs: fcSessHTML, fcdone: fcDoneHTML, speed: speedHTML, speeddone: speedDoneHTML, gameover: () => head('Time is up') + `<div class="card center"><div style="font-size:48px">🎯</div><h2>${V.n} solved</h2><p class="muted">Your best is ${S.best}.</p><button class="btn pri big" data-act="up">Back to practice</button></div>`};
+  const views = {home: homeHTML, welcome: welcomeHTML, placed: placedHTML, place: placeHTML, placeintro: placeIntroHTML, sess: sessHTML, ladder: ladderHTML, me: meHTML, teacher: teacherHTML, game: gameHTML, race: raceHTML, group: groupHTML, fc: fcMenuHTML, fcdeck: fcDeckHTML, fcstudy: fcStudyHTML, fcs: fcSessHTML, fcdone: fcDoneHTML, speed: speedHTML, speeddone: speedDoneHTML, gameover: () => head('Time is up') + `<div class="card center"><div style="font-size:48px">🎯</div><h2>${V.n} solved</h2><p class="muted">Your best is ${S.best}.</p><button class="btn pri big" data-act="up">Back to practice</button></div>`};
   if (!S.name && V.view === 'home') V.view = 'welcome';
   const m = V.modal;
   app.innerHTML = (views[V.view] || homeHTML)() + (m ? `<div class="modal"><div class="card"><p><b>${esc(m.msg)}</b></p>${m.pin ? `<label class="f"><span>Teacher PIN</span><input type="password" id="mpin" inputmode="numeric" autocomplete="off"></label>` : ''}<div class="fb no">${esc(m.err)}</div><div class="row"><button class="btn pri" data-act="myes">${m.pin ? 'Confirm' : 'Yes'}</button><button class="btn" data-act="mno">Cancel</button></div></div></div>` : '');
@@ -1354,7 +1551,10 @@ function homeHTML() {
   }
   if (wob.length) h += `<div class="card"><b>Worth another look</b><p class="muted small">These slipped in your warm-ups.</p>${wob.map(k => `<div class="row" style="margin:6px 0"><span>${esc(k.name)}</span><span class="sp"></span><button class="btn sm" data-act="go" data-id="${k.id}">Practise</button></div>`).join('')}</div>`;
   if (newT) h += `<p class="muted small center">${newT} new troph${newT === 1 ? 'y' : 'ies'} to show your teacher.</p>`;
-  if (S.set.games) h += gameOpen() ? `<div class="card"><div class="row"><span>🎯 <b>Target game</b> <span class="muted small">Open for today. Your best: ${S.best} solved.</span></span><span class="sp"></span><button class="btn" data-act="game">Play 3 minutes</button></div></div>` : `<p class="muted small center">🎯 The target game opens once you finish a round today.</p>`;
+  if (S.set.games || S.set.race) {
+    const won = RC.opp.filter((_, i) => S.race?.best[i]?.won).length;
+    h += `<div class="card"><b>Games</b>${S.set.games ? `<div class="row" style="margin:6px 0">${gameOpen() ? `<span>🎯 <b>Target game</b> <span class="muted small">Your best: ${S.best} solved.</span></span><span class="sp"></span><button class="btn" data-act="game">Play 3 minutes</button>` : `<span class="muted small">🎯 The target game opens once you finish a round today.</span>`}</div>` : ''}${S.set.race ? `<div class="row" style="margin:6px 0">${raceOpen() ? `<span>🏁 <b>Race</b> <span class="muted small">${won ? `${won} of ${RC.opp.length} cars beaten.` : 'Race a car, or a friend.'}</span></span><span class="sp"></span><button class="btn" data-act="race">Race</button>` : `<span class="muted small">🏁 The race opens once you finish a round today.</span>`}</div>` : ''}</div>`;
+  }
   return h;
 }
 function groupHTML() {
@@ -1439,7 +1639,7 @@ function doneHTML() {
     if (link) opts.push([`Use it: word problems with ${STR[st].name.toLowerCase()}`, k.id, false, 'linked']);
     others.forEach(o => opts.push([`${STR[o.st].g.name}: ${o.name}`, o.id, false]));
     h += `<div class="card"><b>Still in class? Choose what's next</b>${opts.map(btn).join('')}${speed ? speedRow(k) : ''}
-    ${gameOpen() ? `<p><button class="btn" style="width:100%;text-align:left" data-act="game">🎯 Target game, 3 minutes</button></p>` : ''}
+    ${gameOpen() ? `<p><button class="btn" style="width:100%;text-align:left" data-act="game">🎯 Target game, 3 minutes</button></p>` : ''}${raceOpen() ? `<p><button class="btn" style="width:100%;text-align:left" data-act="race">🏁 Race</button></p>` : ''}
     ${S.set.links && top ? `<p class="muted small">You are working at the top levels. For a stretch, try one of these:</p>${CONFIG.links.map(l => `<p><a href="${esc(l[1])}" target="_blank" rel="noopener">${esc(l[0])}</a></p>`).join('')}` : ''}</div>`;
   } else {
     if (link) opts.push([`Use it: word problems with ${STR[st].name.toLowerCase()}`, k.id, false, 'linked']);
@@ -1495,7 +1695,7 @@ function teacherHTML() {
     <div class="row"><label>Level <select id="plv" style="width:auto">${[1, 2, 3, 4, 5, 6].map(i => `<option ${i === lv ? 'selected' : ''}>${i}</option>`).join('')}</select></label><button class="btn" data-act="copy" data-el="prompt">Copy prompt</button></div><textarea readonly id="prompt">${esc(llmPrompt(lv))}</textarea>
     <label class="f"><span>Paste the JSON it gives you</span><textarea id="pin_"></textarea></label><div class="fb ${V.pok ? 'ok' : 'no'}">${esc(V.err || '')}</div><div class="row"><button class="btn pri" data-act="padd">Add to this device</button><button class="btn" data-act="copy" data-el="pfile">Copy packs.js for all students</button><button class="btn ghost danger sm" data-act="pclear">Clear saved problems</button></div><textarea readonly id="pfile" style="display:none">${esc('window.MP_PACKS = ' + JSON.stringify(pk, null, 1) + ';')}</textarea></div>
     <div class="card"><b>Settings</b><label class="f"><span>Student name</span><input type="text" id="sname" value="${esc(S.name)}"></label><label class="f"><span>Teacher PIN</span><input type="text" id="spin" value="${esc(S.pin)}" inputmode="numeric"></label>
-    <p><label><input type="checkbox" id="sg" ${S.set.games ? 'checked' : ''}> Target game (free to play on any day a round has been finished)</label></p><p><label><input type="checkbox" id="sl" ${S.set.links ? 'checked' : ''}> Show stretch links at the top levels</label></p>
+    <p><label><input type="checkbox" id="sg" ${S.set.games ? 'checked' : ''}> Target game (free to play on any day a round has been finished)</label></p><p><label><input type="checkbox" id="sr" ${S.set.race ? 'checked' : ''}> Racing game (off until ticked; then open on any day a round has been finished)</label> <button class="btn sm" data-act="rtry">Try the race</button></p><p><label><input type="checkbox" id="sl" ${S.set.links ? 'checked' : ''}> Show stretch links at the top levels</label></p>
     <div class="row"><button class="btn pri" data-act="ssave">Save settings</button><button class="btn" data-act="place">Redo the Fluency challenge</button><button class="btn danger" data-act="wipe">Erase this student's data</button></div></div>`;
   }
   return h;
@@ -1695,6 +1895,12 @@ document.addEventListener('click', e => {
     case 'marked': V.phase = 'rate'; render(); window.scrollTo(0, 0); break;
     case 'rate': finishRound(el.dataset.r); window.scrollTo(0, 0); break;
     case 'game': startGame(); break;
+    case 'race': raceMenu(false); break;
+    case 'rtry': raceMenu(true); break;
+    case 'rfriend': V.r.friend = el.dataset.f === '1'; render(); break;
+    case 'rlist': V.r = racePick(); render(); window.scrollTo(0, 0); break;
+    case 'rgo': raceStart(+el.dataset.i, +el.dataset.n || 0); window.scrollTo(0, 0); break;
+    case 'rkey': raceKey(el.dataset.k); break;
     case 'gt': gTap(+el.dataset.i); break;
     case 'gop': if (V.g.sel !== null) { V.g.op = V.g.op === el.dataset.o ? null : el.dataset.o; render(); } break;
     case 'gundo': if (V.g.hist.length) { V.g.t = V.g.hist.pop(); V.g.sel = null; V.g.op = null; V.g.msg = ''; render(); } break;
@@ -1725,7 +1931,7 @@ document.addEventListener('click', e => {
     case 'backup': backup(); break;
     case 'padd': try { const arr = JSON.parse($('#pin_').value.replace(/^[^\[]*/, '').replace(/[^\]]*$/, '')); const good = arr.filter(p => p && p.id && p.q && typeof p.a === 'number' && p.level >= 1 && p.level <= 6 && !packs().some(x => x.id === p.id)); if (!good.length) throw 0; S.packs.push(...good); V.err = `Added ${good.length} problem${good.length > 1 ? 's' : ''}.`; V.pok = true; save(); } catch (x) { V.err = 'Could not read that. It needs to be the JSON list from the prompt.'; V.pok = false; } render(); break;
     case 'pclear': guard('Remove the extra problems saved on this device?', () => { S.packs = []; }); break;
-    case 'ssave': S.name = $('#sname').value.trim() || S.name; S.pin = $('#spin').value.trim() || S.pin; S.set.games = $('#sg').checked; S.set.links = $('#sl').checked; save(); render(); break;
+    case 'ssave': S.name = $('#sname').value.trim() || S.name; S.pin = $('#spin').value.trim() || S.pin; S.set.games = $('#sg').checked; S.set.race = $('#sr').checked; S.set.links = $('#sl').checked; save(); render(); break;
     case 'wipe': guard('Erase all progress for ' + S.name + ' on this device? This cannot be undone.', () => { const cls = S.cls, pin = S.pin; S = fresh(); S.cls = cls; S.pin = pin; S.known = SK.map(x => x.id); syncMax(); V = {view: 'home'}; }); break;
   }
 });
@@ -1740,6 +1946,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('keydown', e => {
   if (V.view === 'fcs' && !V.modal) { if (/^\d$/.test(e.key)) fcKey(e.key); else if (e.key === 'Backspace') fcKey('⌫'); else if (e.key === 'Enter') $('[data-act=fcnext]')?.click(); return; }
+  if (V.view === 'race' && !V.modal && V.r.ph === 'run') { if (/^\d$/.test(e.key)) raceKey(e.key); else if (e.key === 'Backspace') raceKey('⌫'); return; }
   if (V.view === 'speed' && !V.modal) { if (!V.t0) { if (e.key === 'Enter') speedGo(); } else if (/^\d$/.test(e.key)) speedKey(e.key); else if (e.key === 'Backspace') speedKey('⌫'); return; }
   if (e.key !== 'Enter') return;
   if (V.modal) { e.preventDefault(); return $('[data-act=myes]')?.click(); }
