@@ -108,6 +108,15 @@ label.inline{flex-direction:row;align-items:center;gap:6px;font-weight:400}
 .card .social b{font-weight:700}
 .unsolved{color:var(--k-play);font-weight:700}
 .card .acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:auto;padding-top:4px}
+.pagewrap{max-width:720px}
+.card.page{padding:18px 20px 16px;gap:10px}
+.card.page h2{font-size:1.5rem}
+.card.page h3{font-size:1.05rem;margin-top:4px}
+.card.page .blurb{font-size:1.02rem}
+.need{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.rules{padding-left:1.4em;display:flex;flex-direction:column;gap:6px}
+.fin{font-weight:400}
+.away{border-top:1px dashed var(--line);margin-top:8px;padding-top:12px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
 .status{font-size:.875rem;font-weight:700;border-radius:6px;padding:4px 8px}
 .status.ok{background:var(--ok-soft);color:var(--ok)}
 .status.wait{background:var(--wait-soft);color:var(--wait)}
@@ -234,6 +243,10 @@ function norm(it, topics){
   if(it.src) o.src = it.src;
   if(it.paper) o.paper = true;
   o.blurb = it.blurb || ""; o.how = it.how || "";
+  if(it.need) o.need = it.need;
+  const rl = Array.isArray(it.rules) ? it.rules : typeof it.rules === "string" ? it.rules.split(/\n/) : [];
+  if(rl.map(x => String(x).trim()).filter(Boolean).length) o.rules = rl.map(x => String(x).trim()).filter(Boolean);
+  if(it.go && o.url) o.go = it.go;
   if(it.record && it.record.label) o.record = {label:it.record.label, best:it.record.best === "low" ? "low" : "high"};
   if(o.dir === "compete") o.rung = Math.max(0, Math.round(+it.rung || 0));
   if(it.pass != null && it.pass !== "" && !isNaN(+it.pass)) o.pass = +it.pass;
@@ -349,11 +362,34 @@ function reportHelp(){ const T_ = esc(S().teacher);
   return '<details class="help"><summary>How a report works</summary><ol><li><b>Plan.</b> Write your question and how you will answer it in three lines. Agree it with ' + T_ + '.</li><li><b>Investigate.</b> Try cases, collect data, draw diagrams. Keep it all in your book.</li><li><b>Write it up</b> as one page, a poster or a three-minute talk: your question, what you did, what you found, why it happens, and what you would ask next.</li><li><b>Draft.</b> Show ' + T_ + ' a draft and fix what they point out.</li><li><b>Finish.</b> Hand it in or present it, then set it to Finished.</li></ol><p class="muted">What counts: a clear question, real evidence, an explanation of why, and a reader who can follow it. One report at a time.</p></details>'; }
 function cardHTML(it, pick){
   const c = mine(it.id), st = c ? c.s : "", isRep = it.dir === "report";
-  let mineLine = "";
-  if(st === "done") mineLine += '<span class="chk">Done ' + nice(c.d) + "</span>" + (c.chk ? ' · <span class="chk">Checked by ' + esc(S().teacher) + "</span>" : "");
-  if(it.record && c && c.v != null) mineLine += (mineLine ? " · " : "") + "<b>Your best:</b> " + esc(c.v);
-  let acts = it.url ? '<a class="btn primary" href="' + esc(it.url) + '" target="_blank" rel="noopener">Open ↗</a>' : isRep ? "" : '<span class="tag">It\'s all in the question</span>';
-  if(isRep){
+  return '<article class="card k-' + it.dir + (pick ? " pick" : "") + '">' +
+    '<div class="top"><span class="kind">' + DIRS[it.dir].n + "</span>" + (pick && it.topic !== "any" ? '<span class="tag">' + esc(topicName(it.topic)) + "</span>" : "") + (isNew(it) ? '<span class="tag new">New</span>' : "") + (it.paper ? '<span class="tag">Paper: ask for a copy</span>' : "") +
+    '<span class="pts" title="' + it.pts + ' points">' + pips(it.pts) + " " + TIER[it.pts] + " · " + it.pts + "</span></div>" +
+    "<h3>" + esc(it.title) + "</h3>" +
+    '<p class="blurb">' + esc(it.blurb) + "</p>" +
+    (it.need ? '<p class="how"><b>You need:</b> ' + esc(it.need) + "</p>" : "") +
+    (it.how ? '<p class="how"><b>To finish:</b> ' + esc(it.how) + (it.pass != null ? " Move up a rung with " + it.pass + " or more." : "") + "</p>" : "") +
+    (isRep ? reportHelp() : "") +
+    (mineLine(it) ? '<div class="social">' + mineLine(it) + "</div>" : "") +
+    '<div class="acts">' + goBtn(it) + stateActs(it) + "</div></article>";
+}
+function mineLine(it){
+  const c = mine(it.id), st = c ? c.s : "";
+  let h = "";
+  if(st === "done") h += '<span class="chk">Done ' + nice(c.d) + "</span>" + (c.chk ? ' · <span class="chk">Checked by ' + esc(S().teacher) + "</span>" : "");
+  if(it.record && c && c.v != null) h += (h ? " · " : "") + "<b>Your best:</b> " + esc(c.v);
+  return h;
+}
+const rulesLabel = it => it.dir === "play" ? "How to play →" : "How it works →";
+function goBtn(it){ // a quest with rules opens its own page first; the outside site is at the bottom of that page
+  if(it.rules) return '<a class="btn primary" href="#q/' + esc(it.id) + '">' + rulesLabel(it) + "</a>";
+  if(it.url) return '<a class="btn primary" href="' + esc(it.url) + '" target="_blank" rel="noopener">Open ↗</a>';
+  return it.dir === "report" ? "" : '<span class="tag">It\'s all in the question</span>';
+}
+function stateActs(it){
+  const c = mine(it.id), st = c ? c.s : "";
+  let acts = "";
+  if(it.dir === "report"){
     acts += '<label class="inline small">Stage <select data-rstage="' + it.id + '" aria-label="Stage for ' + esc(it.title) + '">' + STAGES.map((n, i) => '<option value="' + i + '"' + ((st === "done" ? 3 : (c && c.st) || 0) === i ? " selected" : "") + ">" + n + "</option>").join("") + "</select></label>";
   } else if(ui.claiming === it.id){
     acts += '<label class="inline">' + esc(it.record.label) + ' <input type="number" step="any" style="width:110px" value="' + (c && c.v != null ? esc(c.v) : "") + '"></label><button class="btn gold" data-act="claim" data-id="' + it.id + '">Save</button><button class="btn quiet" data-act="cancelclaim">Cancel</button>';
@@ -362,21 +398,28 @@ function cardHTML(it, pick){
   } else {
     acts += '<button class="btn' + (st === "try" ? " on" : "") + '" data-act="try" data-id="' + it.id + '" aria-pressed="' + (st === "try") + '">' + (st === "try" ? "On my list" : "Add to my list") + '</button><button class="btn gold" data-act="done" data-id="' + it.id + '">Done it</button>';
   }
-  return '<article class="card k-' + it.dir + (pick ? " pick" : "") + '">' +
-    '<div class="top"><span class="kind">' + DIRS[it.dir].n + "</span>" + (pick && it.topic !== "any" ? '<span class="tag">' + esc(topicName(it.topic)) + "</span>" : "") + (isNew(it) ? '<span class="tag new">New</span>' : "") + (it.paper ? '<span class="tag">Paper: ask for a copy</span>' : "") +
-    '<span class="pts" title="' + it.pts + ' points">' + pips(it.pts) + " " + TIER[it.pts] + " · " + it.pts + "</span></div>" +
-    "<h3>" + esc(it.title) + "</h3>" +
-    '<p class="blurb">' + esc(it.blurb) + "</p>" +
-    (it.how ? '<p class="how"><b>To finish:</b> ' + esc(it.how) + (it.pass != null ? " Move up a rung with " + it.pass + " or more." : "") + "</p>" : "") +
-    (isRep ? reportHelp() : "") +
-    (mineLine ? '<div class="social">' + mineLine + "</div>" : "") +
-    '<div class="acts">' + acts + "</div></article>";
+  return acts;
+}
+function viewPage(it){ // rules first, the outside site last
+  const inToday = todaySet().some(o => o.q.id === it.id), ml = mineLine(it);
+  let h = '<div class="stack pagewrap"><div><a class="btn quiet" href="#' + ui.view + '" data-act="back">← Back</a></div><article class="card page k-' + it.dir + '">' +
+    '<div class="top"><span class="kind">' + DIRS[it.dir].n + "</span>" + (it.topic !== "any" ? '<span class="tag">' + esc(topicName(it.topic)) + "</span>" : "") + (it.paper ? '<span class="tag">Paper: ask for a copy</span>' : "") +
+    '<span class="pts">' + pips(it.pts) + " " + TIER[it.pts] + " · " + it.pts + "</span></div>" +
+    "<h2>" + esc(it.title) + "</h2>" + '<p class="blurb">' + esc(it.blurb) + "</p>";
+  if(it.need) h += '<p class="need"><b>You need:</b> ' + esc(it.need) + "</p>";
+  if(it.rules) h += "<h3>" + (it.dir === "play" ? "How to play" : "What to do") + '</h3><ol class="rules">' + it.rules.map(r => "<li>" + esc(r) + "</li>").join("") + "</ol>";
+  if(it.how) h += '<p class="fin"><b>To finish:</b> ' + esc(it.how) + (it.pass != null ? " Move up a rung with " + it.pass + " or more." : "") + "</p>";
+  if(ml) h += '<div class="social">' + ml + "</div>";
+  h += '<div class="acts">' + (inToday ? (doneToday(it.id) ? '<span class="status ok">Done today ✓</span>' : '<button class="btn gold" data-act="today" data-id="' + it.id + '">Done today</button>') : stateActs(it)) + "</div>";
+  if(it.url) h += '<div class="away"><span class="small muted">' + esc(it.go || "The original is on another website.") + '</span><a class="btn" href="' + esc(it.url) + '" target="_blank" rel="noopener">Go to the site ↗</a></div>';
+  return h + "</article></div>";
 }
 function todayCard(o){
   const q = o.q, dt = doneToday(q.id);
   return '<article class="card pick k-' + q.dir + '"><div class="top"><span class="kind">' + o.slot + "</span>" + (o.slot === "Quick win" && q.topic !== "any" ? '<span class="tag">' + esc(topicName(q.topic)) + "</span>" : "") + '<span class="pts">' + DIRS[q.dir].n + "</span></div><h3>" + esc(q.title) + '</h3><p class="blurb">' + esc(q.blurb) + "</p>" +
+    (q.need ? '<p class="how"><b>You need:</b> ' + esc(q.need) + "</p>" : "") +
     (q.how ? '<p class="how"><b>To finish:</b> ' + esc(q.how) + "</p>" : "") +
-    '<div class="acts">' + (q.url ? '<a class="btn primary" href="' + esc(q.url) + '" target="_blank" rel="noopener">Open ↗</a>' : "") + (dt ? '<span class="status ok">Done today ✓</span>' : '<button class="btn gold" data-act="today" data-id="' + q.id + '">Done today</button>') + "</div></article>";
+    '<div class="acts">' + (q.rules || q.url ? goBtn(q) : "") + (dt ? '<span class="status ok">Done today ✓</span>' : '<button class="btn gold" data-act="today" data-id="' + q.id + '">Done today</button>') + "</div></article>";
 }
 function todayHTML(){
   const set = todaySet(), n = set.filter(o => doneToday(o.q.id)).length, st = streak();
@@ -504,6 +547,9 @@ function tQuests(){
       '<label>From (optional)<input type="text" id="f_src" value="' + esc(it.src) + '"></label>' +
       '<label class="full">What is it? (students read this)<textarea id="f_blurb">' + esc(it.blurb) + "</textarea></label>" +
       '<label class="full">What do they do or show you to finish?<input type="text" id="f_how" value="' + esc(it.how) + '"></label>' +
+      '<label class="full">What they need (optional)<input type="text" id="f_need" value="' + esc(it.need) + '" placeholder="e.g. A partner, one dice, paper"></label>' +
+      '<label class="full">Rules or steps, one per line (optional). Students see these on a page first, with the link at the bottom.<textarea id="f_rules" style="font-family:inherit;font-size:.9rem">' + esc((it.rules || []).join("\n")) + "</textarea></label>" +
+      '<label class="full">Words beside the link on that page (optional)<input type="text" id="f_go" value="' + esc(it.go) + '" placeholder="e.g. Printable boards (PDF)"></label>' +
       '<label>Personal best to track (optional)<input type="text" id="f_rec" value="' + esc(it.record ? it.record.label : "") + '" placeholder="e.g. Fewest moves"></label>' +
       '<label>Best is<select id="f_best"><option value="high">Highest</option><option value="low"' + (it.record && it.record.best === "low" ? " selected" : "") + ">Lowest</option></select></label>" +
       '<label>Competition rung (Competition quests only)<select id="f_rung">' + T.rungs.slice().sort((a,b) => a.n - b.n).map(r => '<option value="' + r.n + '"' + ((it.rung || 0) === r.n ? " selected" : "") + ">" + (r.n ? "Rung " + r.n + ": " : "") + esc(r.name) + "</option>").join("") + "</select></label>" +
@@ -561,12 +607,19 @@ function render(){
   const c = myClass(); $("#sub").textContent = (c ? c.name + " · " : "") + "Your progress is saved on this device";
   const tabs = {quests:"Quests", compete:"Competitions", mine:"My progress", teacher:"Teacher"};
   $("#tabs").innerHTML = Object.keys(tabs).map(k => '<a href="#' + k + '"' + (ui.view === k ? ' aria-current="page"' : "") + ">" + tabs[k] + "</a>").join("");
-  let h = ({quests:viewQuests, compete:viewCompete, mine:viewMine, teacher:viewTeacher})[ui.view]();
+  const pg = ui.page && item(ui.page);
+  let h = pg ? viewPage(pg) : ({quests:viewQuests, compete:viewCompete, mine:viewMine, teacher:viewTeacher})[ui.view]();
   if(ui.flash && ui.view !== "teacher") h = '<p class="note plain">' + esc(ui.flash) + "</p>" + h;
   $("#app").innerHTML = h;
   ui.flash = "";
 }
-function route(){ const v = location.hash.replace("#",""); ui.view = ["quests","compete","mine","teacher"].includes(v) ? v : v === "boards" ? "mine" : "quests"; render(); }
+function route(){
+  const v = decodeURIComponent(location.hash.replace("#",""));
+  if(v.startsWith("q/")){ if(!ui.page){ ui.y = window.scrollY; ui.fromApp = true; } ui.page = v.slice(2); render(); window.scrollTo(0, 0); return; }
+  const back = !!ui.page; ui.page = null; ui.fromApp = false;
+  ui.view = ["quests","compete","mine","teacher"].includes(v) ? v : v === "boards" ? "mine" : "quests"; render();
+  if(back) window.scrollTo(0, ui.y || 0);
+}
 window.addEventListener("hashchange", route);
 function better(it, a, b){ if(a == null) return b; return it.record.best === "low" ? Math.min(a, b) : Math.max(a, b); }
 
@@ -574,6 +627,7 @@ let armed = null;
 document.addEventListener("click", ev => {
   const el = ev.target.closest("[data-act]"); if(!el) return;
   const act = el.dataset.act, id = el.dataset.id;
+  if(act === "back"){ if(ui.fromApp){ ev.preventDefault(); history.back(); } return; }
   if(el.dataset.confirm && armed !== el){ armed = el; el.dataset.label = el.textContent; el.textContent = "Sure? Press again"; setTimeout(() => { if(armed === el){ armed = null; if(el.isConnected) el.textContent = el.dataset.label; } }, 4000); return; }
   armed = null;
   switch(act){
@@ -622,7 +676,7 @@ document.addEventListener("submit", ev => {
   if(f === "quest"){
     const isNewQ = ui.edit === "new", old = isNewQ ? null : item(ui.edit);
     let id = old ? old.id : slug(v("f_title")); if(isNewQ){ let n = 2, base = id; while(item(id)) id = base + "-" + n++; }
-    const q = norm({id, title:v("f_title"), url:v("f_url"), dir:v("f_dir"), topic:v("f_topic"), pts:+v("f_pts"), src:v("f_src"), paper:$("#f_paper").checked, blurb:v("f_blurb"), how:v("f_how"),
+    const q = norm({id, title:v("f_title"), url:v("f_url"), dir:v("f_dir"), topic:v("f_topic"), pts:+v("f_pts"), src:v("f_src"), paper:$("#f_paper").checked, blurb:v("f_blurb"), how:v("f_how"), need:v("f_need"), rules:$("#f_rules").value, go:v("f_go"),
       record:v("f_rec") ? {label:v("f_rec"), best:v("f_best")} : null, rung:+v("f_rung") || 0, pass:v("f_pass"), added:old ? old.added : today(), hidden:old ? old.hidden : false}, T.topics);
     const i = T.quests.findIndex(x => x.id === q.id); if(i >= 0) T.quests[i] = q; else T.quests.push(q);
     saveT(); ui.edit = null; ui.flash = "Saved on this device. Publish data.js to share it.";
