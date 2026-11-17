@@ -86,8 +86,8 @@ T({id: 'mp-frac-1', type: 3, needs: ['F4', 'F13'], areas: ['FF'], skel: 'fractio
       const u = ch / e * c, ans = fs(u, P0), sport = pick(['football match', 'rugby match', 'basketball game']);
       const s1 = [`${P0} ÷ ${b} = ${P0 / b}`, `${P0 / b} × ${a} = ${ch}`], s2 = [`${ch} ÷ ${e} = ${ch / e}`];
       if (c > 1) s2.push(`${ch / e} × ${c} = ${u}`);
-      const s3 = Math.random() < .5 ? [`${u} out of ${P0} = ${u}/${P0}`] : [`${a}/${b} × ${c}/${e} = ${a * c}/${b * e}`];
-      if (ans !== `${u}/${P0}`) s3.push(`${u}/${P0} = ${ans}`);      // simplify only when it can be
+      const mult = Math.random() < .5, nu = mult ? a * c : u, de = mult ? b * e : P0, s3 = [mult ? `${a}/${b} × ${c}/${e} = ${nu}/${de}` : `${u} out of ${P0} = ${nu}/${de}`];
+      if (ans !== `${nu}/${de}`) s3.push(`${nu}/${de} = ${ans}`);      // simplify only when it can be
       return P(`${P0} people watch a ${sport}.`, [
         W(`${F(a, b)} of the people are children. Work out the number of children. You must show all your working.`, ch, s1, {marks: 2}),
         W(`${F(c, e)} of the children are under 10. Work out the number of children who are under 10.`, u, s2, {marks: 2}),
