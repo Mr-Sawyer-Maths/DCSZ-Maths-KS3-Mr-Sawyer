@@ -33,7 +33,7 @@ T({id: 'mp-whole-1', type: 3, needs: ['M12', 'WD1', 'N5'], areas: ['M', 'D', 'NW
       if (n % c === 0) continue;
       return P(`A school is taking ${s} students and ${t} teachers to ${place}.`, [
         W('Work out the total number of people going on the trip.', n, [`${s} + ${t} = ${n}`], {marks: 1}),
-        W(`A coach holds ${c} people. Work out how many coaches are needed.`, k, [`${n} ÷ ${c} = ${q} remainder ${n % c}`, `${q} coaches is not enough, so ${k} coaches`], {marks: 2}),
+        W(`A coach holds ${c} people. Work out how many coaches are needed.`, k, [`${n} ÷ ${c} = ${q} remainder ${n % c}`, `${q} ${q === 1 ? 'coach is' : 'coaches are'} not enough, so ${k} coaches`], {marks: 2}),
         W(`Each coach costs ${mon(p, '$')} to hire. Work out the total cost of the coaches.`, k * p, [`${k} × ${p} = ${k * p}`], {pre: '$', marks: 2})]);
     }
   }});
