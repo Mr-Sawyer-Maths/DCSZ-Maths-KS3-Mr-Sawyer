@@ -93,7 +93,7 @@ T({id: 'ff-5a', type: 5, needs: ['F4'], areas: ['FF'], skel: 'compare-fractions-
       const d1 = pick(D), d2 = pick(D), n1 = ri(1, d1 - 1), n2 = ri(1, d2 - 1), m1 = ri(3, 12), m2 = ri(3, 12);
       if (gcd(n1, d1) !== 1 || gcd(n2, d2) !== 1) continue;
       const a1 = d1 * m1, a2 = d2 * m2, s1 = n1 * m1, s2 = n2 * m2;
-      if (s1 === s2 || a1 > 100 || a2 > 100) continue;
+      if (s1 === s2 || a1 === a2 || n1 * d2 === n2 * d1 || a1 > 100 || a2 > 100) continue;      // different fractions of different amounts, never a tie
       const first = s1 > s2, diff = Math.abs(s1 - s2);
       return W(`${A} saves ${F(n1, d1)} of ${mon(a1, c)}. ${B} saves ${F(n2, d2)} of ${mon(a2, c)}. Who saves more money? How much more does that person save?`, diff,
         [`${A}: ${a1} ÷ ${d1} = ${m1}${n1 === 1 ? '' : `, ${m1} × ${n1} = ${s1}`}`, `${B}: ${a2} ÷ ${d2} = ${m2}${n2 === 1 ? '' : `, ${m2} × ${n2} = ${s2}`}`, `${mon(Math.max(s1, s2), c)} − ${mon(Math.min(s1, s2), c)} = ${mon(diff, c)}`],
@@ -138,7 +138,8 @@ T({id: 'nm-2a', type: 2, needs: ['N22'], areas: ['NM'], skel: 'near-hundred-star
     }
     const [i1, i2] = pick(big ? [['bike', 'scooter'], ['laptop', 'tablet'], ['sofa', 'armchair'], ['television', 'radio']] : [['jacket', 'scarf'], ['pair of trainers', 'cap'], ['bag', 'purse']]);
     const X = s + (big ? ri(51, 350) : ri(21, 150)), diff = X - s;
-    return W(`A ${i1} costs ${mon(X, c)} and a ${i2} costs ${mon(s, c)}. Work out how much more the ${i1} costs.`, diff, [`${mon(X, c)} − ${mon(r, c)} = ${mon(X - r, c)}`, `${mon(X - r, c)} + 1 = ${mon(diff, c)}`], {pre: c});
+    const art = w => /^[aeiou]/.test(w) ? 'an' : 'a';
+    return W(`${art(i1) === 'an' ? 'An' : 'A'} ${i1} costs ${mon(X, c)} and ${art(i2)} ${i2} costs ${mon(s, c)}. Work out how much more the ${i1} costs.`, diff, [`${mon(X, c)} − ${mon(r, c)} = ${mon(X - r, c)}`, `${mon(X - r, c)} + 1 = ${mon(diff, c)}`], {pre: c});
   }});
 T({id: 'nm-2b', type: 2, needs: ['N12'], areas: ['NM'], skel: 'scale-up-or-share-multiples-of-ten', ctx: 'school', style: 'plain', cur: '', marks: 1,
   desc: 'random direction: boxes times items in each box (multiples of 10 and 100), or a total packed equally to find the number in each',
