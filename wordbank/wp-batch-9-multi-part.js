@@ -25,7 +25,7 @@ var mpGap = (h1, m1, h2, m2) => {      // minutes from one clock time to a later
 var mpBorrow = (a, b) => { let br = 0; while (a > 0 || b > 0) { if (a % 10 - br < b % 10) return true; br = 0; a = Math.floor(a / 10); b = Math.floor(b / 10); } return false; };      // does a − b in columns need an exchange?
 var mpCols = (a, b) => { const lines = []; let br = 0; ['Units', 'Tens', 'Hundreds', 'Thousands'].forEach((nme, i) => { const da = Math.floor(a / Math.pow(10, i)) % 10, db = Math.floor(b / Math.pow(10, i)) % 10; let top = da - br; if (top < db) { top += 10; br = 1; } else br = 0; lines.push(`${nme}: ${top} − ${db} = ${top - db}`); }); return lines; };      // column subtraction, one line per column
 var mpP = p => '£' + (p / 100).toFixed(2);      // pence as pounds, always 2 decimals: 240 gives £2.40
-T({id: 'mp-whole-1', type: 3, needs: ['M12', 'WD1', 'N5'], areas: ['M', 'D', 'NW'], skel: 'trip-tickets-coaches-total', ctx: 'school', style: 'cam', cur: '$', marks: 5, hub: 'core', tw: ['interpret'],
+T({id: 'mp-whole-1', type: 3, needs: ['M12', 'WD1', 'N5', 'WM2'], areas: ['M', 'D', 'NW'], skel: 'trip-tickets-coaches-total', ctx: 'school', style: 'cam', cur: '$', marks: 5, hub: 'core', tw: ['interpret'],
   desc: 'school trip: total people, coaches needed (always round up), total coach cost (uses the number of coaches)',
   gen: () => {
     for (;;) {
@@ -65,7 +65,7 @@ T({id: 'mp-neg-1', type: 3, needs: ['N13'], areas: ['NN'], skel: 'city-temperatu
       W(`By midday the temperature in ${city} has risen by ${rise} °C. Work out the temperature in ${city} at midday.`, ans, [`${mpN(t)} + ${rise} = ${mpN(ans)}`], {suf: '°C', marks: 1})],
     {table: [['City', 'Temperature (°C)'], ...rows.map(r => [r[0], mpN(r[1])])]});
   }});
-T({id: 'mp-powers-1', type: 4, needs: ['N18', 'WD1', 'M12'], areas: ['NX', 'NW', 'M'], skel: 'square-patio-tiles-packs-cost', ctx: 'building', style: 'cam', cur: '$', marks: 5, hub: 'core', tw: ['interpret'],
+T({id: 'mp-powers-1', type: 4, needs: ['N18', 'WD1', 'M12', 'WM3'], areas: ['NX', 'NW', 'M'], skel: 'square-patio-tiles-packs-cost', ctx: 'building', style: 'cam', cur: '$', marks: 5, hub: 'core', tw: ['interpret'],
   desc: 'square patio of n by n tiles: number of tiles (square), packs needed (round up), total cost (uses the packs)',
   gen: () => {
     for (;;) {
@@ -77,7 +77,7 @@ T({id: 'mp-powers-1', type: 4, needs: ['N18', 'WD1', 'M12'], areas: ['NX', 'NW',
         W(`One pack costs ${mon(p, '$')}. Work out the total cost of the packs.`, packs * p, [`${packs} × ${p} = ${packs * p}`], {pre: '$', marks: 2})]);
     }
   }});
-T({id: 'mp-frac-1', type: 3, needs: ['F4', 'F13'], areas: ['FF'], skel: 'fraction-of-fraction-of-crowd', ctx: 'sport', style: 'edexcel', cur: '', marks: 5, hub: 'core',
+T({id: 'mp-frac-1', type: 3, needs: ['F4', 'F13', 'WM2'], areas: ['FF'], skel: 'fraction-of-fraction-of-crowd', ctx: 'sport', style: 'edexcel', cur: '', marks: 5, hub: 'core',
   desc: 'a crowd (multiple of 40): a fraction are children, a fraction of those are under 10, then the fraction of the whole crowd (simplest form)',
   gen: () => {
     for (;;) {
@@ -101,16 +101,17 @@ T({id: 'mp-dec-1', type: 4, needs: ['F15', 'F16', 'WD3'], areas: ['FD', 'NW'], s
       const items = shuf([['coffee', 'coffees'], ['tea', 'teas'], ['muffin', 'muffins'], ['cookie', 'cookies'], ['sandwich', 'sandwiches'], ['juice', 'juices'], ['hot chocolate', 'hot chocolates'], ['soup', 'soups']]).slice(0, pick([4, 5]));
       const prices = []; while (prices.length < items.length) { const p = ri(17, 99) * 5; if (!prices.includes(p)) prices.push(p); }
       const [A, B] = two(), [i, j] = shuf(items.map((_, x) => x)).slice(0, 2), z = ri(0, items.length - 1), amt = ri(5, 12);
+      prices[z] = pick([60, 75, 80, 120, 125, 150, 160, 175, 200, 225, 240, 250].filter(p => !prices.includes(p)));      // non-calculator (17 Nov 2026): part (c) divides by a price that is easy to count up in
       const total = 2 * prices[i] + prices[j], pay = total > 1000 ? 20 : (Math.random() < .7 ? 10 : 20), q = Math.floor(amt * 100 / prices[z]), r = amt * 100 % prices[z];
       if (r === 0 || q < 2 || q > 9) continue;
       return P('Here is part of a café price list.', [
         W(`${A} buys 2 ${items[i][1]} and 1 ${items[j][0]}. Work out the total cost. You must show your working.`, total / 100, [`2 × ${mpP(prices[i])} = ${mpP(2 * prices[i])}`, `${mpP(2 * prices[i])} + ${mpP(prices[j])} = ${mpP(total)}`], {pre: '£', marks: 2}),
         W(`${A} pays with a £${pay} note. Work out the change.`, (pay * 100 - total) / 100, [`£${pay} − ${mpP(total)} = ${mpP(pay * 100 - total)}`], {pre: '£', marks: 1}),
-        W(`${B} has £${amt} to spend. ${B} only buys ${items[z][1]}. Work out the greatest number of ${items[z][1]} ${B} can buy.`, q, [`£${amt} = ${amt * 100}p`, `${amt * 100} ÷ ${prices[z]} = ${q} remainder ${r}`, `Only whole items can be bought, so ${q}`], {marks: 2})],
+        W(`${B} has £${amt} to spend. ${B} only buys ${items[z][1]}. Work out the greatest number of ${items[z][1]} ${B} can buy.`, q, [`${q} × ${mpP(prices[z])} = ${mpP(q * prices[z])}`, `${q + 1} × ${mpP(prices[z])} = ${mpP((q + 1) * prices[z])}, which is more than £${amt}`, `Only whole items can be bought, so ${q}`], {marks: 2})],
       {table: [['Item', 'Price'], ...items.map((it, x) => [it[0][0].toUpperCase() + it[0].slice(1), mpP(prices[x])])]});
     }
   }});
-T({id: 'mp-pct-1', type: 4, needs: ['F8', 'F18', 'M12'], areas: ['FP', 'M'], skel: 'tickets-child-adult-takings-rise', ctx: 'leisure', style: 'ocr', cur: '£', marks: 6, hub: 'core',
+T({id: 'mp-pct-1', type: 4, needs: ['F8', 'F18', 'M12', 'WM2'], areas: ['FP', 'M'], skel: 'tickets-child-adult-takings-rise', ctx: 'leisure', style: 'ocr', cur: '£', marks: 6, hub: 'core',
   desc: 'theatre tickets (multiple of 20): a percentage are child tickets, total money from child and adult prices, then a 5%, 10% or 20% rise',
   gen: () => {
     const T0 = ri(5, 20) * 20, pct = pick([15, 20, 25, 30, 35, 40]), child = T0 * pct / 100, adult = T0 - child, c = pick([4, 5, 6, 8]), a = pick([10, 12, 15]), total = child * c + adult * a, rise = pick([10, 5, 20]);

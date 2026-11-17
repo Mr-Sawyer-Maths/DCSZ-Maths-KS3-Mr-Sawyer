@@ -24,7 +24,7 @@ T({id: 'fd-2a', type: 2, needs: ['F15'], areas: ['FD'], skel: 'dec-start-unknown
     return W(q, ans, [`${out} + ${left} = ${nstr(ans)}`], {suf: kind === 'l' ? ' litres' : kind === 'm' ? ' m' : ' kg'});
   }});
 T({id: 'fd-2b', type: 2, needs: ['F15'], areas: ['FD'], skel: 'dec-compare-difference', ctx: 'sport', style: 'cam', cur: '', marks: 1,
-  desc: 'two athletes with results of different decimal places: how much further or how many seconds longer',
+  desc: 'two athletes with results of different decimal places: how much further, or how much longer in seconds',
   gen: () => {
     const [A, B] = two(), ev = pick([['jump', 300, 590], ['throw', 2000, 4500], ['race100', 1250, 1590], ['race200', 2600, 3400], ['swim', 3000, 4500]]);
     const t = fdTwo(ev[1] + 1, ev[2]), o = fdOne(ev[1] / 10, ev[2] / 10), [ha, hb] = Math.random() < .5 ? [t, o] : [o, t];
@@ -34,8 +34,8 @@ T({id: 'fd-2b', type: 2, needs: ['F15'], areas: ['FD'], skel: 'dec-compare-diffe
     if (kind === 'jump') { q = `In the long jump, ${A} jumps ${xa} m and ${B} jumps ${xb} m. Work out how much further ${bigName} jumps than ${smallName}.`; suf = ' m'; }
     else if (kind === 'throw') { q = `In the javelin, ${A} throws ${xa} m and ${B} throws ${xb} m. Work out how much further ${bigName} throws than ${smallName}.`; suf = ' m'; }
     else { const d = kind === 'race100' ? 'runs 100 m' : kind === 'race200' ? 'runs 200 m' : 'swims 50 m';
-      q = `${A} ${d} in ${xa} seconds. ${B} ${d} in ${xb} seconds. Work out how many seconds longer ${bigName} takes than ${smallName}.`; }
-    return W(q, ans, [`${fdD(big)} − ${fdD(small)} = ${nstr(ans)}`], suf ? {suf} : {});
+      q = `${A} ${d} in ${xa} seconds. ${B} ${d} in ${xb} seconds. Work out how much longer ${bigName} takes than ${smallName}.`; suf = ' seconds'; }
+    return W(q, ans, [`${fdD(big)} − ${fdD(small)} = ${nstr(ans)}${suf}`], {suf});
   }});
 T({id: 'fd-2c', type: 2, needs: ['F16'], areas: ['FD'], skel: 'dec-multiply-or-divide-from-story', ctx: 'food', style: 'plain', cur: '', marks: 1,
   desc: 'random direction: amount for each times a number of items, or a total shared equally to find the amount for one',
