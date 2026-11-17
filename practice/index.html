@@ -362,13 +362,168 @@ sk('F18', 'F', 'Percentage increase and decrease', 'Find the percentage, then ad
 sk('F19', 'F', 'Percentage multipliers', 'An increase of 15% means you have 115% of it, which is × 1.15. A decrease of 30% leaves 70%, which is × 0.7.', () => { const p = pick([5, 10, 12, 15, 20, 25, 30, 35, 40, 50, 8, 3]); return pick([q(`Write the multiplier for an increase of ${p}%`, +nstr(1 + p / 100)), q(`Write the multiplier for a decrease of ${p}%`, +nstr(1 - p / 100)), q(`A multiplier of ${nstr(1 + p / 100)} is an increase of what percentage?`, p, {suf: '%'})]); });
 sk('F20', 'F', 'Reverse percentages', 'The new price is not 100%. After a 20% increase, the new price is 120% of the original. Find 1%, then 100%.', () => { const O = ri(2, 20) * 20, p = pick([10, 20, 25, 50]); return pick([q(`After a ${p}% increase, a price is £${O * (100 + p) / 100}. What was the original price?`, O, {pre: '£'}), q(`After a ${p}% decrease, a price is £${O * (100 - p) / 100}. What was the original price?`, O, {pre: '£'})]); });
 
-/* ---- Ratio (group R, area RA). Plan: claude/section-ratio-outline.md. Ids R1 to R11 are fixed by that outline.
-   Step C (16 Nov 2026) ships R3 only, with the group marked draft: it shows only with ?draft in the address. Step D adds the rest. ---- */
+/* ---- Ratio (group R, area RA). Plan: claude/section-ratio-outline.md. Ids R1 to R11 are fixed by that outline; never rename them.
+   Engine pieces built 16 Nov 2026 (ratio answers, notes, drawn counters, book-only answers, mixBook, Stretch); levels 17 Nov 2026.
+   How a level like these is written: claude/section-fill-guide.md. Gates (in the level check): R3, R6, R9. Stretch: R10, R11. ---- */
 const COPRIME = [[1, 2], [1, 3], [2, 3], [1, 4], [3, 4], [1, 5], [2, 5], [3, 5], [4, 5], [1, 6], [5, 6], [2, 7], [3, 7], [4, 7], [5, 7], [3, 8], [5, 8], [7, 8], [2, 9], [4, 9], [5, 9], [7, 9]];
 const rord = ([a, b]) => Math.random() < .5 ? [a, b] : [b, a];
 sk('R3', 'RA', 'Simplifying ratios', 'Divide both parts by the same number. Keep going until nothing else divides into both. 18 : 24: divide by 6 to get 3 : 4. Dividing by the highest common factor does it in one go.',
   () => { const [a, b] = rord(pick(COPRIME)), m = ri(2, 12); return q(`Simplify ${a * m} : ${b * m}`, `${a}:${b}`); },
   {chain: () => { const [a, b] = rord(pick(COPRIME.filter(([x, y]) => y <= 5))); return [2, 4, 8].map(m => q(`Simplify ${a * m} : ${b * m}`, `${a}:${b}`)).concat(q(`Simplify ${b * 8} : ${a * 8}`, `${b}:${a}`)); }});
+// Helpers for the Ratio levels. rsimp: a ratio of whole numbers in simplest form, as an answer string ('3:4').
+const rsimp = (...p) => { const g = p.reduce(gcd); return p.map(x => x / g).join(':'); };
+const RTRIPLES = [[1, 2, 3], [2, 3, 4], [1, 3, 4], [2, 3, 5], [1, 2, 5], [3, 4, 5], [1, 4, 5], [2, 5, 6], [1, 3, 5], [2, 3, 7], [3, 5, 7], [1, 2, 4]];
+const rmoney = v => Number.isInteger(v) ? '£' + v : '£' + v.toFixed(2);
+// Things that come in two kinds: [first, second, where, all of them]
+const RPAIRS = [['boys', 'girls', 'In a class', 'students'], ['cats', 'dogs', 'At an animal shelter', 'animals'], ['adults', 'children', 'On a school trip', 'people'],
+  ['red cars', 'blue cars', 'In a car park', 'cars'], ['apples', 'oranges', 'In a fruit box', 'pieces of fruit'], ['fiction books', 'non-fiction books', 'On a shelf', 'books']];
+const RSHAPES = ['circle', 'triangle', 'square', 'star'], RPL = {circle: 'circles', triangle: 'triangles', square: 'squares', star: 'stars'};
+const rcap = s => s[0].toUpperCase() + s.slice(1);
+const RCOL = ['red', 'blue', 'green', 'yellow'];
+
+sk('R1', 'RA', 'Writing a ratio', 'The order matters. "Red to blue" means red first. 5 red and 8 blue is 5 : 8, and blue to red is 8 : 5.',
+  () => {
+    const r = Math.random();
+    if (r < .4) {      // drawn counters: two kinds, never sharing a factor
+      const [s1, s2] = shuf(RSHAPES).slice(0, 2); let a, b; do { a = ri(2, 9); b = ri(2, 11); } while (a === b || gcd(a, b) > 1);
+      const qq = `Write the ratio of ${RPL[s1]} to ${RPL[s2]}.`;
+      return q(qq, `${a}:${b}`, {pic: [[a, s1], [b, s2]], qw: `There are ${a} ${RPL[s1]} and ${b} ${RPL[s2]}. ${qq}`});
+    }
+    if (r < .6) {      // counters in a bag, asked either way round
+      const [c1, c2] = shuf(RCOL).slice(0, 2); let a, b; do { a = ri(2, 15); b = ri(2, 15); } while (a === b || gcd(a, b) > 1);
+      return Math.random() < .5 ? q(`A bag has ${a} ${c1} counters and ${b} ${c2} counters. Write the ratio of ${c1} to ${c2}.`, `${a}:${b}`)
+        : q(`A bag has ${a} ${c1} counters and ${b} ${c2} counters. Write the ratio of ${c2} to ${c1}.`, `${b}:${a}`);
+    }
+    if (r < .8) {      // the total and one part given: find the other part first
+      const [x, y, where, all] = pick(RPAIRS); let T, a; do { T = ri(15, 35); a = ri(3, T - 3); } while (gcd(a, T) > 1);
+      return Math.random() < .5 ? q(`${where} there are ${T} ${all}, all ${x} or ${y}. ${a} are ${x}. Write the ratio of ${x} to ${y}.`, `${a}:${T - a}`)
+        : q(`${where} there are ${T} ${all}, all ${x} or ${y}. ${a} are ${x}. Write the ratio of ${y} to ${x}.`, `${T - a}:${a}`);
+    }
+    const fr = shuf([['apples', 'pears', 'plums'], ['pens', 'pencils', 'rulers'], ['red', 'green', 'yellow']].map(x => x)).pop(), isCol = fr[0] === 'red';
+    let n; do { n = [ri(2, 12), ri(2, 12), ri(2, 12)]; } while (new Set(n).size < 3 || n.reduce(gcd) > 1);
+    const o = shuf([0, 1, 2]), names = o.map(i => fr[i]);
+    const what = isCol ? `${n[0]} red, ${n[1]} green and ${n[2]} yellow sweets` : `${n[0]} ${fr[0]}, ${n[1]} ${fr[1]} and ${n[2]} ${fr[2]}`;
+    return q(`A bag has ${what}. Write the ratio of ${names.join(' to ')}.`, o.map(i => n[i]).join(':'));
+  }, {pl: false});
+
+sk('R2', 'RA', 'Equivalent ratios', 'Whatever you do to one part, do to the other. 3 : 5 = 12 : □. The 3 was multiplied by 4 to make 12, so 5 × 4 = 20.',
+  () => {
+    const [a, b] = rord(pick(COPRIME));
+    if (Math.random() < .2) {      // the scale factor isn't a whole number: go through the simplest ratio
+      const [m1, m2] = shuf([2, 3, 4, 5, 6]).slice(0, 2);
+      return Math.random() < .5 ? q(`${a * m1} : ${b * m1} = ${a * m2} : □`, b * m2) : q(`${a * m1} : ${b * m1} = □ : ${b * m2}`, a * m2);
+    }
+    const m = ri(2, 9), big = [a * m, b * m], small = [a, b], hole = ri(0, 1), smallFirst = Math.random() < .6;
+    const L = smallFirst ? small : big, R = (smallFirst ? big : small).slice(), ans = R[hole]; R[hole] = '□';
+    return q(`${L[0]} : ${L[1]} = ${R[0]} : ${R[1]}`, ans);
+  }, {pl: false, chain: () => { const [a, b] = rord(pick(COPRIME.filter(([x, y]) => y <= 5))); return [q(`${a} : ${b} = ${a * 4} : □`, b * 4), q(`${a} : ${b} = □ : ${b * 5}`, a * 5), q(`${a * 4} : ${b * 4} = ${a} : □`, b), q(`${a * 4} : ${b * 4} = ${a * 3} : □`, b * 3)]; }});
+
+// R3 is above (step C).
+
+const RUNITS = [['cm', 'm', 100, 5, 5], ['m', 'km', 1000, 50, 2], ['g', 'kg', 1000, 50, 5], ['p', '£', 100, 5, 5], ['minutes', 'hours', 60, 5, 5]];      // small, big, how many small in one big, step, most big units
+const rbig = (u, v) => u === '£' ? rmoney(v) : u === 'hours' ? (v === 1 ? '1 hour' : v + ' hours') : nstr(v) + ' ' + u;
+const rsmall = (u, v) => u === 'p' ? v + 'p' : v + ' ' + u;
+sk('R4', 'RA', 'Simplifying: three parts, units and decimals', 'Three parts: divide all three by the same number. Different units: change them to the same unit first. 40 cm : 2 m is 40 cm : 200 cm = 1 : 5. Decimals: multiply every part by 10 until they are all whole. 1.5 : 2 is 15 : 20 = 3 : 4.',
+  () => {
+    const r = Math.random();
+    if (r < 1 / 3) { const t = shuf(pick(RTRIPLES)), m = ri(2, 10); return q(`Simplify ${t.map(x => x * m).join(' : ')}`, t.join(':')); }
+    if (r < 2 / 3) {
+      const [s, B, U, st, mx] = pick(RUNITS); let a, b, k, big;
+      do { [a, b] = pick(COPRIME); k = st * ri(1, Math.floor(U / st)); big = b * k / U; } while (a * k >= U || !(big >= .5 && big <= mx) || (U === 60 ? !Number.isInteger(big) : (b * k) % (U / 10) !== 0) || (B === '£' && !Number.isInteger(big * 2)));
+      return Math.random() < .5 ? q(`Simplify ${rsmall(s, a * k)} : ${rbig(B, big)}`, `${a}:${b}`) : q(`Simplify ${rbig(B, big)} : ${rsmall(s, a * k)}`, `${b}:${a}`);
+    }
+    let a, b, j; do { [a, b] = rord(pick(COPRIME)); j = ri(1, 9); } while ((a * j) % 10 === 0 && (b * j) % 10 === 0);
+    return q(`Simplify ${nstr(a * j / 10)} : ${nstr(b * j / 10)}`, `${a}:${b}`);
+  }, {pl: false, chain: () => { let a, b, c; do { [a, b, c] = shuf(pick(RTRIPLES)); } while (gcd(a, b) > 1); const m = pick([4, 6]); return [q(`Simplify ${a * m} : ${b * m}`, `${a}:${b}`), q(`Simplify ${a * m} : ${b * m} : ${c * m}`, `${a}:${b}:${c}`), q(`Simplify ${nstr(a * m / 10)} : ${nstr(b * m / 10)}`, `${a}:${b}`), q(`Simplify ${a * m} cm : ${nstr(b * m / 10)} m`, rsimp(a * m, b * m * 10))]; }});
+
+const RN_CTX = [['teachers', 'students', 'On a school trip'], ['sand', 'cement', 'In a mortar mix'], ['squash', 'water', 'In a drink']];
+sk('R5', 'RA', 'The form 1 : n and n : 1', 'Divide both parts by the part that has to become 1. To write 4 : 10 in the form 1 : n, divide both by 4: 1 : 2.5.',
+  () => {
+    const d = pick([2, 4, 5, 8, 10, 20, 25]); let o; do { o = ri(1, Math.min(100, 4 * d)); } while (o === d || (o % d === 0 && Math.random() < .8) || (d >= 20 && o % 5 !== 0 && o % 4 !== 0));
+    const n = nstr(o / d), first = Math.random() < .65;
+    if (Math.random() < .3) { const [x, y, where] = pick(RN_CTX); return first ? q(`${where}, the ratio of ${x} to ${y} is ${d} : ${o}. Write this ratio in the form 1 : n.`, `1:${n}`, {form: 'one1'}) : q(`${where}, the ratio of ${x} to ${y} is ${o} : ${d}. Write this ratio in the form n : 1.`, `${n}:1`, {form: 'n1'}); }
+    return first ? q(`Write ${d} : ${o} in the form 1 : n`, `1:${n}`, {form: 'one1'}) : q(`Write ${o} : ${d} in the form n : 1`, `${n}:1`, {form: 'n1'});
+  }, {pl: false});
+
+// Sharing: a question in its parts, so the typed version and the book version ("give both shares") come from the same numbers.
+function rShare() {
+  const three = Math.random() < .2, p = three ? shuf(pick(RTRIPLES)) : rord(pick(COPRIME.filter(([x, y]) => x + y <= 12))), s = p.reduce((x, y) => x + y);
+  const kind = pick(['money', 'money', 'sweets', 'grams']), u0 = ri(2, 12), m = kind === 'money' ? pick([1, 1, 5, 10]) : kind === 'grams' ? pick([5, 10]) : 1, u = s * u0 * m > 600 ? u0 : u0 * m;      // totals stay at 600 or under
+  const who = shuf(NAMES).slice(0, p.length), T = s * u, R = p.join(' : ');
+  const amt = v => kind === 'money' ? '£' + v : kind === 'grams' ? v + ' g' : v + ' sweets';
+  const lead = kind === 'money' ? `${who.slice(0, -1).join(', ')} and ${who[p.length - 1]} share £${T} in the ratio ${R}.` : kind === 'grams' ? `Share ${T} g of flour in the ratio ${R}.` : `${who.slice(0, -1).join(', ')} and ${who[p.length - 1]} share ${T} sweets in the ratio ${R}.`;
+  return {p, u, who, kind, lead, amt, T};
+}
+sk('R6', 'RA', 'Sharing in a ratio', 'Add the parts to find how many parts there are. Divide the total by that to find one part. Then multiply. Share £40 in the ratio 3 : 5: 8 parts, one part is £5, so the shares are £15 and £25.',
+  () => {
+    const {p, u, who, kind, lead} = rShare(), o = {pre: kind === 'money' ? '£' : '', suf: kind === 'grams' ? ' g' : ''};
+    const mx = Math.max(...p), mn = Math.min(...p);
+    if (kind === 'grams' || Math.random() < .5) { const big = Math.random() < .5; return q(`${lead} How much is the ${p.length > 2 ? (big ? 'largest' : 'smallest') : (big ? 'larger' : 'smaller')} share?`, (big ? mx : mn) * u, o); }
+    const i = ri(0, p.length - 1); return q(`${lead} How ${kind === 'money' ? 'much does' : 'many does'} ${who[i]} get?`, p[i] * u, o);
+  }, {chain: () => { const T = 8 * ri(2, 8); return [q(`Share £${T} in the ratio 1 : 1. How much is each share?`, T / 2, {pre: '£'}), q(`Share £${T} in the ratio 1 : 3. How much is the larger share?`, 3 * T / 4, {pre: '£'}), q(`Share £${T} in the ratio 3 : 5. How much is the larger share?`, 5 * T / 8, {pre: '£'}), q(`Share £${2 * T} in the ratio 3 : 5. How much is the larger share?`, 5 * T / 4, {pre: '£'})]; },
+    book: () => { const {p, u, who, kind, lead, amt} = rShare(); const sh = p.map(x => amt(x * u)); const list = sh.slice(0, -1).join(', ') + ' and ' + sh[sh.length - 1];
+      return kind === 'grams' ? q(`${lead} Work out each share.`, list, {self: true}) : q(`${lead} How ${kind === 'money' ? 'much does' : 'many does'} each person get?`, p.map((x, i) => `${who[i]} ${amt(x * u)}`).join(', '), {self: true}); }});
+
+sk('R7', 'RA', 'One part given', 'Use the part you know to find what one part is worth, then multiply. Blue : yellow = 2 : 3, with 8 litres of blue: 2 parts are 8 litres, so one part is 4 litres and yellow is 3 × 4 = 12 litres.',
+  () => {
+    const [a, b] = rord(pick(COPRIME.filter(([x, y]) => y <= 7))), u = ri(2, 12), r = Math.random();
+    if (r < .25) { const [c1, c2] = pick([['blue', 'yellow'], ['red', 'white'], ['black', 'white']]); return Math.random() < .5 ? q(`${rcap(c1)} and ${c2} paint are mixed in the ratio ${a} : ${b}. ${a * u} litres of ${c1} paint are used. How many litres of ${c2} paint are needed?`, b * u, {suf: ' litres'}) : q(`${rcap(c1)} and ${c2} paint are mixed in the ratio ${a} : ${b}. ${b * u} litres of ${c2} paint are used. How many litres of ${c1} paint are needed?`, a * u, {suf: ' litres'}); }
+    if (r < .45) { const g = u * 10; return Math.random() < .5 ? q(`A recipe uses flour and sugar in the ratio ${a} : ${b}. It uses ${a * g} g of flour. How much sugar does it use?`, b * g, {suf: ' g'}) : q(`A recipe uses flour and sugar in the ratio ${a} : ${b}. It uses ${b * g} g of sugar. How much flour does it use?`, a * g, {suf: ' g'}); }
+    if (r < .75) { const [x, y, where, all] = pick(RPAIRS), s = Math.random() < .5;
+      return pick([q(`${where}, the ratio of ${x} to ${y} is ${a} : ${b}. There are ${(s ? a : b) * u} ${s ? x : y}. How many ${s ? y : x} are there?`, (s ? b : a) * u),
+        q(`${where}, the ratio of ${x} to ${y} is ${a} : ${b}. There are ${(s ? a : b) * u} ${s ? x : y}. How many ${all} are there altogether?`, (a + b) * u)]); }
+    const [x, y] = two(), m = pick([1, 5]), big = a > b ? x : y;
+    return q(`${x} and ${y} share some money in the ratio ${a} : ${b}. ${big} gets £${Math.max(a, b) * u * m}. How much money did they share?`, (a + b) * u * m, {pre: '£'});
+  }, {pl: false});
+
+sk('R8', 'RA', 'Difference given', 'The difference in parts matches the difference in amounts. 3 : 7 is 4 parts apart. If one person gets £20 more, 4 parts are £20, so one part is £5.',
+  () => {
+    const [a, b] = pick(COPRIME.filter(([x, y]) => y <= 9)), u = ri(2, 12), r = Math.random();      // a < b
+    if (r < .4) { const [x, y] = two(), m = pick([1, 1, 5]), first = Math.random() < .5, X = first ? x : y, Y = first ? y : x;
+      return q(`${x} and ${y} share some money in the ratio ${first ? a : b} : ${first ? b : a}. ${first ? y : x} gets £${(b - a) * u * m} more than ${first ? x : y}. How much money did they share?`, (a + b) * u * m, {pre: '£'}); }
+    const [x, y, where] = pick(RPAIRS), more = Math.random() < .5;      // more: there are more of x
+    const ra = more ? `${b} : ${a}` : `${a} : ${b}`, lead = `${where}, the ratio of ${x} to ${y} is ${ra}. There are ${(b - a) * u} more ${more ? x : y} than ${more ? y : x}.`;
+    return pick([q(`${lead} How many ${y} are there?`, (more ? a : b) * u), q(`${lead} How many ${x} are there?`, (more ? b : a) * u)]);
+  }, {pl: false});
+
+sk('R9', 'RA', 'Ratio and fractions', 'Add the parts to get the denominator. Boys : girls = 2 : 3 is 5 parts, so boys are 2/5 of the class, not 2/3. Going back: if 2/5 are boys, 3/5 are girls, so boys : girls = 2 : 3.',
+  () => {
+    const r = Math.random();
+    if (r < .35) { const [x, y, where, all] = pick(RPAIRS), [a, b] = rord(pick(COPRIME.filter(([p, s]) => p + s <= 12))), s = Math.random() < .5, n = s ? a : b, g = gcd(n, a + b);
+      return q(`${where}, the ratio of ${x} to ${y} is ${a} : ${b}. What fraction of the ${all} are ${s ? x : y}?`, `${n / g}/${(a + b) / g}`, {form: 'simplest', notes: {[`${n}/${s ? b : a}`]: `That is ${s ? x : y} over ${s ? y : x}. A fraction of all the ${all} is ${s ? x : y} over everyone: add the parts first.`}}); }
+    if (r < .5) { const t = shuf(pick(RTRIPLES)), i = ri(0, 2), s = t[0] + t[1] + t[2], g = gcd(t[i], s), col = ['red', 'blue', 'green'];
+      return q(`Red : blue : green = ${t.join(' : ')}. What fraction of the counters are ${col[i]}?`, `${t[i] / g}/${s / g}`, {form: 'simplest'}); }
+    let n, d; do { d = ri(3, 12); n = ri(1, d - 1); } while (gcd(n, d) > 1);
+    const [x, y] = pick([['red', 'blue'], ['boys', 'girls'], ['cats', 'dogs']]), noun = x === 'red' ? 'counters' : x === 'boys' ? 'students in a club' : 'pets in a survey';
+    const lead = `${F(n, d)} of the ${noun} are ${x}. The rest are ${y}.`, rev = Math.random() < .4;
+    return rev ? q(`${lead} Write the ratio of ${y} to ${x}.`, `${d - n}:${n}`, {notes: {[`${d - n}:${d}`]: `That compares the ${y} with all the ${noun.split(' ')[0]}. Compare ${y} with ${x}: the ${x} are ${n} parts out of ${d}.`}})
+      : q(`${lead} Write the ratio of ${x} to ${y}.`, `${n}:${d - n}`, {notes: {[`${n}:${d}`]: `That compares the ${x} with all the ${noun.split(' ')[0]}. Compare ${x} with ${y}: the ${y} are ${d - n} parts out of ${d}.`}});
+  });
+
+sk('R10', 'RA', 'Ratio and percentages', 'Turn the ratio into a fraction of the whole, then into a percentage. 1 : 4 is 5 parts, so the smaller part is 1/5 = 20%.',
+  () => {
+    if (Math.random() < .6) { let s, a; do { s = pick([4, 5, 10, 20, 25, 50]); a = ri(1, s - 1); } while (a * 2 === s || gcd(a, s - a) > 1);
+      const [x, y, ctx] = pick([['sand', 'cement', 'mixture'], ['boys', 'girls', 'class'], ['squash', 'water', 'drink'], ['red', 'white', 'paint']]), first = Math.random() < .5;
+      return q(`The ratio of ${x} to ${y} in a ${ctx} is ${a} : ${s - a}. What percentage of the ${ctx} is ${first ? x : y}?`, 100 * (first ? a : s - a) / s, {suf: '%'}); }
+    const p = 5 * ri(1, 19); if (p === 50) return q(`50% of a class are boys. The rest are girls. Write the ratio of boys to girls.`, '1:1');
+    const [x, y, w] = pick([['boys', 'girls', 'a class'], ['adults', 'children', 'the people at a show'], ['cars', 'vans', 'the vehicles in a car park']]);
+    return q(`${p}% of ${w} are ${x}. The rest are ${y}. Write the ratio of ${x} to ${y} in its simplest form.`, rsimp(p, 100 - p));
+  }, {pl: false, stretch: true});
+
+function rCombine(kind) {      // A : B = a : b and B : C = c : d. kind 0: B the same; 1: one B a multiple of the other; 2: needs the LCM
+  let a, b, c, d;
+  do { [a, b] = rord(pick(COPRIME)); [c, d] = rord(pick(COPRIME)); } while (b === 1 || c === 1 || (kind === 0 ? b !== c : kind === 1 ? b === c || (b % c && c % b) : b % c === 0 || c % b === 0) || b > 6 || c > 6);
+  const L = b * c / gcd(b, c);
+  return {a, b, c, d, ans: rsimp(a * L / b, L, d * L / c)};
+}
+const R11_CTX = [['cats', 'dogs', 'rabbits', 'At a vet'], ['red', 'blue', 'green', 'In a bag of counters'], ['apples', 'pears', 'plums', 'In a fruit bowl']];
+sk('R11', 'RA', 'Combining two ratios', 'Make the shared letter the same number in both ratios. A : B = 2 : 3 and B : C = 4 : 5. B is 3 in one and 4 in the other, so make both 12: A : B = 8 : 12 and B : C = 12 : 15, giving A : B : C = 8 : 12 : 15.',
+  () => {
+    const {a, b, c, d, ans} = rCombine(pick([0, 1, 1, 2, 2, 2]));
+    if (Math.random() < .3) { const [x, y, z, where] = pick(R11_CTX); return q(`${where}, the ratio of ${x} to ${y} is ${a} : ${b} and the ratio of ${y} to ${z} is ${c} : ${d}. Write the ratio of ${x} to ${y} to ${z}.`, ans); }
+    return q(`A : B = ${a} : ${b} and B : C = ${c} : ${d}. Find A : B : C.`, ans);
+  }, {pl: false, stretch: true, chain: () => { const r = [0, 1, 2, 2].map(rCombine), [x, y, z, where] = pick(R11_CTX), w = r[3];
+    return r.slice(0, 3).map(({a, b, c, d, ans}) => q(`A : B = ${a} : ${b} and B : C = ${c} : ${d}. Find A : B : C.`, ans)).concat(q(`${where}, the ratio of ${x} to ${y} is ${w.a} : ${w.b} and the ratio of ${y} to ${z} is ${w.c} : ${w.d}. Write the ratio of ${x} to ${y} to ${z}.`, w.ans)); }});
 
 /* ---- Strand W: word problems (templates with random numbers) ---- */
 const NAMES = ['Aisha', 'Ben', 'Chloe', 'Dev', 'Ella', 'Femi', 'Grace', 'Hamza', 'Isla', 'Jack', 'Kai', 'Leah', 'Maya', 'Noah', 'Olivia', 'Priya', 'Ravi', 'Sam', 'Tia', 'Zara'];
@@ -436,8 +591,8 @@ const WTAGS = {
   2: [['M'], ['M'], ['D'], ['M'], ['M'], ['D']],
   3: [['M', 'S'], ['A', 'S', 'X'], ['M', 'S', 'NM'], ['D', 'NW'], ['M', 'A', 'NM'], ['M', 'A', 'NM'], ['NW']],
   4: [['FF'], ['FP'], ['FP', 'FE'], ['FF'], ['FP'], ['FD'], ['NW', 'FD']],
-  5: [['FP'], ['FF'], ['D', 'M'], ['FP', 'FD'], ['FF'], ['D', 'M'], ['D', 'M'], ['NX']],
-  6: [['FP'], ['FP'], ['FP'], ['FF', 'FP'], ['D', 'M'], ['FP']],
+  5: [['FP'], ['FF'], ['D', 'M', 'RA'], ['FP', 'FD'], ['FF'], ['D', 'M'], ['D', 'M'], ['NX']],
+  6: [['FP'], ['FP'], ['FP'], ['FF', 'FP'], ['D', 'M', 'RA'], ['FP']],
 };
 for (const l in WP) WP[l].forEach((t, i) => { t[2] = WTAGS[l][i] || []; });
 const linkFns = t => Object.values(WP).flat().filter(x => x[2].includes(t)).map(x => x[1]);
@@ -463,8 +618,8 @@ const GROUPS = [
     ['FD', 'Decimals', ['F5', 'F15', 'F16']],
     ['FE', 'Fraction, decimal, percentage equivalence', ['F6', 'F9']],
     ['FP', 'Percentages', ['F7', 'F8', 'F17', 'F18', 'F19', 'F20']]]},
-  {id: 'R', name: 'Ratio and proportion', short: 'Ratio', col: '--r', draft: true, tracks: [
-    ['RA', 'Ratio', ['R3'], {mixBook: 2}]]},
+  {id: 'R', name: 'Ratio and proportion', short: 'Ratio', col: '--r', tracks: [
+    ['RA', 'Ratio', ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10', 'R11'], {mixBook: 2}]]},
   {id: 'W', name: 'Word problems', short: 'Problems', col: '--w', tracks: [['W', 'Word problems', ['W1', 'W2', 'W3', 'W4', 'W5', 'W6']]]},
 ];
 // A group marked draft is built but not on the home screen yet, unless the address has ?draft (for testing a section before it is finished).
