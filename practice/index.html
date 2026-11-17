@@ -36,10 +36,14 @@ p{margin:6px 0}.muted{color:var(--muted)}.small{font-size:14px}.center{text-alig
 .chip{display:inline-block;border-radius:99px;padding:1px 9px;font-size:13px;font-weight:600;background:var(--soft)}
 .chip.secure{background:var(--ok);color:#fff}.chip.learning{background:var(--warn);color:#fff}.chip.support{background:var(--bad);color:#fff}.chip.assumed,.chip.mixed{background:var(--soft);color:var(--muted)}
 .chip.stretch{background:transparent;border:1.5px solid var(--gold);color:var(--gold);padding:0 8px;margin-left:6px;vertical-align:middle}
+.qtbl{border-collapse:collapse;margin:6px auto 10px;width:auto;font-size:22px}.qtbl th,.qtbl td{border:1.5px solid var(--line);padding:6px 14px;text-align:center;font-size:inherit;vertical-align:middle}.qtbl th{text-align:left;font-weight:600;background:var(--soft)}
+.blist .qtbl{margin:6px 0;font-size:18px}.sol .qtbl{font-size:18px}.sheet .qtbl{margin:1.5mm 0 0;font-size:15px}.sheet .qtbl th,.sheet .qtbl td{border:1px solid #000;padding:1mm 3mm;background:none}
+.wnote{font-size:14px;color:var(--muted);text-align:center;margin:4px 0 8px}.wcheck{display:flex;gap:10px;align-items:center;justify-content:center;font-size:17px;margin:10px 0;cursor:pointer}.wcheck input{width:24px;height:24px}
 .qpic{max-width:420px;margin:4px auto 10px}.qpic>div{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:6px 0}.qpic svg{width:26px;height:26px}
 .chip.timer{font-variant-numeric:tabular-nums;min-width:56px;text-align:center}.chip.timer.over{background:var(--warn);color:#fff}
 .steps{display:flex;gap:6px;margin:6px 0 12px}.steps i{flex:1;height:6px;border-radius:9px;background:var(--line)}.steps i.on{background:var(--accent)}
 .qbig{font-size:38px;font-weight:700;text-align:center;margin:18px 0 10px;line-height:1.3}
+.qbig.long{font-size:27px;line-height:1.35}
 .qbig.wp{font-size:21px;font-weight:500;text-align:left;line-height:1.5}
 .fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.82em;line-height:1.15;margin:0 .18em}
 .fr span:first-child{border-bottom:.09em solid currentColor;padding:0 .25em}.fr span:last-child{padding:0 .25em}
@@ -525,6 +529,184 @@ sk('R11', 'RA', 'Combining two ratios', 'Make the shared letter the same number 
   }, {pl: false, stretch: true, chain: () => { const r = [0, 1, 2, 2].map(rCombine), [x, y, z, where] = pick(R11_CTX), w = r[3];
     return r.slice(0, 3).map(({a, b, c, d, ans}) => q(`A : B = ${a} : ${b} and B : C = ${c} : ${d}. Find A : B : C.`, ans)).concat(q(`${where}, the ratio of ${x} to ${y} is ${w.a} : ${w.b} and the ratio of ${y} to ${z} is ${w.c} : ${w.d}. Write the ratio of ${x} to ${y} to ${z}.`, w.ans)); }});
 
+/* ---- Proportion (group R, area RP). Plan: claude/section-proportion-outline.md. Ids P1 to P4 are fixed by that outline; never rename them.
+   Built 18 Nov 2026, with two engine pieces: the working check on choice questions (Q.work, Q.show) and small tables (Q.tbl).
+   Gates (in the level check): P1, P4. Non-calculator: dividing by a single digit, 10, 12 or 100; multiplying at most 2 digits by 2.
+   Helpers start with pp so they can't clash with the rest of the file. ---- */
+const ppm = p => p < 100 ? p + 'p' : rmoney(p / 100);      // an amount in pence, written as 75p or £1.80
+// A money answer: under £1 it is asked in pence; £1 or more is in pounds with £ in the box.
+const ppAns = (text, p, o = {}) => p < 100 ? q(text + ' Give your answer in pence.', p, {suf: 'p', ...o}) : q(text, p / 100, {pre: '£', ...o});
+const ppTxt = p => p % 100 ? (p / 100).toFixed(2) : String(p / 100);      // pounds for a table cell headed (£)
+// Things to buy, with a sensible price for one: [one, many, lowest and highest price in pence, step]
+const PPITEMS = [['pen', 'pens', 15, 150, 5], ['notebook', 'notebooks', 120, 450, 10], ['cinema ticket', 'cinema tickets', 600, 1200, 50], ['bus ticket', 'bus tickets', 150, 350, 10],
+  ['cupcake', 'cupcakes', 50, 250, 5], ['bottle of water', 'bottles of water', 40, 120, 5], ['packet of crisps', 'packets of crisps', 30, 90, 5]];
+const ppPrice = ([, , lo, hi, st]) => lo + st * ri(0, (hi - lo) / st);      // the price of one, in pence
+// Rates with whole answers: [one lot is worth lo to hi (in steps of st), the given fact, ask about m, ask how long for v, units of the answer, units going back]
+const PPRATES = [
+  [8, 30, 1, (n, v) => `A printer prints ${v} pages in ${n} minutes.`, m => `At the same rate, how many pages does it print in ${m} minutes?`, v => `At the same rate, how many minutes does it take to print ${v} pages?`, '', ' minutes'],
+  [3, 12, 1, (n, v) => `A tap lets out ${v} litres of water in ${n} minutes.`, m => `At the same rate, how many litres does it let out in ${m} minutes?`, v => `At the same rate, how many minutes does it take to let out ${v} litres?`, ' litres', ' minutes'],
+  [9, 18, 1, (n, v) => `A car travels ${v} km on ${n} litres of petrol.`, m => `At the same rate, how far does it travel on ${m} litres?`, v => `At the same rate, how many litres does it need to travel ${v} km?`, ' km', ' litres'],
+  [20, 60, 5, (n, v, w) => `${w} types ${v} words in ${n} minutes.`, (m, w) => `At the same rate, how many words does ${w} type in ${m} minutes?`, (v, w) => `At the same rate, how many minutes does it take ${w} to type ${v} words?`, '', ' minutes']];
+sk('P1', 'RP', 'The unitary method', 'Find the value of one, then multiply. 5 pens cost £3.50, so one pen costs £3.50 ÷ 5 = 70p, and 8 pens cost 8 × 70p = £5.60.',
+  () => {
+    const n = ri(2, 9), dir = Math.random(), m = dir < .67 || n === 2 ? ri(n + 1, 12) : ri(2, n - 1);
+    if (Math.random() < .6) {
+      const it = pick(PPITEMS), [one, many] = it; let u; do { u = ppPrice(it); } while (n * u > 6000 || m * u > 8000);
+      const lead = `${n} ${many} cost ${ppm(n * u)}.`;
+      if (Math.random() < .25) { let k; do { k = ri(2, 15); } while (k === n || k * u > 8000); return q(`${lead} How many ${many} can you buy with ${ppm(k * u)}?`, k); }
+      return ppAns(`${lead} How much do ${m} ${many} cost?`, m * u);
+    }
+    const [lo, hi, st, given, more, back, u1, u2] = pick(PPRATES), u = lo + st * ri(0, (hi - lo) / st), w = nm();
+    if (Math.random() < .25) return q(`${given(n, n * u, w)} ${back(m * u, w)}`, m, {suf: u2});
+    return q(`${given(n, n * u, w)} ${more(m, w)}`, m * u, {suf: u1});
+  }, {chain: () => { const u = pick([30, 45, 60, 75, 90]), [one, many] = pick([PPITEMS[0], PPITEMS[5], PPITEMS[6]]), lead = `4 ${many} cost ${ppm(4 * u)}.`;
+    return [ppAns(`${lead} How much does 1 ${one} cost?`, u), ppAns(`${lead} How much do 3 ${many} cost?`, 3 * u), ppAns(`${lead} How much do 10 ${many} cost?`, 10 * u), ppAns(`6 ${many} cost ${ppm(4 * u)}. How much do 4 ${many} cost?`, 8 * u / 3)]; }});
+
+// Recipes: [dish, ingredients: [name, unit ('' for things you count), amounts for one group of people, the name of one]]
+const PPDISH = [
+  ['pancakes', [['flour', 'g', [50, 75, 100]], ['milk', 'ml', [100, 125, 150]], ['eggs', '', [1, 2], 'egg']]],
+  ['a crumble', [['flour', 'g', [50, 75, 100]], ['butter', 'g', [25, 50, 75]], ['sugar', 'g', [25, 50, 75]]]],
+  ['flapjacks', [['oats', 'g', [75, 100, 150]], ['butter', 'g', [50, 75]], ['syrup', 'g', [25, 50]]]],
+  ['soup', [['stock', 'ml', [150, 200, 250]], ['lentils', 'g', [50, 75, 100]], ['onions', '', [1], 'onion']]],
+  ['a smoothie', [['milk', 'ml', [100, 150]], ['yoghurt', 'g', [50, 75]], ['bananas', '', [1, 2], 'banana']]]];
+const PPUNIT = {g: 'grams', ml: 'millilitres'};
+const ppAmt = ([name, unit, , one], v) => unit ? `${v} ${unit} of ${name}` : `${v} ${v === 1 ? one : name}`;
+// The people a recipe serves (N) and is made for (M). kind 0: halves, thirds and the like (neither divides the other); 1: scaling up by a whole number; 2: scaling down.
+function ppServes(kind) {
+  for (;;) { const N = pick([2, 3, 4, 5, 6, 8, 10, 12]), M = pick([2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 16, 18, 20]); if (M === N) continue;
+    const up = M % N === 0, down = N % M === 0; if ((kind === 0 && !up && !down) || (kind === 1 && up) || (kind === 2 && down)) return [N, M]; }
+}
+// One recipe, answer first: the amount for g = HCF(N, M) people, then the recipe (for N) and the answer (for M) from it.
+function ppRecipe(all) {
+  for (;;) {
+    const r = Math.random(), [N, M] = ppServes(r < .6 ? 0 : r < .85 ? 1 : 2), g = gcd(N, M), [dish, ings] = pick(PPDISH);
+    const use = all ? ings : [pick(ings)], v = use.map(x => pick(x[2]));
+    if (use.some((x, i) => v[i] * Math.max(N, M) / g > (x[1] ? 2000 : 12))) continue;
+    return {N, M, dish, use, rec: v.map(x => x * N / g), ans: v.map(x => x * M / g)};
+  }
+}
+const ppList = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0];
+sk('P2', 'RP', 'Recipes', 'Find the amount for a number of people that goes into both, then multiply. A recipe for 4 uses 300 g of flour. For 2 people it is 150 g, so for 6 people it is 3 × 150 g = 450 g.',
+  () => {
+    const {N, M, dish, use: [x], rec: [a], ans: [b]} = ppRecipe(false);
+    return q(`A recipe for ${dish} for ${N} people uses ${ppAmt(x, a)}. How many ${x[1] ? `${PPUNIT[x[1]]} of ${x[0]}` : x[0]} are needed for ${M} people?`, b, {suf: x[1] ? ' ' + x[1] : ''});
+  }, {pl: false, chain: () => { const [dish, ings] = pick(PPDISH.slice(0, 3)), x = pick(ings.filter(y => y[1])), v = pick(x[2]);
+    return [8, 2, 6, 10].map(M => q(`A recipe for ${dish} for 4 people uses ${ppAmt(x, 2 * v)}. How many ${PPUNIT[x[1]]} of ${x[0]} are needed for ${M} people?`, v * M / 2, {suf: ' ' + x[1]})); },
+    book: () => { if (Math.random() < 2 / 3) return BY.P2.gen();
+      const {N, M, dish, use, rec, ans} = ppRecipe(true);
+      return q(`A recipe for ${dish} for ${N} people uses ${ppList(use.map((x, i) => ppAmt(x, rec[i])))}. Rewrite the recipe for ${M} people.`, ppList(use.map((x, i) => ppAmt(x, ans[i]))), {self: true}); }});
+
+// Best value. Things sold by the item, by weight and by volume: [what the packs are called, one, many / the product]
+const PPPACK = [['Pack', 'bread roll', 'bread rolls'], ['Pack', 'pen', 'pens'], ['Box', 'egg', 'eggs'], ['Pack', 'yoghurt', 'yoghurts'], ['Bag', 'apple', 'apples']];
+const PPWT = [['Bag', 'rice'], ['Bag', 'flour'], ['Bag', 'sugar'], ['Bag', 'porridge oats'], ['Bag', 'pasta']], PPVOL = [['Bottle', 'orange juice'], ['Bottle', 'squash'], ['Carton', 'milk']];
+const ppG = h => h % 10 ? h * 100 + ' g' : h / 10 + ' kg', ppMl = h => h % 10 ? h * 100 + ' ml' : (h === 10 ? '1 litre' : h / 10 + ' litres');      // h hundreds of grams or ml
+const ppNs = [2, 3, 4, 5, 6, 8, 10, 12];
+// A best-value comparison. kind 'easy': one pack is 2 or 3 times the other; 'unit': cost of one each; 'mixed': per 100 g or 100 ml, one size in kg or litres.
+function ppBest(kind) {
+  const same = Math.random() < 1 / 6, sw = Math.random() < .5;
+  let lab, A, B, show, ans;
+  const verdict = (cA, cB) => same ? 'They are the same value.' : `${cA < cB ? A : B} is better value.`;
+  if (kind === 'easy') {
+    const [l, one, many] = pick(PPPACK), mult = pick([2, 3]); let nA, uA, TA, TB;
+    do { nA = ri(2, 6); uA = 5 * ri(3, 19); TA = nA * uA; TB = mult * TA + (same ? 0 : pick([-30, -20, -15, -10, -5, 5, 10, 15, 20, 30])); } while (TB > 2000 || TB <= (mult - 1) * TA);
+    lab = l; A = lab + ' A'; B = lab + ' B'; ans = same ? 'Same value' : TB < mult * TA ? B : A;
+    show = [`${B} has ${mult} times as many as ${A}: ${mult} × ${ppm(TA)} = ${ppm(mult * TA)}.`, `${B} costs ${ppm(TB)}. ${same ? 'They are the same value.' : ans + ' is better value.'}`];
+    return {lab, A, B, ans, show, work: false, lead: `${A}: ${nA} ${many} for ${ppm(TA)}.\n${B}: ${nA * mult} ${many} for ${ppm(TB)}.`};
+  }
+  if (kind === 'unit') {
+    const [l, one, many] = pick(PPPACK); let nA, nB, uA, uB;
+    do { nA = pick(ppNs); nB = pick(ppNs); uA = 5 * ri(3, 19); uB = same ? uA : uA + pick([-10, -5, 5, 10]); } while (nA === nB || nA % nB === 0 || nB % nA === 0 || uB < 10 || nA * uA > 2000 || nB * uB > 2000);
+    lab = l; A = lab + ' A'; B = lab + ' B'; ans = same ? 'Same value' : uA < uB ? A : B;
+    show = [`${A}: ${ppm(nA * uA)} ÷ ${nA} = ${ppm(uA)} for each ${one}.`, `${B}: ${ppm(nB * uB)} ÷ ${nB} = ${ppm(uB)} for each ${one}.`, verdict(uA, uB)];
+    return {lab, A, B, ans, show, work: true, lead: `${A}: ${nA} ${many} for ${ppm(nA * uA)}.\n${B}: ${nB} ${many} for ${ppm(nB * uB)}.`};
+  }
+  const vol = Math.random() < .35, [l, what] = pick(vol ? PPVOL : PPWT), sz = vol ? ppMl : ppG, per = vol ? '100 ml' : '100 g', big = vol ? 'litre' : 'kg';
+  let h1, h2, p1, p2;      // h1 hundreds in the small-unit pack, h2 hundreds (whole kg or litres) in the other
+  do { h1 = ri(2, 9); h2 = 10 * ri(1, 4); p1 = vol ? ri(8, 30) : ri(10, 60); p2 = same ? p1 : p1 + pick([-5, -4, -3, -2, 2, 3, 4, 5]); } while (p2 < 8 || h1 * p1 > 2000 || h2 * p2 > 2000);
+  lab = l; A = lab + ' A'; B = lab + ' B';
+  const [hA, hB, pA, pB] = sw ? [h2, h1, p2, p1] : [h1, h2, p1, p2];
+  ans = same ? 'Same value' : pA < pB ? A : B;
+  const line = (X, h, p) => h % 10 ? `${X}: ${ppm(h * p)} ÷ ${h} = ${ppm(p)} for ${per}.` : `${X}: ${h / 10} ${big}${h > 10 && vol ? 's' : ''} is ${h * 100} ${vol ? 'ml' : 'g'}, so ${ppm(h * p)} ÷ ${h} = ${ppm(p)} for ${per}.`;
+  show = [line(A, hA, pA), line(B, hB, pB), verdict(pA, pB)];
+  return {lab, A, B, ans, show, work: true, lead: `${A}: ${sz(hA)} of ${what} for ${ppm(hA * pA)}.\n${B}: ${sz(hB)} of ${what} for ${ppm(hB * pB)}.`};
+}
+const ppChoice = b => q(`${b.lead}\nWhich is better value?`, b.ans, {kind: 'choice', opts: [b.A, b.B, 'Same value'], show: b.show, work: b.work});
+const ppBestBook = b => q(`${b.lead}\nWhich is better value? Show the cost of the same amount for each.`, b.show.join(' '), {self: true});
+function ppUnitPrice() {
+  const r = Math.random();
+  if (r < .4) { const [l, one, many] = pick(PPPACK); let n, u; do { n = pick(ppNs); u = Math.random() < .7 ? 5 * ri(3, 19) : 10 * ri(11, 25); } while (n * u > 2000);
+    return ppAns(`A ${l.toLowerCase()} of ${n} ${many} costs ${ppm(n * u)}. How much is that for each ${one}?`, u); }
+  if (r < .85) { const vol = r >= .7, [lab, what] = pick(vol ? PPVOL : PPWT); let h, u; do { h = ri(2, 10); u = ri(10, 90); } while (h * u > 2000);
+    return ppAns(`A ${(vol ? ppMl : ppG)(h)} ${lab.toLowerCase()} of ${what} costs ${ppm(h * u)}. What is the cost of 100 ${vol ? 'ml' : 'g'}?`, u); }
+  const vol = Math.random() < .4, k = ri(2, 5), u = 10 * ri(vol ? 6 : 6, vol ? 20 : 40);
+  return ppAns(vol ? `A ${k} litre bottle of juice costs ${ppm(k * u)}. What is the cost of 1 litre?` : `A ${k} kg bag of potatoes costs ${ppm(k * u)}. What is the cost of 1 kg?`, u);
+}
+const ppKind = () => { const r = Math.random(); return r < 1 / 3 ? 'easy' : r < 7 / 9 ? 'unit' : 'mixed'; };
+sk('P3', 'RP', 'Best value', 'Compare the cost of the same amount. Work out the price of one item, or of 100 g, for each. 6 rolls for £1.80 is 30p a roll. 10 rolls for £2.50 is 25p a roll. The 10 rolls are better value.',
+  () => Math.random() < .5 ? ppUnitPrice() : ppChoice(ppBest(ppKind())),
+  {pl: false, chain: () => {
+    const [l, one, many] = pick(PPPACK), uA = pick([20, 30, 40, 50]), uB = uA - 5, A = l + ' A', B = l + ' B', a = `${A}: 6 ${many} for ${ppm(6 * uA)}.`;
+    const m = ppBest('mixed');
+    return [q(`${a}\n${B}: 6 ${many} for ${ppm(6 * uB)}.\nWhich is better value?`, `${B}: the same number of ${many} for less money.`, {self: true}),
+      q(`${a}\n${B}: 12 ${many} for ${ppm(12 * uA - 20)}.\nWhich is better value?`, `${B}: 2 × ${ppm(6 * uA)} = ${ppm(12 * uA)}, and ${B} costs ${ppm(12 * uA - 20)}.`, {self: true}),
+      q(`${a}\n${B}: 10 ${many} for ${ppm(10 * uB)}.\nWhich is better value?`, `${B}: ${ppm(uB)} for each ${one}, against ${ppm(uA)}.`, {self: true}),
+      ppBestBook(m)]; },
+   book: () => Math.random() < .5 ? ppUnitPrice() : ppBestBook(ppBest(ppKind()))});
+
+// Direct proportion. Tables: [x heading, y heading, money?, value of one lot (pence for money), words for the ladder]
+const PPTAB = [
+  ['Number of pens', 'Cost (£)', true, () => 5 * ri(5, 40), (x, y, z) => `${x} pens cost ${y}. How much do ${z} pens cost?`, '', 'The cost is in direct proportion to the number of pens.'],
+  ['Petrol (litres)', 'Cost (£)', true, () => 5 * ri(26, 32), (x, y, z) => `${x} litres of petrol cost ${y}. How much do ${z} litres cost?`, '', 'The cost is in direct proportion to the amount of petrol.'],
+  ['Number of tickets', 'Cost (£)', true, () => 50 * ri(5, 24), (x, y, z) => `${x} tickets cost ${y}. How much do ${z} tickets cost?`, '', 'The cost is in direct proportion to the number of tickets.'],
+  ['Time (hours)', 'Distance (km)', false, () => 5 * ri(6, 14), (x, y, z) => `A train travels ${y} km in ${x} hours. How far does it travel in ${z} hours?`, ' km', 'A train goes at a steady speed, so the distance is in direct proportion to the time.', 8],
+  ['Number of boxes', 'Number of pencils', false, () => pick([6, 8, 10, 12, 20, 24]), (x, y, z) => `${x} boxes hold ${y} pencils. How many pencils do ${z} boxes hold?`, '', 'Every box holds the same number of pencils.'],
+  ['Paint (litres)', 'Area (m²)', false, () => ri(3, 9), (x, y, z) => `${x} litres of paint cover ${y} m². How much area do ${z} litres cover?`, ' m²', 'The area covered is in direct proportion to the amount of paint.']];
+// The multiplier from one amount to another: [the multiplier, what its denominator is]
+const PPMULT = [[1.5, 2], [2.5, 2], [0.5, 2], [0.25, 4], [0.75, 4], [1.25, 4], [3.5, 2], [2, 1], [3, 1]];
+function ppAdd(right, add, money) {      // the additive mistake: a note for it, unless it happens to be right or isn't positive
+  if (add <= 0 || Math.abs(add - right) < 1e-9) return {};
+  const keys = [nstr(add)].concat(money ? [add.toFixed(2)] : []);
+  return {notes: Object.fromEntries(keys.map(k => [k, `That adds the same amount to both. In direct proportion you multiply both by the same number.`]))};
+}
+function ppTable() {
+  const [xl, yl, money, uf, words, suf, says, top = 40] = pick(PPTAB), u = uf();
+  let x0, xa, xb;
+  do { const [m, d] = pick(PPMULT); x0 = d * ri(d === 1 ? 2 : 1, Math.floor(12 / d)); xa = x0 * m; xb = x0 * pick([2, 3, 0.5, 1.5, 4]); } while (xa === x0 || xb === x0 || xb === xa || !Number.isInteger(xb) || xa > top || xb > top || x0 > top || xa < 2 || xb < 2);
+  const yv = x => money ? ppTxt(x * u) : x * u, cols = [x0, ...[xa, xb].sort((a, b) => a - b)];
+  const tbl = [[xl, ...cols], [yl, ...cols.map(x => x === xa ? '□' : yv(x))]];
+  const right = money ? xa * u / 100 : xa * u, given = money ? x0 * u / 100 : x0 * u;
+  return q(`${says} Find the missing value in the table.`, right,
+    {tbl, qw: words(x0, money ? ppm(x0 * u) : x0 * u, xa), ...(money ? {pre: '£'} : {suf: suf || ''}), ...ppAdd(right, given + (xa - x0), money)});
+}
+// Through a common factor: a and c share a factor that goes into both (12 and 20 through 4).
+const PPPAIR = [
+  [(a, b) => `${a} litres of paint cover ${b} m².`, c => `How much area do ${c} litres cover?`, ' m²', [3, 12]],
+  [(a, b) => `${a} m of ribbon cost £${b}.`, c => `How much do ${c} m of ribbon cost?`, '£', [2, 12]],
+  [(a, b) => `A machine makes ${b} badges in ${a} minutes.`, c => `At the same rate, how many badges does it make in ${c} minutes?`, '', [5, 30]],
+  [(a, b) => `${a} kg of apples cost £${b}.`, c => `How much do ${c} kg of apples cost?`, '£', [2, 9]]];
+function ppFactor() {
+  const [lead, ask, unit, [lo, hi]] = pick(PPPAIR); let f, p, r;
+  do { f = ri(2, 6); p = ri(2, 7); r = ri(2, 7); } while (p === r || gcd(p, r) > 1 || f * Math.max(p, r) > 48);
+  const w = ri(lo, hi), a = f * p, c = f * r, b = w * p, ans = w * r;
+  return q(`${lead(a, b)} ${ask(c)}`, ans, {...(unit === '£' ? {pre: '£'} : {suf: unit}), ...ppAdd(ans, b + c - a, false)});
+}
+function ppMultiplier() {
+  const [m, d] = pick(PPMULT.filter(x => x[0] !== 2 && x[0] !== 3)), a = d * ri(2, Math.floor(24 / d)), c = a * m;
+  const diff = Math.abs(c - a), note = {[nstr(diff)]: `That is how much it goes ${c > a ? 'up' : 'down'} by. What do you multiply ${a} by to get ${c}?`};
+  return Math.random() < .5 ? q(`A recipe uses ${a} g of butter. It is changed to use ${c} g, with everything else in direct proportion. What is the multiplier?`, m, {notes: note})
+    : q(`What do you multiply ${a} by to get ${c}?`, m, {notes: note});
+}
+sk('P4', 'RP', 'Direct proportion: tables and multipliers', 'In direct proportion, both amounts are multiplied by the same number. 4 pens cost £3. 6 pens is 4 pens × 1.5, which is × 3/2: halve, then times 3. So 6 pens cost £3 × 1.5 = £4.50. Or go through an amount that divides both: 2 pens cost £1.50, and 6 pens is 3 lots of 2 pens.',
+  () => { const r = Math.random(); return r < .4 ? ppTable() : r < .8 ? ppFactor() : ppMultiplier(); },
+  {chain: () => { const y = pick([2, 3, 5, 6, 7, 9]), [one, many] = pick(PPITEMS.slice(0, 3));
+    return [[8, 2], [12, 3], [6, 1.5], [10, 2.5]].map(([n, k]) => q(`4 ${many} cost £${y}. How much do ${n} ${many} cost?`, y * k, {pre: '£'})); },
+   book: () => {
+     if (Math.random() < .75) return BY.P4.gen();
+     const yes = Math.random() < .5, u = 5 * ri(8, 40), xs = [ri(2, 4), ri(5, 7), ri(8, 12)], i = ri(1, 2), u2 = yes ? u : u + pick([-5, 5, 10]);
+     const ys = xs.map((x, j) => x * (j === i ? u2 : u)), tbl = [['Number of tickets', ...xs], ['Cost (£)', ...ys.map(ppTxt)]];
+     return q('Is the cost in direct proportion to the number of tickets? Give a reason.', yes ? `Yes: every ticket costs ${ppm(u)} (each cost ÷ the number of tickets is ${ppm(u)}).` : `No: ${xs[0]} tickets is ${ppm(u)} each, but ${xs[i]} tickets is ${ppm(u2)} each.`, {tbl, self: true});
+   }});
+
 /* ---- Strand W: word problems (templates with random numbers) ---- */
 const NAMES = ['Aisha', 'Ben', 'Chloe', 'Dev', 'Ella', 'Femi', 'Grace', 'Hamza', 'Isla', 'Jack', 'Kai', 'Leah', 'Maya', 'Noah', 'Olivia', 'Priya', 'Ravi', 'Sam', 'Tia', 'Zara'];
 const nm = () => pick(NAMES);
@@ -591,7 +773,7 @@ const WTAGS = {
   2: [['M'], ['M'], ['D'], ['M'], ['M'], ['D']],
   3: [['M', 'S'], ['A', 'S', 'X'], ['M', 'S', 'NM'], ['D', 'NW'], ['M', 'A', 'NM'], ['M', 'A', 'NM'], ['NW']],
   4: [['FF'], ['FP'], ['FP', 'FE'], ['FF'], ['FP'], ['FD'], ['NW', 'FD']],
-  5: [['FP'], ['FF'], ['D', 'M', 'RA'], ['FP', 'FD'], ['FF'], ['D', 'M'], ['D', 'M'], ['NX']],
+  5: [['FP'], ['FF'], ['D', 'M', 'RA'], ['FP', 'FD'], ['FF'], ['D', 'M', 'RP'], ['D', 'M', 'RP'], ['NX']],
   6: [['FP'], ['FP'], ['FP'], ['FF', 'FP'], ['D', 'M', 'RA'], ['FP']],
 };
 for (const l in WP) WP[l].forEach((t, i) => { t[2] = WTAGS[l][i] || []; });
@@ -619,7 +801,8 @@ const GROUPS = [
     ['FE', 'Fraction, decimal, percentage equivalence', ['F6', 'F9']],
     ['FP', 'Percentages', ['F7', 'F8', 'F17', 'F18', 'F19', 'F20']]]},
   {id: 'R', name: 'Ratio and proportion', short: 'Ratio', col: '--r', tracks: [
-    ['RA', 'Ratio', ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10', 'R11'], {mixBook: 2}]]},
+    ['RA', 'Ratio', ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10', 'R11'], {mixBook: 2}],
+    ['RP', 'Proportion', ['P1', 'P2', 'P3', 'P4'], {mixBook: 2}]]},
   {id: 'W', name: 'Word problems', short: 'Problems', col: '--w', tracks: [['W', 'Word problems', ['W1', 'W2', 'W3', 'W4', 'W5', 'W6']]]},
 ];
 // A group marked draft is built but not on the home screen yet, unless the address has ?draft (for testing a section before it is finished).
@@ -780,7 +963,7 @@ function submitAns(val) {
   if (r.ok) {
     A.state = 'right'; A.cls = 'ok';
     A.fb = !A.lim || A.left < (A.q.tries || 1) ? '✓ Correct' : A.auto ? `✓ Correct · ${secsTxt(A.ms)}, automatic` : `✓ Correct · ${secsTxt(A.ms)}. Aim for under ${A.lim} s.`;
-    if (A.steps) return render(); render(); setTimeout(() => { if (V.ask === A) nextAsk(); }, A.lim && !A.auto ? 1300 : 700);
+    if (A.steps || (A.q.work && !A.quiet)) return render(); render(); setTimeout(() => { if (V.ask === A) nextAsk(); }, A.lim && !A.auto ? 1300 : 700);
   }
   else { A.note = r.note || ''; A.left--; if (A.left > 0) { A.fb = unitWrong ? 'The number is right. Check the units.' : r.note || 'Not yet. Check your working and try again.'; A.cls = 'no'; if (!unitWrong) A.val = ''; render(); } else { A.state = 'wrong'; if (A.quiet) return nextAsk(); render(); } }
 }
@@ -811,7 +994,7 @@ function askHTML() {
   const A = V.ask, Q = A.q, wp = !!Q.steps;
   let h = `${A.label ? `<div class="muted small center">${esc(A.label)}</div>` : ''}${qHTML(Q, wp)}${A.hint && A.state === 'open' ? `<p class="muted small center">${esc(A.hint)}</p>` : ''}${A.state === 'open' ? (A.lim ? `<p class="center small"><span class="chip">⏱ Timed</span> <span id="qt" class="chip timer">${secsTxt(Date.now() - A.t0)}</span> <span class="muted">Automatic goal: under ${A.lim} s</span></p>` : wp ? `<p class="center small"><span class="chip">Not timed</span> <span class="muted">Take your time</span></p>` : `<p class="center small"><span class="chip">No time goal</span> <span class="muted">Take your time</span></p>`) : ''}`;
   if (A.state === 'open') {
-    h += `<div class="fb ${A.cls}">${esc(A.fb)}</div>`;
+    h += `<div class="fb ${A.cls}">${esc(A.fb)}</div>${Q.work && !A.quiet ? '<p class="wnote">Work it out in your book first. After you answer, you check your working against the model working.</p>' : ''}`;
     if (Q.kind === 'choice') h += `<div class="row" style="justify-content:center">${Q.opts.map((o, i) => `<button class="btn big" data-act="choice" data-i="${i}">${fmt(o)}</button>`).join('')}</div>`;
     else h += `<div style="max-width:420px;margin:0 auto;position:relative"><div class="ansbox" data-act="focusans">${Q.pre && !A.units ? `<span class="pre">${esc(Q.pre)}</span>` : ''}<span id="ansview">${ansView(A.val)}</span></div><input id="ans" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your answer" value="${esc(A.val)}"></div>
       ${A.units ? `<div class="row" style="justify-content:center;margin-top:10px"><span class="muted small">Units</span>${A.units.map(u => `<button class="btn sm ${A.unit === u ? 'pri' : ''}" data-act="unit" data-u="${esc(u)}">${esc(u)}</button>`).join('')}</div>` : ''}
@@ -821,7 +1004,9 @@ function askHTML() {
   } else {
     h += `<div class="fb ${A.state === 'right' ? 'ok' : 'no'}">${A.state === 'right' ? '✓ Correct' : 'The answer is ' + ansHTML(Q)}</div>${A.state === 'wrong' && A.note ? `<p class="center small">${esc(A.note)}</p>` : ''}`;
     if (A.steps && Q.steps?.length) h += `<div class="sol"><b>Worked solution</b><br>${Q.steps.map(fmt).join('<br>')}<br><b>Answer: ${ansHTML(Q)}</b></div><p class="muted small">Compare this with the working in your book. Fix anything that is different.</p>`;
-    if (A.state === 'wrong' || A.steps) h += `<p class="center"><button class="btn pri big" data-act="next">Next</button></p>`;
+    if (!A.steps) h += showHTML(Q);
+    if (Q.work && !A.quiet) h += `<label class="wcheck"><input type="checkbox" data-act="wchk" ${A.wok ? 'checked' : ''}> I've checked my working against this</label>`;
+    if (A.state === 'wrong' || A.steps || (Q.work && !A.quiet)) h += `<p class="center"><button class="btn pri big" data-act="next" ${needsCheck(A) ? 'disabled' : ''}>Next</button></p>`;
   }
   return h;
 }
@@ -835,7 +1020,13 @@ const padKeys = Q => isRatio(Q.a) ? PADKEYS.map(x => x[0] === 'mixed' ? [':', '<
 const PIC = {circle: ['--n', '<circle cx="12" cy="12" r="9"/>'], triangle: ['--w', '<path d="M12 3 L21 20 L3 20 Z"/>'], square: ['--k', '<rect x="4" y="4" width="16" height="16" rx="2"/>'], star: ['--f', '<path d="M12 2 l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7-5.4-4.7 7.1-.6z"/>']};
 const PLURAL = {circle: 'circles', triangle: 'triangles', square: 'squares', star: 'stars'};
 const picHTML = pic => `<div class="qpic" role="img" aria-label="${pic.map(([n, sh]) => n + ' ' + (n === 1 ? sh : PLURAL[sh])).join(', ')}">${pic.map(([n, sh]) => '<div>' + Array.from({length: n}, () => `<svg viewBox="0 0 24 24" aria-hidden="true" style="fill:var(${PIC[sh][0]})">${PIC[sh][1]}</svg>`).join('') + '</div>').join('')}</div>`;
-const qHTML = (Q, wp) => (Q.pic ? picHTML(Q.pic) : '') + `<div class="qbig ${wp ? 'wp' : ''}">${fmt(Q.q)}</div>`;
+/* Small tables (Proportion, 18 Nov 2026): Q.tbl = [['Pens', 4, 6], ['Cost (£)', 3, '□']], one row per list, the first item a heading.
+   Drawn under the question on screen, in the book list and on sheets. Give Q.qw too, a words version for the ladder and home card. */
+const tblHTML = t => `<table class="qtbl">${t.map(r => `<tr><th>${fmt(String(r[0]))}</th>${r.slice(1).map(c => `<td>${fmt(String(c))}</td>`).join('')}</tr>`).join('')}</table>`;
+const qHTML = (Q, wp) => (Q.pic ? picHTML(Q.pic) : '') + `<div class="qbig ${wp ? 'wp' : String(Q.q).length > 60 ? 'long' : ''}">${fmt(Q.q)}</div>` + (Q.tbl ? tblHTML(Q.tbl) : '');
+// Model working (Q.show, a list of lines) shown after the answer. With Q.work the student must tick that they have checked their working against it.
+const showHTML = Q => Q.show?.length ? `<div class="sol"><b>Model working</b><br>${Q.show.map(fmt).join('<br>')}</div>` : '';
+const needsCheck = A => !!(A && A.q.work && !A.quiet && A.state !== 'open' && !A.wok);
 const PADKEYS = [['7', '7'], ['8', '8'], ['9', '9'], ['⌫', '⌫', 'Delete'], ['4', '4'], ['5', '5'], ['6', '6'], ['−', '−', 'Minus'], ['1', '1'], ['2', '2'], ['3', '3'], ['%', '%', 'Percent'],
   ['0', '0'], ['.', '.', 'Decimal point'], ['frac', `<span class="ic">${FRAC_IC}</span>`, 'Fraction'], ['mixed', `<span class="ic">${MIXED_IC}</span>`, 'Mixed number']];
 
@@ -1837,7 +2028,7 @@ function sessHTML() {
     const typedLine = isFacts(k)
       ? `<div class="tline"><span class="chip">⏱ Timed</span><span class="small"><b>${tn} quick questions on screen.</b> Goal: each one straight away, without counting: under ${CONFIG.autoSecs} seconds for small numbers, longer for bigger ones.${k.old ? ' They mix these facts with ones from earlier levels.' : ''}${k.speedOK ? '' : ' Questions with decimals have no clock.'}</span></div>`
       : `<div class="tline"><span class="chip">No time goal</span><span class="small"><b>${tn} quick questions on screen.</b> No clock to beat; how long you take is noted for your teacher.${k.written ? ' Use your book for the working.' : ''}</span></div>`;
-    h += `<div class="card"><h2 style="margin-top:0">${wp ? 'Before you start' : 'Study this first'}${strChip(k)}</h2><p>${esc(k.tip)}</p>${ex ? `<div class="sol"><span class="muted small">Example</span>${ex.pic ? picHTML(ex.pic) : ''}<div style="font-size:26px;font-weight:700">${fmt(ex.q)}</div><div style="font-size:22px">Answer: <b>${ansHTML(ex)}</b></div></div>` : ''}
+    h += `<div class="card"><h2 style="margin-top:0">${wp ? 'Before you start' : 'Study this first'}${strChip(k)}</h2><p>${esc(k.tip)}</p>${ex ? `<div class="sol"><span class="muted small">Example</span>${ex.pic ? picHTML(ex.pic) : ''}<div style="font-size:26px;font-weight:700">${fmt(ex.q)}</div>${ex.tbl ? tblHTML(ex.tbl) : ''}<div style="font-size:22px">Answer: <b>${ansHTML(ex)}</b></div>${ex.show ? `<div class="small">${ex.show.map(fmt).join('<br>')}</div>` : ''}</div>` : ''}
     ${wp ? `<div class="tline"><span class="chip">Not timed</span><span class="small">3 problems. Do your working in your book, then type the final answer. You get two tries.</span></div>`
       : typedLine + `<div class="tline"><span class="chip">No time goal</span><span class="small"><b>${bn} questions in your book.</b> Take care with these.</span></div>`}<button class="btn pri big" data-act="typed">${wp ? 'Start' : 'Got it, start'}</button></div>`;
   } else if (V.phase === 'book' || V.phase === 'mark') {
@@ -1846,7 +2037,7 @@ function sessHTML() {
     ${!mk && V.chainN ? `<p class="small" style="color:var(--accent)">Questions 1 to ${V.chainN} change one thing at a time. Think about what changes before you work each one out.</p>` : ''}
     ${!mk && V.mixed ? `<p class="small" style="color:var(--accent)">These mix the new facts with ones from earlier levels.</p>` : ''}
     ${!mk && V.earlierN ? `<p class="small" style="color:var(--accent)">${V.earlierN === 1 ? 'One of these is' : V.earlierN + ' of these are'} from earlier levels, to keep them fresh.</p>` : ''}
-    <ul class="blist">${V.book.map((x, i) => `<li><span class="n">${i + 1}</span><span>${x.pic ? picHTML(x.pic) : ''}${fmt(x.q)}</span>${mk ? `<span class="a">${ansHTML(x)}</span><span class="mk"><button class="y ${V.marks[i] === true ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="1" aria-label="Correct">✓</button><button class="x ${V.marks[i] === false ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="0" aria-label="Wrong">✗</button></span>` : ''}</li>`).join('')}</ul>
+    <ul class="blist">${V.book.map((x, i) => `<li><span class="n">${i + 1}</span><span>${x.pic ? picHTML(x.pic) : ''}${fmt(x.q)}${x.tbl ? tblHTML(x.tbl) : ''}</span>${mk ? `<span class="a">${ansHTML(x)}</span><span class="mk"><button class="y ${V.marks[i] === true ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="1" aria-label="Correct">✓</button><button class="x ${V.marks[i] === false ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="0" aria-label="Wrong">✗</button></span>` : ''}</li>`).join('')}</ul>
     ${mk ? `<button class="btn pri big" data-act="marked" ${V.marks.includes(null) ? 'disabled' : ''}>Done</button>` : `<button class="btn pri big" data-act="tomark">I've finished, show the answers</button>`}</div>`;
   } else if (V.phase === 'rate') {
     h += `<div class="card"><h2 style="margin-top:0">How did that feel?</h2><p class="muted small">Be honest. This helps choose what you practise next.</p><div class="rate"><button class="btn" data-act="rate" data-r="hard">😓<br>Tough</button><button class="btn" data-act="rate" data-r="ok">🙂<br>OK</button><button class="btn" data-act="rate" data-r="easy">😎<br>Easy</button></div></div>`;
@@ -2017,7 +2208,7 @@ function makeSheet(k, type, who) {
   const secs = sheetSections(k, type); if (!secs) return null;
   const long = Math.max(...Array.from({length: 15}, () => String(qText(bookGen(k)())).length)), cols = k.written ? 2 : long > 22 ? 1 : long > 11 ? 2 : 3;
   let n = 0; const ans = [];
-  const cell = (x, cls = '') => { n++; ans.push([n, x]); return `<div class="${cls}" data-n="${n}"><b>${n}</b><span>${eqs(qText(x))}</span></div>`; };
+  const cell = (x, cls = '') => { n++; ans.push([n, x]); return `<div class="${cls}" data-n="${n}"><b>${n}</b><span>${x.tbl ? fmt(x.q) + tblHTML(x.tbl) : eqs(qText(x))}</span></div>`; };
   const body = secs.map(s => `<div class="sect">${s.h ? `<div class="sec">${esc(s.h)}</div>` : ''}${s.tip ? `<div class="stip">${esc(s.tip)}</div>` : ''}` +
     (s.pairs ? `<div class="sq" style="grid-template-columns:1fr 1fr">${s.pairs.map(p => `<div class="pair">${p.map((x, i) => cell(x, i < p.length - 1 ? 'known' : 'new')).join('')}</div>`).join('')}</div>`
       : `<div class="sq${k.written ? ' tall' : ''}" style="grid-template-columns:repeat(${cols},1fr)">${s.qs.map(x => cell(x)).join('')}</div>`) + '</div>').join('');
@@ -2131,7 +2322,8 @@ document.addEventListener('click', e => {
     case 'submit': submitAns($('#ans').value); break;
     case 'choice': submitAns(V.ask.q.opts[+el.dataset.i]); break;
     case 'skip': skipAns(); break;
-    case 'next': nextAsk(); break;
+    case 'next': if (!needsCheck(V.ask)) nextAsk(); break;
+    case 'wchk': if (V.ask) { V.ask.wok = el.checked; render(); } break;
     case 'tomark': V.bsec = V.bt0 ? Math.round((Date.now() - V.bt0) / 1000) : undefined; V.phase = 'mark'; render(); window.scrollTo(0, 0); break;
     case 'mark': V.marks[+el.dataset.i] = el.dataset.v === '1'; render(); break;
     case 'marked': V.phase = 'rate'; render(); window.scrollTo(0, 0); break;
@@ -2193,7 +2385,7 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
   if (V.modal) { e.preventDefault(); return $('[data-act=myes]')?.click(); }
   if (V.ask?.state === 'open' && $('#ans')) { e.preventDefault(); submitAns($('#ans').value); }
-  else if (V.ask && V.ask.state !== 'open') { e.preventDefault(); nextAsk(); }
+  else if (V.ask && V.ask.state !== 'open') { e.preventDefault(); if (!needsCheck(V.ask)) nextAsk(); }
   else if (V.view === 'welcome') $('[data-act=setname]')?.click();
 });
 addEventListener('pagehide', save);
