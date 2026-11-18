@@ -183,6 +183,8 @@ const dOff = n => { const d = new Date(); d.setDate(d.getDate() - n); return dst
 const nice = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short'}); };
 const fmt = s => esc(s).replace(/\{(?:(-?\d+) )?([^{}\/ ]+)\/([^{}\/ ]+)\}/g, (_, w, n, d) => `${w || ''}<span class="fr"><span>${n}</span><span>${d}</span></span>`).replace(/\^□/g, '<sup><span class="box"></span></sup>').replace(/□/g, '<span class="box"></span>').replace(/\n/g, '<br>');
 const q = (t, a, o = {}) => ({q: t, a, ...o});
+// Tells questions apart: by their text, and for drawn ones by their answer and labels too (many share their wording).
+const qKey = x => x.fig ? x.q + '|' + x.a + '|' + x.fig.el.map(e => e.lab || e.s || '').join(',') : x.q;
 const SUPS = '⁰¹²³⁴⁵⁶⁷⁸⁹';
 const sup = n => (n < 0 ? '⁻' : '') + String(Math.abs(n)).split('').map(d => SUPS[d]).join('');
 const mmss = x => { x = Math.round(x); return Math.floor(x / 60) + ':' + pad2(x % 60); };
@@ -796,7 +798,7 @@ function agDraw(f, aria) {
   const isLet = t => /^[a-z]$/.test(t);
   const txt = (p, t, unk) => { const hw = t.length * (unk ? 5.5 : 4.8) + 2; labs.push([p[0] - hw, p[1] - 9, p[0] + hw, p[1] + 9]); box.push([p[0] - hw - 4, p[1] - 12], [p[0] + hw + 4, p[1] + 12]); return `<text x="${f1(p[0])}" y="${f1(p[1])}" text-anchor="middle" dominant-baseline="central"${unk ? ' class="unk"' : ''}>${esc(t)}</text>`; };
   f.el.forEach(e => {
-    if (e.t === 'seg') out.push(`<path d="M${xy(P(e.a))}L${xy(P(e.b))}"/>`);
+    if (e.t === 'seg') out.push(`<path${e.thin ? ' class="arc"' : ''} d="M${xy(P(e.a))}L${xy(P(e.b))}"/>`);
     else if (e.t === 'arc') {
       const v = P(e.c); let [b1, b2] = mir < 0 ? [ta(e.a2), ta(e.a1)] : [ta(e.a1), ta(e.a2)];
       const span = ((b2 - b1) % 360 + 360) % 360, unk = isLet(e.lab || '');
@@ -943,6 +945,199 @@ sk('AN11', 'GA', 'Parallel lines: corresponding and alternate angles', 'Parallel
         {self: true, fig: agPar(h, {Bur: h + '°', ...all}, {bare: true}), qw: `Two parallel lines are crossed by a third line, making eight angles. One is ${h}°. Work out the other seven and give a reason for each.`})]; },
    book: () => { const Q = agParQ(pick(['corr', 'alt', 'alt', 'two'])); return Math.random() < .25 ? agReasonQ(Q, Q.show.map(s => s.split(':')[0]).join(', then ') + '.') : Q; }});
 
+/* ---- Angles build 2 (18 Nov 2026): AN1, AN3, AN4, AN5, AN6, AN7, AN9. ---- */
+const AG_ACC = 'Drawn accurately';
+// Makes another question when a diagram's labels would overlap (very flat shapes), so every diagram the student sees is clear.
+const agClean = f => (...a) => { let Q; for (let k = 0; k < 12; k++) { Q = f(...a); agDraw(Q.fig, ''); if (!agDraw.clash) return Q; } return Q; };
+const ag5 = (lo, hi) => Math.random() < .7 ? 5 * ri(Math.ceil(lo / 5), Math.floor(hi / 5)) : ri(lo, hi);
+// A polygon from its corners, anticlockwise: arcs inside each labelled corner, reflex ones too. labs: one per corner.
+function agPoly(pts, labs, o = {}) {
+  const n = pts.length, el = pts.map((p, i) => ({t: 'seg', a: p, b: pts[(i + 1) % n]}));
+  pts.forEach((v, i) => { const lab = labs[i]; if (!lab) return; el.push({t: 'arc', c: v, a1: agDir(v, pts[(i + 1) % n]), a2: agDir(v, pts[(i + n - 1) % n]), lab: lab === 'R' ? '' : lab, right: lab === 'R'}); });
+  (o.extra || []).forEach(e => el.push(e));
+  return {el, rot: o.rot || 0, mir: !!o.mir, note: AG_NOTE, far: !!o.far};
+}
+// The corners of a quadrilateral with these interior angles (anticlockwise from the bottom left), or null if it can't be drawn simply.
+function agQuadPts(ang) {
+  const [a, b, c] = ang, phi = 360 - b - c, u1 = agP(180 - b), u2 = agP(phi);
+  for (let k = 0; k < 40; k++) {
+    const pl = .45 + Math.random() * .7, rhs = [pl * Math.cos(agR(a)) - 1, pl * Math.sin(agR(a))];
+    const det = u1[0] * u2[1] - u2[0] * u1[1]; if (Math.abs(det) < 1e-6) continue;
+    const qq = (rhs[0] * u2[1] - u2[0] * rhs[1]) / det, t = (u1[0] * rhs[1] - rhs[0] * u1[1]) / det;
+    if (qq < .35 || t < .3 || qq > 1.6 || t > 1.8) continue;
+    const P = [[0, 0], [1, 0], [1 + qq * u1[0], qq * u1[1]], agP(a, pl)];
+    const X = (p, q, r, s) => { const d = (q[0] - p[0]) * (s[1] - r[1]) - (q[1] - p[1]) * (s[0] - r[0]); if (Math.abs(d) < 1e-9) return false; const ta = ((r[0] - p[0]) * (s[1] - r[1]) - (r[1] - p[1]) * (s[0] - r[0])) / d, tb = ((r[0] - p[0]) * (q[1] - p[1]) - (r[1] - p[1]) * (q[0] - p[0])) / d; return ta > 0 && ta < 1 && tb > 0 && tb < 1; };
+    if (X(P[0], P[1], P[2], P[3]) || X(P[1], P[2], P[3], P[0])) continue;
+    return P;
+  }
+  return null;
+}
+
+// AN1 Estimating and naming angles. Drawn accurately, the one level where the picture is the information.
+function agOne(a, L, o = {}) {
+  const r0 = o.r0 ?? ri(0, 359), O = [0, 0];
+  const el = [{t: 'seg', a: O, b: agP(r0)}, {t: 'seg', a: O, b: agP(r0 + a)}, {t: 'arc', c: O, a1: r0, a2: r0 + a, lab: a === 90 ? '' : L, right: a === 90}];
+  return {el, rot: 0, note: AG_ACC, far: false};
+}
+const AG_TYPES = ['Acute', 'Right angle', 'Obtuse', 'Reflex'];
+const agType = a => a < 90 ? 'Acute' : a === 90 ? 'Right angle' : a < 180 ? 'Obtuse' : 'Reflex';
+function agEstQ(o = {}) {
+  let a = o.a; if (!a) do { a = Math.random() < .25 ? ri(190, 350) : ri(10, 170); } while ([90, 180, 270].some(x => Math.abs(a - x) < 6));
+  const L = o.L || agLet();
+  return q(`Estimate the size of angle ${L}.`, a, {suf: '°', near: 15, close: 30, L, fig: agOne(a, L, o), qw: `Estimate the size of the angle marked ${L} in the diagram.`});
+}
+function agTypeQ() {
+  const a = Math.random() < .15 ? 90 : Math.random() < .3 ? ri(195, 345) : ri(15, 165), L = agLet();
+  if ([90, 180].some(x => a !== 90 && Math.abs(a - x) < 8)) return agTypeQ();
+  return q(`What type of angle is ${a === 90 ? 'this' : L}?`, agType(a), {kind: 'choice', opts: AG_TYPES, fig: agOne(a, L), qw: 'What type of angle is shown in the diagram?'});
+}
+sk('AN1', 'GA', 'Estimating and naming angles', 'Compare with the angles you know. A right angle is a square corner, 90°. A straight line is 180°. Half a right angle is 45°. An angle a bit more than a right angle might be about 110°. Acute is less than 90°, obtuse is between 90° and 180°, reflex is more than 180°.',
+  () => Math.random() < .6 ? agEstQ() : agTypeQ(),
+  {pl: false, chain: () => { const r0 = ri(0, 359), o = {L: 'x', r0}; return [agEstQ({...o, a: 40}), agEstQ({...o, a: 80}), agEstQ({...o, a: 140}), agEstQ({...o, a: 220})]; },
+   book: () => { if (Math.random() < .4) { const Q = agTypeQ(); return q(`${Q.q.replace('?', '')}: acute, a right angle, obtuse or reflex?`, Q.a, {fig: Q.fig, qw: Q.qw, self: true}); }
+     const Q = agEstQ(); return q(Q.q, `About ${Q.a}° (anything from ${Q.a - 15}° to ${Q.a + 15}° is a good estimate)`, {fig: Q.fig, qw: Q.qw, self: true}); }});
+
+// AN3 Angles round a point. Three angles (50%), four (30%, one may be a square corner), two with one reflex (20%). True size.
+function agPointQ(type, o = {}) {
+  const L = o.L || agLet(), rot = o.rot ?? ri(0, 359);
+  let gs;
+  if (o.gs) gs = o.gs;
+  else if (type === 'three') do { gs = [ag5(40, 170), ag5(40, 170)]; } while (360 - gs[0] - gs[1] < 40 || 360 - gs[0] - gs[1] > 200 || gs.includes(180));
+  else if (type === 'four') do { gs = [Math.random() < .5 ? 90 : ag5(40, 130), ag5(40, 130), ag5(40, 130)]; } while (360 - gs.reduce((a, b) => a + b) < 35 || 360 - gs.reduce((a, b) => a + b) > 150);
+  else gs = [ag5(200, 320)];
+  const x = 360 - gs.reduce((a, b) => a + b, 0), vals = gs.slice(), i = o.i ?? ri(0, gs.length); vals.splice(i, 0, x);
+  const labs = vals.map((v, j) => j === i ? L : v === 90 ? 'R' : v + '°');
+  const gTxt = gs.map(v => v + '°').join(', ');
+  return q(agFind(L), x, {suf: '°', L, fig: agFan(vals, labs, {rot}), qw: `Angles round a point: ${gTxt} and ${L}. ${agFind(L)}`, show: ['Angles round a point add up to 360°.', `${L} = 360° − ${gs.map(v => v + '°').join(' − ')} = ${x}°`]});
+}
+sk('AN3', 'GA', 'Angles round a point', 'Angles round a point add up to 360°, a full turn. If three angles are 100°, 120° and x, then x = 360° − 220° = 140°.',
+  () => { const r = Math.random(); return agPointQ(r < .5 ? 'three' : r < .8 ? 'four' : 'two'); },
+  {pl: false, chain: () => { const o = {L: 'x', rot: 0}; return [agPointQ('three', {...o, gs: [100, 120], i: 2}), agPointQ('three', {...o, gs: [100, 130], i: 2}), agPointQ('four', {...o, L: 'y', gs: [100, 130, 90], i: 2}), agPointQ('two', {...o, L: 'z', gs: [250], i: 1})]; }});
+
+// AN4 Crossing lines: vertically opposite angles (gate). Opposite (40%), next to (40%), three lines through a point (20%). Reason after the answer.
+function agCrossQ(type, o = {}) {
+  const L = o.L || agLet(), rot = o.rot ?? ri(0, 179);
+  if (type === 'three') {
+    let p, qv; do { p = ag5(30, 100); qv = ag5(30, 100); } while (180 - p - qv < 30);
+    const r = 180 - p - qv, labs = [p + '°', qv + '°', '', '', '', L];
+    return q(agFind(L), r, {suf: '°', L, fig: agFan([p, qv, r, p, qv, r], labs, {rot}), qw: `Three straight lines cross at a point, making angles of ${p}° and ${qv}° next to each other. ${L} is opposite the angle next to them. ${agFind(L)}`,
+      why: agWhy(['vo', 'line', 'point', 'tri'], [['line', 'vo']], 'after'), show: ['Angles on a straight line add up to 180°: the third angle on the line is 180° − ' + p + '° − ' + qv + '° = ' + r + '°.', `Vertically opposite angles are equal: ${L} = ${r}°.`]});
+  }
+  let g = o.g; if (!g) g = agPickA(30, 150);
+  const i = o.i ?? ri(0, 3), j = type === 'opp' ? (i + 2) % 4 : (i + pick([1, 3])) % 4, t = i % 2 ? 180 - g : g, parts = [t, 180 - t, t, 180 - t], x = parts[j];
+  const labs = ['', '', '', '']; labs[i] = g + '°'; labs[j] = L;
+  const f = type === 'opp' ? 'vo' : 'line';
+  return q(agFind(L), x, {suf: '°', L, fig: agFan(parts, labs, {rot}), qw: `Two straight lines cross. One angle is ${g}°. ${L} is ${type === 'opp' ? 'opposite it' : 'next to it'}. ${agFind(L)}`,
+    why: agWhy(['vo', 'line', 'point'], [[f]], 'after'), show: [f === 'vo' ? `Vertically opposite angles are equal: ${L} = ${g}°.` : `Angles on a straight line add up to 180°: ${L} = 180° − ${g}° = ${x}°.`]});
+}
+sk('AN4', 'GA', 'Crossing lines: vertically opposite angles', 'Where two straight lines cross, opposite angles are equal: they are called vertically opposite. The angles next to each other are on a straight line, so they add to 180°. If one angle is 70°, the opposite one is 70° and the other two are 110°.',
+  () => { const r = Math.random(); return agCrossQ(r < .4 ? 'opp' : r < .8 ? 'next' : 'three'); },
+  {chain: () => { const g = pick([65, 70, 75]), o = {L: 'x', rot: 20, g, i: 0}, h = g - 5;
+    return [agCrossQ('opp', o), agCrossQ('next', {...o, i: 0}), q(agFind('x'), 180 - g, {suf: '°', L: 'x', fig: agFan([g, 180 - g, g, 180 - g], [g + '°', '', '', 'x'], {rot: 20}), qw: `Two straight lines cross. One angle is ${g}°. x is diagonally across from the angle next to it. ${agFind('x')}`}),
+      q('Work out all three missing angles. Give a reason for each.', `a = ${180 - h}° (angles on a straight line), b = ${h}° (vertically opposite), c = ${180 - h}° (vertically opposite to a)`, {self: true, fig: agFan([h, 180 - h, h, 180 - h], [h + '°', 'a', 'b', 'c'], {rot: 20}), qw: `Two straight lines cross. One angle is ${h}°. Work out the other three and give a reason for each.`})]; },
+   book: () => { const Q = agCrossQ(pick(['opp', 'next', 'next', 'three'])); return Math.random() < .25 ? agReasonQ(Q, Q.show.map(s => s.split(':')[0]).join(', then ') + '.') : Q; }});
+
+// AN5 Compass directions and turns. Drawn accurately, north always up.
+const AG_PTS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+const AG_PNAME = {N: 'north', E: 'east', S: 'south', W: 'west'};
+function agRose(arrows) {      // a compass with arrows on the bearings given
+  const O = [0, 0], el = [];
+  ['N', 'E', 'S', 'W'].forEach((d, i) => { const th = 90 - 90 * i; el.push({t: 'seg', a: O, b: agP(th, 1), thin: true}, {t: 'txt', p: agP(th, 1.14), s: d}); });
+  arrows.forEach(b => { const e = agP(90 - b, .8); el.push({t: 'seg', a: O, b: e}, {t: 'par', a: O, b: e, n: 1, at: .97}); });
+  return {el, rot: 0, note: AG_ACC, far: false};
+}
+const agPtB = p => AG_PTS.indexOf(p) * 22.5;
+function agCompassQ(type, o = {}) {
+  if (type === 'est') {
+    const sixteen = o.sixteen ?? Math.random() < 1 / 3, step = sixteen ? 1 : 2, i = step * ri(0, 16 / step - 1), b = i * 22.5 + (Math.random() * 2 - 1) * (sixteen ? 5 : 8);
+    const opts = [-step, 0, step].map(k => AG_PTS[(i + k + 16) % 16]);
+    return q('Which direction is the arrow closest to?', AG_PTS[i], {kind: 'choice', opts, fig: agRose([b]), qw: 'An arrow is drawn on a compass. Which direction is it closest to?'});
+  }
+  if (type === 'turn') {
+    const s = pick(['N', 'E', 'S', 'W', 'NE', 'SE', 'SW', 'NW']), t = pick([90, 90, 180, 270, 45, 135]), cw = Math.random() < .5, who = nm();
+    const end = AG_PTS[((agPtB(s) + (cw ? t : -t)) / 22.5 % 16 + 16) % 16], wrong = AG_PTS[((agPtB(s) + (cw ? -t : t)) / 22.5 % 16 + 16) % 16];
+    const others = AG_PTS.filter((p, k) => k % 2 === 0 && p !== end && p !== wrong && p !== s), opts = shuf([end, wrong === end ? pick(others) : wrong, pick(others)]);
+    return q(`${who} faces ${s} and turns ${t}° ${cw ? 'clockwise' : 'anticlockwise'}. Which way is ${who} facing now?`, end, {kind: 'choice', opts: [...new Set(opts)].length === 3 ? opts : shuf([end, ...others.slice(0, 2)]), fig: agRose([agPtB(s)]), qw: `${who} faces ${s} and turns ${t}° ${cw ? 'clockwise' : 'anticlockwise'}. Which way is ${who} facing now?`});
+  }
+  let a, b; do { a = pick(AG_PTS.filter((p, k) => k % 2 === 0)); b = pick(AG_PTS.filter((p, k) => k % 2 === 0)); } while (a === b);
+  if (o.a) [a, b] = [o.a, o.b];
+  const cwq = o.cw ?? Math.random() < .4, d = ((agPtB(b) - agPtB(a)) % 360 + 360) % 360, x = cwq ? d : Math.min(d, 360 - d);
+  return q(cwq ? `How many degrees is a clockwise turn from ${a} to ${b}?` : `What is the smaller angle between ${a} and ${b}?`, x, {suf: '°', fig: agRose([agPtB(a), agPtB(b)]), qw: cwq ? `A clockwise turn from ${a} to ${b}: how many degrees?` : `What is the smaller angle between the directions ${a} and ${b}?`,
+    show: [`From one direction to the next of the eight (N, NE, E…) is 45°.`, `${cwq ? 'Clockwise from' : 'From'} ${a} to ${b} is ${x / 45} steps: ${x / 45} × 45° = ${x}°.`]});
+}
+sk('AN5', 'GA', 'Compass directions and turns', 'The four main directions are N, E, S and W, clockwise. Halfway between them are NE, SE, SW and NW. Between those are NNE, ENE and so on: NNW is between N and NW. From one direction to the next main direction is a quarter turn, 90°. N to NE is 45°.',
+  () => { const r = Math.random(); return agCompassQ(r < .4 ? 'est' : r < .7 ? 'turn' : 'between'); },
+  {pl: false, chain: () => [['E'], ['SE'], ['S'], ['SW']].map(([b]) => agCompassQ('between', {a: 'N', b, cw: true})),
+   book: () => { const Q = agCompassQ(pick(['est', 'turn', 'between', 'between'])); return Q.kind === 'choice' ? q(`${Q.q} (${Q.opts.join(', ')})`, Q.a, {fig: Q.fig, qw: Q.qw, self: true}) : Q; }});
+
+// AN6 Three-figure bearings (gate). The clockwise angle given (35%), the angle anticlockwise from north (35%), the angle from south, east or west (30%).
+// Where to write A: the direction from A furthest from B's line, north and the reference line.
+const agAway = (th, ref) => { const used = [th, 90, ...(ref ? [90 - {S: 180, E: 90, W: 270}[ref]] : [])]; let best = 0, bd = -1; for (let a = 0; a < 360; a += 15) { const d = Math.min(...used.map(u => Math.abs(((a - u) % 360 + 540) % 360 - 180))); if (d > bd) { bd = d; best = a; } } return agP(best, .17); };
+const agB3 = b => String(Math.round(b)).padStart(3, '0');
+function agBearQ(type, o = {}) {
+  let b, g, ref = null, arc;
+  if (type === 'cw') { g = o.g ?? (Math.random() < .5 ? ri(15, 99) : ri(100, 175)); b = g; arc = [90 - b, 90]; }
+  else if (type === 'acw') { g = o.g ?? ri(15, 165); b = 360 - g; arc = [90, 90 + g]; }
+  else {
+    g = ri(15, 75); const k = pick(['S-W', 'S-E', 'E-S', 'E-N', 'W-N', 'W-S']), base = {S: 180, E: 90, W: 270}[k[0]], tw = k[2];
+    const sign = (base + 90) % 360 === {N: 0, E: 90, S: 180, W: 270}[tw] || (base === 270 && tw === 'N') ? 1 : -1;
+    b = (base + sign * g + 360) % 360; ref = k[0];
+    const rm = 90 - base, bm = 90 - b; arc = sign > 0 ? [bm, rm] : [rm, bm];      // clockwise in bearings is anticlockwise reversed in maths angles
+  }
+  const A = [0, 0], th = 90 - b, B = agP(th, 1);
+  const el = [{t: 'seg', a: A, b: [0, .85]}, {t: 'par', a: A, b: [0, .85], n: 1, at: .97}, {t: 'txt', p: [0, 1.0], s: 'N'}, {t: 'seg', a: A, b: B}, {t: 'txt', p: agP(th, 1.13), s: 'B'}, {t: 'txt', p: agAway(th, ref), s: 'A'},
+    {t: 'arc', c: A, a1: arc[0], a2: arc[1], lab: g + '°'}];
+  if (ref) { const rm = 90 - {S: 180, E: 90, W: 270}[ref]; el.push({t: 'seg', a: A, b: agP(rm, .7)}, {t: 'txt', p: agP(rm, .84), s: ref}); }
+  const ans = agB3(b), how = type === 'cw' ? [`The angle is measured clockwise from north, so the bearing is ${g}°, written with three figures: ${ans}°.`]
+    : type === 'acw' ? [`The angle is ${g}° anticlockwise from north, so clockwise it is 360° − ${g}° = ${b}°.`] : [`${ref} is a bearing of ${agB3({S: 180, E: 90, W: 270}[ref])}°. B is ${g}° from it, so the bearing is ${b}°, written ${ans}°.`];
+  return q('Find the bearing of B from A.', ans, {suf: '°', form: 'bearing', fig: {el, rot: 0, note: AG_NOTE, far: false}, qw: type === 'cw' ? `B is ${g}° clockwise from north at A. Find the bearing of B from A.` : type === 'acw' ? `B is ${g}° anticlockwise from north at A. Find the bearing of B from A.` : `From A, B is ${g}° round from ${AG_PNAME[ref]}. Find the bearing of B from A.`, show: how});
+}
+sk('AN6', 'GA', 'Three-figure bearings', 'A bearing is an angle measured clockwise from north, written with three figures. East is 090°. A bearing of 70° is written 070°. To find the bearing of B from A, stand at A, face north and turn clockwise until you face B.',
+  () => { const r = Math.random(); return agClean(agBearQ)(r < .35 ? 'cw' : r < .7 ? 'acw' : 'ref'); },
+  {chain: () => [agBearQ('cw', {g: 70}), agBearQ('acw', {g: 70}), agBearQ('cw', {g: 110}), agBearQ('acw', {g: 110})]});
+
+// AN7 Angles in a triangle. Any (50%), right-angled (25%), obtuse (25%). A third of diagrams distorted, by up to 20°.
+function agTriQ(type, o = {}) {
+  const L = o.L || agLet(); let ang = o.ang;
+  if (!ang) do { ang = type === 'right' ? [90, ri(20, 70)] : type === 'obtuse' ? [ri(100, 140), ri(20, 50)] : [ri(35, 85), ri(35, 85)]; ang.push(180 - ang[0] - ang[1]); } while (ang[2] < 15 || ang.some(a => a !== 90 && Math.abs(a - 90) < 6) || (type === 'any' && ang[2] >= 90));
+  ang = o.ang ? ang : shuf(ang);
+  const xi = o.xi ?? pick([0, 1, 2].filter(i => ang[i] !== 90)), {d, far} = agDistort(ang, ...(o.dist || [1 / 3, 20])), labs = ang.map((a, i) => i === xi ? L : a === 90 ? 'R' : a + '°');
+  const gs = ang.filter((a, i) => i !== xi);
+  return q(agFind(L), ang[xi], {suf: '°', L, fig: agTri([d[0], d[1]], labs, {rot: o.rot ?? ri(0, 359), far}), qw: `A triangle has angles of ${gs.map(a => a + '°').join(' and ')}${gs.includes(90) ? ' (a right angle)' : ''}. ${L} is the third angle. ${agFind(L)}`,
+    show: ['Angles in a triangle add up to 180°.', `${L} = 180° − ${gs[0]}° − ${gs[1]}° = ${ang[xi]}°`]});
+}
+sk('AN7', 'GA', 'Angles in a triangle', 'The angles in a triangle add up to 180°. If two angles are 50° and 70°, the third is 180° − 120° = 60°.',
+  () => { const r = Math.random(); return agClean(agTriQ)(r < .5 ? 'any' : r < .75 ? 'right' : 'obtuse'); },
+  {pl: false, chain: () => [70, 80, 90, 100].map(b => agTriQ('any', {L: 'x', ang: [50, b, 130 - b], xi: 2, rot: 0, dist: [0, 0]})),
+   book: () => { const Q = agClean(agTriQ)(pick(['any', 'right', 'obtuse'])); return Math.random() < .25 ? agReasonQ(Q, 'Angles in a triangle add up to 180°.') : Q; }});
+
+// AN9 Angles in a quadrilateral. Three angles given (55%), with right angles (30%), an arrowhead with one reflex angle (15%). A third distorted, by up to 20°.
+function agQuadQ(type, o = {}) {
+  const L = o.L || agLet();
+  for (let k = 0; k < 60; k++) {
+    let ang = o.ang;
+    if (!ang) {
+      if (type === 'arrow') { const r = ag5(200, 250), a = ri(25, 55), b = ri(25, 55); ang = [a, b, 360 - r - a - b, r]; if (ang[2] < 20 || ang[2] > 80) continue; ang = [ang[0], ang[1], ang[3], ang[2]]; }
+      else if (type === 'right') { const two = Math.random() < .5; ang = two ? [90, 90, ri(55, 125)] : [90, ri(60, 130), ri(60, 130)]; ang.push(360 - ang.reduce((x, y) => x + y)); ang = shuf(ang); }
+      else { ang = [ri(60, 130), ri(60, 130), ri(60, 130)]; ang.push(360 - ang.reduce((x, y) => x + y)); ang = shuf(ang); }
+      if (ang.filter(a => a === 90).length > 2 || ang.some(a => a < 20 || (a !== 90 && Math.abs(a - 90) < 6) || (a > 175 && a < 185) || a >= 270)) continue;
+      if (type !== 'arrow' && ang.some(a => a >= 180)) continue;
+    }
+    const {d, far} = agDistort(ang, ...(o.dist || [1 / 3, 20])), P = agQuadPts(d); if (!P) continue;
+    const xi = o.xi ?? pick([0, 1, 2, 3].filter(i => ang[i] !== 90 && ang[i] < 180)), labs = ang.map((a, i) => i === xi ? L : a === 90 ? 'R' : a + '°'), gs = ang.filter((a, i) => i !== xi);
+    const fig = agPoly(P, labs, {rot: o.rot ?? ri(0, 359), mir: o.mir ?? Math.random() < .5, far, extra: o.diag ? [{t: 'seg', a: P[0], b: P[2]}] : []});
+    return q(agFind(L), ang[xi], {suf: '°', L, fig, qw: `A quadrilateral has angles of ${gs.map(a => a + '°').join(', ')} and ${L}. ${agFind(L)}`, show: ['Angles in a quadrilateral add up to 360°.', `${L} = 360° − ${gs.map(a => a + '°').join(' − ')} = ${ang[xi]}°`]});
+  }
+  return agQuadQ('any', {L, dist: [0, 0], ang: [80, 95, 110, 75]});
+}
+sk('AN9', 'GA', 'Angles in a quadrilateral', 'The angles in a quadrilateral add up to 360°, because it splits into two triangles. If three angles are 80°, 95° and 110°, the fourth is 360° − 285° = 75°.',
+  () => { const r = Math.random(); return agClean(agQuadQ)(r < .55 ? 'any' : r < .85 ? 'right' : 'arrow'); },
+  {pl: false, chain: () => { const o = {L: 'x', xi: 3, rot: 0, mir: false, dist: [0, 0]};
+    const D = agQuadQ('any', {...o, ang: [80, 95, 110, 75], diag: true});
+    return [agQuadQ('any', {...o, ang: [80, 95, 110, 75]}), agQuadQ('any', {...o, ang: [80, 95, 120, 65]}), agQuadQ('any', {...o, ang: [90, 90, 120, 60]}),
+      q('The diagonal splits the quadrilateral into two triangles. Use this to show that the angles of a quadrilateral add up to 360°.', 'Each triangle\'s angles add up to 180°, and together they make the four corners: 2 × 180° = 360°.', {self: true, fig: D.fig, qw: 'A quadrilateral with a diagonal drawn, splitting it into two triangles. Show that its angles add up to 360°.'})]; },
+   book: () => { const Q = agClean(agQuadQ)(pick(['any', 'right', 'arrow'])); return Math.random() < .25 ? agReasonQ(Q, 'Angles in a quadrilateral add up to 360°.') : Q; }});
+
 const WP = {
 1: [
  ['money left after spending (subtraction)', () => { const n = nm(), a = ri(20, 60), b = ri(5, a - 8); return W(`${n} has £${a} and spends £${b} on a game. How much money does ${n} have left?`, a - b, [`${a} − ${b} = ${a - b}`, `£${a - b} left`], {pre: '£'}); }],
@@ -1033,8 +1228,8 @@ const GROUPS = [
   {id: 'R', name: 'Ratio and proportion', short: 'Ratio', col: '--r', tracks: [
     ['RA', 'Ratio', ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10', 'R11'], {mixBook: 2}],
     ['RP', 'Proportion', ['P1', 'P2', 'P3', 'P4'], {mixBook: 2}]]},
-  {id: 'G', name: 'Geometry', short: 'Geometry', col: '--g', tint: '--gt', draft: true, tracks: [
-    ['GA', 'Angles', ['AN2', 'AN8', 'AN11'], {mixBook: 2}]]},
+  {id: 'G', name: 'Geometry', short: 'Geometry', col: '--g', tint: '--gt', tracks: [
+    ['GA', 'Angles', ['AN1', 'AN2', 'AN3', 'AN4', 'AN5', 'AN6', 'AN7', 'AN8', 'AN9', 'AN11'], {mixBook: 2}]]},
   {id: 'W', name: 'Word problems', short: 'Problems', col: '--w', tracks: [['W', 'Word problems', ['W1', 'W2', 'W3', 'W4', 'W5', 'W6']]]},
 ];
 // A group marked draft is built but not on the home screen yet, unless the address has ?draft (for testing a section before it is finished).
@@ -1306,7 +1501,7 @@ const PADKEYS = [['7', '7'], ['8', '8'], ['9', '9'], ['⌫', '⌫', 'Delete'], [
 // ---------- practice session ----------
 const PH = ['warm', 'learn', 'typed', 'book', 'mark', 'rate', 'done'];
 const median = a => { const b = a.slice().sort((x, y) => x - y); return b.length ? b[Math.floor((b.length - 1) / 2)] : null; };
-function distinct(k, n, from = []) { const out = from.slice(), seen = new Set(out.map(x => x.q)); for (let t = 0; out.length < n && t < 200; t++) { const x = k.gen(); if (!seen.has(x.q)) { seen.add(x.q); out.push(x); } } return out; }
+function distinct(k, n, from = []) { const out = from.slice(), seen = new Set(out.map(qKey)); for (let t = 0; out.length < n && t < 200; t++) { const x = k.gen(); if (!seen.has(qKey(x))) { seen.add(qKey(x)); out.push(x); } } return out; }
 // New questions and earlier ones alternate: new, earlier, new, earlier ... (for facts levels; other levels use the level alone).
 function mixedQs(k, n) {
   if (!(isFacts(k) && k.olds?.length)) return distinct(k, n);
@@ -1344,12 +1539,12 @@ const bookGen = k => k.book || k.gen;
 function earlierQs(k, n) {
   const pool = L[k.st].filter(x => x.idx < k.idx && !x.easy); if (!pool.length || !n) return [];
   const out = [], seen = new Set();
-  for (let t = 0; out.length < n && t < 60; t++) { let r = Math.random() * pool.reduce((a, x) => a + x.idx + 1, 0), i = 0; while ((r -= pool[i].idx + 1) > 0) i++; const Q = bookGen(pool[i])(); if (!seen.has(Q.q)) { seen.add(Q.q); out.push(Q); } }
+  for (let t = 0; out.length < n && t < 60; t++) { let r = Math.random() * pool.reduce((a, x) => a + x.idx + 1, 0), i = 0; while ((r -= pool[i].idx + 1) > 0) i++; const Q = bookGen(pool[i])(); if (!seen.has(qKey(Q))) { seen.add(qKey(Q)); out.push(Q); } }
   return out;
 }
 function bookQs(k, bn, ch) {
-  const od = earlierQs(k, STR[k.st].mixBook || 0), own = [], seen = new Set(ch.map(x => x.q)), g = bookGen(k);
-  for (let t = 0; own.length < bn - ch.length - od.length && t < 200; t++) { const x = g(); if (!seen.has(x.q)) { seen.add(x.q); own.push(x); } }
+  const od = earlierQs(k, STR[k.st].mixBook || 0), own = [], seen = new Set(ch.map(qKey)), g = bookGen(k);
+  for (let t = 0; own.length < bn - ch.length - od.length && t < 200; t++) { const x = g(); if (!seen.has(qKey(x))) { seen.add(qKey(x)); own.push(x); } }
   V.earlierN = od.length;
   const gap = Math.max(1, Math.floor(own.length / (od.length + 1)));
   const mixed = own.slice(); od.forEach((x, i) => mixed.splice(Math.min(mixed.length, gap * (i + 1) + i), 0, x));
@@ -2457,11 +2652,11 @@ const BRIDGES = {
 [2, 10, 5, 4, 3, 11, 9, 6, 8, 7, 12].forEach(n => { BRIDGES['D' + n] = {from: '×' + n, tip: `Use the multiplication. ${n} × 7 = ${n * 7}, so ${n * 7} ÷ ${n} = 7.`, pair: () => { const k = ri(2, n === 12 ? 12 : 10); return [q(`${n} × ${k}`, n * k), q(`${n * k} ÷ ${n}`, k)]; }}; });
 const SHEET_TYPES = {level: 'Level practice', known: 'Mixed known', bridge: 'Bridge'};
 const PAGE_MM = 262;      // usable height of A4 with 12 mm margins (273 mm), less a little for browsers that add a header
-function fillQs(gen, n) { const out = [], seen = new Set(); for (let t = 0; out.length < n && t < n * 40; t++) { const x = gen(); if (out.length && out[out.length - 1].q === x.q) continue; if (seen.has(x.q) && t < n * 20) continue; seen.add(x.q); out.push(x); } return out; }
+function fillQs(gen, n) { const out = [], seen = new Set(); for (let t = 0; out.length < n && t < n * 40; t++) { const x = gen(); if (out.length && qKey(out[out.length - 1]) === qKey(x)) continue; if (seen.has(qKey(x)) && t < n * 20) continue; seen.add(qKey(x)); out.push(x); } return out; }
 const weighted = lv => { const w = lv.map(x => x.easy ? .3 : x.idx + 1), tot = w.reduce((a, b) => a + b, 0); return () => { let r = Math.random() * tot, i = 0; while ((r -= w[i]) > 0 && i < w.length - 1) i++; return lv[i].gen(); }; };
 const knowns = B => () => { const p = B.pair(); return pick(p.slice(0, -1)); };
 const pairsOf = (B, n) => { const out = [], seen = new Set(); for (let t = 0; out.length < n && t < 200; t++) { const p = B.pair(), key = p[p.length - 1].q; if (!seen.has(key) || t > 100) { seen.add(key); out.push(p); } } return out; };
-const uniq = a => { const seen = new Set(); return a.filter(x => !seen.has(x.q) && seen.add(x.q)); };
+const uniq = a => { const seen = new Set(); return a.filter(x => !seen.has(qKey(x)) && seen.add(qKey(x))); };
 function sheetSections(k, type) {
   const N = 90;
   if (type === 'known') { const ks = L[k.st].slice(0, k.idx).filter(x => !x.written || k.written); return ks.length ? [{h: 'Levels you know, mixed', qs: fillQs(weighted(ks), N)}] : null; }
