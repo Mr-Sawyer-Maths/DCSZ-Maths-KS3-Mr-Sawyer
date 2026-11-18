@@ -8,9 +8,9 @@
 <title>Maths Practice</title>
 <style>
 :root{--bg:#f4f2ec;--panel:#fff;--ink:#1c2230;--muted:#646c7a;--line:#dedad0;--accent:#274c77;--accent-ink:#fff;
---k:#3d7a5a;--n:#2f6f8f;--f:#8a5a9e;--w:#b4682a;--r:#1f7a78;--ok:#2f8a53;--warn:#b97a14;--bad:#c2482f;--soft:#eef2f7;--gold:#c99a1d;
+--k:#3d7a5a;--n:#2f6f8f;--f:#8a5a9e;--w:#b4682a;--r:#1f7a78;--g:#2a7fc4;--gt:#eef6fd;--ok:#2f8a53;--warn:#b97a14;--bad:#c2482f;--soft:#eef2f7;--gold:#c99a1d;
 --font:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15181e;--panel:#1f242d;--ink:#eceef2;--muted:#9aa3b2;--line:#343b48;--accent:#7fb0e6;--accent-ink:#0f1620;--soft:#262d39;--k:#7cc79c;--n:#6bb3d6;--f:#c29ad6;--w:#e3a063;--r:#6cc6c0;--ok:#5cc487;--warn:#e6b455;--bad:#ef8a73}}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15181e;--panel:#1f242d;--ink:#eceef2;--muted:#9aa3b2;--line:#343b48;--accent:#7fb0e6;--accent-ink:#0f1620;--soft:#262d39;--k:#7cc79c;--n:#6bb3d6;--f:#c29ad6;--w:#e3a063;--r:#6cc6c0;--g:#a6d8ff;--gt:#1b2633;--ok:#5cc487;--warn:#e6b455;--bad:#ef8a73}}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -39,6 +39,9 @@ p{margin:6px 0}.muted{color:var(--muted)}.small{font-size:14px}.center{text-alig
 .qtbl{border-collapse:collapse;margin:6px auto 10px;width:auto;font-size:22px}.qtbl th,.qtbl td{border:1.5px solid var(--line);padding:6px 14px;text-align:center;font-size:inherit;vertical-align:middle}.qtbl th{text-align:left;font-weight:600;background:var(--soft)}
 .blist .qtbl{margin:6px 0;font-size:18px}.sol .qtbl{font-size:18px}.sheet .qtbl{margin:1.5mm 0 0;font-size:15px}.sheet .qtbl th,.sheet .qtbl td{border:1px solid #000;padding:1mm 3mm;background:none}
 .wnote{font-size:14px;color:var(--muted);text-align:center;margin:4px 0 8px}.wcheck{display:flex;gap:10px;align-items:center;justify-content:center;font-size:17px;margin:10px 0;cursor:pointer}.wcheck input{width:24px;height:24px}
+.qfig{text-align:center;margin:4px auto 6px}.qfig svg.agfig{max-width:100%;height:auto;color:var(--ink);overflow:visible}.agfig path{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.agfig path.arc{stroke-width:1.6}.agfig path.unk{stroke:var(--g)}.agfig text{font-size:16px;font-weight:600;fill:currentColor}.agfig text.unk{fill:var(--g);font-style:italic;font-family:Georgia,'Times New Roman',serif;font-size:19px}
+.fignote{font-size:12px;color:var(--muted);margin-top:2px}.farnote{font-size:14px;color:var(--warn);text-align:center;margin:6px 0}.blist .qfig{text-align:left}.blist .qfig svg.agfig{max-width:260px}
+.why{max-width:460px;margin:10px auto 4px}.why p{margin:4px 0}.wf{display:block;width:100%;text-align:left;margin:5px 0;font-size:16px;line-height:1.3;padding:8px 14px;min-height:40px}.wf.on{border:2px solid var(--accent);background:var(--soft);font-weight:600}.wf.on::before{content:'✓ '}.wlock{font-size:30px;font-weight:700;text-align:center;margin:6px 0}
 .qpic{max-width:420px;margin:4px auto 10px}.qpic>div{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:6px 0}.qpic svg{width:26px;height:26px}
 .chip.timer{font-variant-numeric:tabular-nums;min-width:56px;text-align:center}.chip.timer.over{background:var(--warn);color:#fff}
 .steps{display:flex;gap:6px;margin:6px 0 12px}.steps i{flex:1;height:6px;border-radius:9px;background:var(--line)}.steps i.on{background:var(--accent)}
@@ -127,6 +130,7 @@ table.fg td.sel{outline:3px solid var(--accent);outline-offset:-3px}
 #print .pg{page-break-after:always}#print .pg:last-child{page-break-after:auto}
 #print .pq{display:grid;grid-template-columns:1fr 1fr;gap:14px 30px;font-size:19px;margin-top:14px}#print .pq div{padding-bottom:16px;border-bottom:1px dotted #999}
 #print .pa{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:15px}}
+.sheet .qfig{text-align:left;margin:1mm 0}.sheet .qfig svg.agfig{height:30mm;width:auto;max-width:54mm;color:#000}.sheet .qfig .fignote{font-size:9px;margin:0}.sheet .sqt{font-size:13px;line-height:1.3}
 </style>
 </head>
 <body>
@@ -232,8 +236,12 @@ function check(Q, inp) {
 function checkBase(Q, inp) {
   if (isRatio(Q.a)) return checkRatio(Q, inp);
   const v = parseVal(inp); if (!v) return {bad: true};
+  /* Estimates (Angles, 18 Nov 2026): Q.near accepts anything that close to the answer; Q.close marks a miss within that as close. */
+  if (Q.near != null) { const d = Math.abs(v.n / v.d - Number(Q.a)), u = Q.suf || ''; return d <= Q.near ? {ok: true, est: true} : Q.close && d <= Q.close ? {ok: false, note: `Close: within ${Q.close}${u}. Within ${Q.near}${u} counts as right.`} : {ok: false}; }
   const t = parseVal(typeof Q.a === 'number' ? nstr(Q.a) : Q.a);
   if (v.n * t.d !== t.n * v.d) return {ok: false};
+  // Bearings: Q.a is a string of three figures ('070'). The right angle without the leading zero gets a second try.
+  if (Q.form === 'bearing') return /^\d{3}$/.test(String(inp).trim().replace(/°$/, '')) ? {ok: true} : {retry: `Right. Bearings have three figures: ${Q.a}.`};
   if (Q.form) {
     if (v.form === 'dec') return {retry: 'Right value. Write it as a fraction.'};
     if (Q.form === 'simplest' && v.form !== 'int' && !v.low) return {retry: 'Right value. Now simplify it.'};
@@ -713,6 +721,228 @@ const nm = () => pick(NAMES);
 const two = () => shuf(NAMES).slice(0, 2);
 const mny = x => '£' + (Number.isInteger(x) ? x : x.toFixed(2));
 const W = (q_, a, steps, o = {}) => ({q: q_, a: +nstr(a), steps, ...o});
+/* ---- Angles (group G, area GA). Plan: claude/section-angles-outline.md. Ids AN1 to AN17 are fixed by that outline; never rename them.
+   Build 1 (18 Nov 2026): the engine pieces and three sample levels, AN2, AN8 and AN11. The group ships as a draft (?draft) until build 2.
+   Diagrams: a level gives Q.fig, built here from the true angles, and the app draws it as inline SVG (agDraw). Early levels are drawn
+   true size; later ones are sometimes distorted, each angle staying in its own 90° band (Matt, 18 Nov 2026), and Q.fig.far says when
+   a diagram is far from true size, so the answer can say so. Reasons: Q.why (see the engine, "Reasons" in submitAns).
+   Helpers start with ag so they can't clash with the rest of the file. ---- */
+const agR = d => d * Math.PI / 180;
+const agP = (a, r = 1, c = [0, 0]) => [c[0] + r * Math.cos(agR(a)), c[1] + r * Math.sin(agR(a))];
+const agDir = (p, q) => Math.atan2(q[1] - p[1], q[0] - p[0]) * 180 / Math.PI;
+const agLet = () => pick(['x', 'x', 'x', 'y', 'a', 'b']);
+const agFind = L => `Work out the size of angle ${L}.`;
+// The facts, in exam wording. Reason questions offer some of these.
+const AG_FACT = {line: 'Angles on a straight line add up to 180°', point: 'Angles round a point add up to 360°', vo: 'Vertically opposite angles are equal',
+  tri: 'Angles in a triangle add up to 180°', iso: 'Base angles of an isosceles triangle are equal', quad: 'Angles in a quadrilateral add up to 360°',
+  corr: 'Corresponding angles are equal', alt: 'Alternate angles are equal', coint: 'Co-interior angles add up to 180°'};
+// A reason question: opts are fact keys, ok the sets of facts that are right (any one of them), mode 'after' or 'with'.
+const agWhy = (opts, ok, mode) => ({opts: shuf(opts).map(f => AG_FACT[f]), ok: ok.map(s => s.map(f => AG_FACT[f])), n: ok[0].length, mode});
+// An angle size for a question: half the time a multiple of 5, never within 5° of a right angle.
+function agPickA(lo, hi) { for (;;) { const a = Math.random() < .5 ? 5 * ri(Math.ceil(lo / 5), Math.floor(hi / 5)) : ri(lo, hi); if (Math.abs(a - 90) > 5) return a; } }
+
+/* Distortion. A drawn angle stays in the true angle's 90° band (acute stays acute, obtuse stays obtuse), at least 8° from the band's
+   edges (so it never looks like a right angle or a straight line), and right angles are drawn exactly. ts are the true angles of
+   one figure that must keep their total (a straight line, a triangle); share is how often to distort, max how far. */
+function agBandOk(t, d) {
+  if (t % 90 === 0) return Math.abs(d - t) < 1e-9;
+  const lo = 90 * Math.floor(t / 90), m = Math.min(8, t - lo, lo + 90 - t);
+  return d >= lo + m && d <= lo + 90 - m && d >= Math.min(10, t);
+}
+function agDistort(ts, share, max, extra) {
+  const same = {d: ts.slice(), far: false};
+  if (!share || Math.random() >= share) return same;
+  const sum = ts.reduce((a, b) => a + b, 0), free = ts.map(t => t % 90 !== 0), nf = free.filter(Boolean).length;
+  if (nf < 2) return same;
+  for (let k = 0; k < 120; k++) {
+    let d = ts.map((t, i) => free[i] ? t + (Math.random() * 2 - 1) * max : t);
+    const off = (sum - d.reduce((a, b) => a + b, 0)) / nf; d = d.map((x, i) => free[i] ? x + off : x);
+    const dev = Math.max(...d.map((x, i) => Math.abs(x - ts[i])));
+    if (dev <= max && dev >= max * .45 && d.every((x, i) => agBandOk(ts[i], x)) && (!extra || extra(d))) return {d, far: dev > 25};
+  }
+  return same;
+}
+
+/* The shortest routes from one angle to another through a figure's facts. edges: [angle, angle, fact]. Returns the length, every
+   set of facts a shortest route uses (for reason questions: any of them is right) and one route (for the model working). */
+function agRoutes(edges, from, to) {
+  let best = 9, sets = [], path = null;
+  const go = (n, seen, facts, pth) => {
+    if (facts.length > Math.min(best, 3)) return;
+    if (n === to) { if (facts.length < best) { best = facts.length; sets = []; path = pth; } const s = [...new Set(facts)].sort().join('|'); if (!sets.includes(s)) sets.push(s); return; }
+    edges.forEach(([a, b, f]) => { const m = a === n ? b : b === n ? a : null; if (m && !seen.includes(m)) go(m, [...seen, m], [...facts, f], [...pth, [m, f]]); });
+  };
+  go(from, [from], [], []);
+  return {n: best, sets: sets.map(s => s.split('|')), path};
+}
+
+/* Drawing. A figure is {el, rot, mir, note, far}: el lists the parts in plain coordinates (y up), rot turns the whole figure,
+   mir mirrors it. Parts: {t: 'seg', a, b}; {t: 'arc', c, a1, a2, lab, right} (the angle at c from direction a1 anticlockwise to a2;
+   lab is '65°' or a letter; right draws the square corner); {t: 'tick', a, b, n} (equal-side dashes); {t: 'par', a, b, n, at}
+   (parallel arrows); {t: 'txt', p, s}. Lines use the text colour, so it works in dark mode and in print; unknown angles are in
+   the group's blue and always carry a letter, so nothing depends on colour alone. */
+function agDraw(f, aria) {
+  const rot = f.rot || 0, mir = f.mir ? -1 : 1, c = Math.cos(agR(rot)), s = Math.sin(agR(rot));
+  const tp = p => { const x = p[0] * mir, y = p[1]; return [x * c - y * s, x * s + y * c]; };
+  const ta = a => (mir < 0 ? 180 - a : a) + rot;
+  const pts = []; f.el.forEach(e => ['a', 'b', 'c', 'p'].forEach(k => { if (e[k]) pts.push(tp(e[k])); }));
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const w = Math.max(x1 - x0, .3 * (y1 - y0), 1e-6), h = Math.max(y1 - y0, .3 * (x1 - x0), 1e-6), sc = Math.min(260 / w, 220 / h);
+  const P = p => { const q = tp(p); return [(q[0] - x0) * sc, (y1 - q[1]) * sc]; };
+  const U = a => [Math.cos(agR(a)), -Math.sin(agR(a))];      // a direction on screen (y down)
+  const add = (p, u, r) => [p[0] + u[0] * r, p[1] + u[1] * r];
+  const f1 = n => +n.toFixed(1), xy = p => f1(p[0]) + ' ' + f1(p[1]);
+  const box = [[0, 0], [(x1 - x0) * sc, (y1 - y0) * sc]], out = [], labs = [];
+  const isLet = t => /^[a-z]$/.test(t);
+  const txt = (p, t, unk) => { const hw = t.length * (unk ? 5.5 : 4.8) + 2; labs.push([p[0] - hw, p[1] - 9, p[0] + hw, p[1] + 9]); box.push([p[0] - hw - 4, p[1] - 12], [p[0] + hw + 4, p[1] + 12]); return `<text x="${f1(p[0])}" y="${f1(p[1])}" text-anchor="middle" dominant-baseline="central"${unk ? ' class="unk"' : ''}>${esc(t)}</text>`; };
+  f.el.forEach(e => {
+    if (e.t === 'seg') out.push(`<path d="M${xy(P(e.a))}L${xy(P(e.b))}"/>`);
+    else if (e.t === 'arc') {
+      const v = P(e.c); let [b1, b2] = mir < 0 ? [ta(e.a2), ta(e.a1)] : [ta(e.a1), ta(e.a2)];
+      const span = ((b2 - b1) % 360 + 360) % 360, unk = isLet(e.lab || '');
+      if (e.right) { const r = 12, p1 = add(v, U(b1), r), p2 = add(v, U(b2), r), p3 = add(p1, U(b2), r); out.push(`<path class="arc" d="M${xy(p1)}L${xy(p3)}L${xy(p2)}"/>`); }
+      else if (e.lab) {
+        const r = e.r || (span < 35 ? 30 : 21), p1 = add(v, U(b1), r), p2 = add(v, U(b2), r);
+        if (!e.bare) out.push(`<path class="arc${unk ? ' unk' : ''}" d="M${xy(p1)}A${r} ${r} 0 ${span > 180 ? 1 : 0} 0 ${xy(p2)}"/>`);
+        // The label sits on the bisector, far enough out that it clears both arms of a narrow angle.
+        const half = Math.hypot(e.lab.length * (unk ? 5.5 : 4.8), 9) + 5, d = Math.min(95, Math.max(r + 13, span < 180 ? half / Math.sin(agR(span / 2)) : 0)), bis = b1 + span / 2;
+        out.push(txt(add(v, U(bis), d), e.lab, unk));
+      }
+    } else if (e.t === 'tick') {
+      const a = P(e.a), b = P(e.b), m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], L = Math.hypot(b[0] - a[0], b[1] - a[1]), d = [(b[0] - a[0]) / L, (b[1] - a[1]) / L], n = [-d[1], d[0]];
+      for (let i = 0; i < (e.n || 1); i++) { const o = add(m, d, (i - ((e.n || 1) - 1) / 2) * 5); out.push(`<path d="M${xy(add(o, n, -6))}L${xy(add(o, n, 6))}"/>`); }
+    } else if (e.t === 'par') {
+      const a = P(e.a), b = P(e.b), L = Math.hypot(b[0] - a[0], b[1] - a[1]), d = [(b[0] - a[0]) / L, (b[1] - a[1]) / L], n = [-d[1], d[0]], q = add(a, d, L * (e.at || .8));
+      for (let i = 0; i < (e.n || 1); i++) { const tip = add(q, d, i * 7 + 4); out.push(`<path d="M${xy(add(add(tip, d, -7), n, -5))}L${xy(tip)}L${xy(add(add(tip, d, -7), n, 5))}"/>`); }
+    } else if (e.t === 'txt') out.push(txt(add(P(e.p), e.off || [0, 0], 1), e.s, false));
+  });
+  // Labels that overlap each other are counted (agDraw.clash), so the tests can catch crowded diagrams.
+  agDraw.clash = labs.filter((a, i) => labs.some((b, j) => j > i && a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3])).length;
+  const bx = box.map(p => p[0]), by = box.map(p => p[1]), vx = Math.min(...bx) - 6, vy = Math.min(...by) - 6, vw = Math.max(...bx) - vx + 6, vh = Math.max(...by) - vy + 6;
+  return `<svg class="agfig" viewBox="${f1(vx)} ${f1(vy)} ${f1(vw)} ${f1(vh)}" width="${Math.round(vw)}" role="img" aria-label="${esc(aria || '')}">${out.join('')}</svg>`;
+}
+const AG_NOTE = 'Not drawn accurately', AG_FAR = 'This diagram was drawn far from true size. Work from the facts, not the look.';
+
+/* Angles at a point: rays from the centre in the directions given, with an arc between each ray and the next.
+   parts are the true angles, anticlockwise from direction 0; labs the label for each ('65°', a letter, 'R' for a square corner, '' for none). */
+function agFan(parts, labs, o = {}) {
+  const {d, far} = agDistort(parts, ...(o.dist || [0, 0])), dirs = [0];
+  d.forEach(x => dirs.push(dirs[dirs.length - 1] + x));
+  const O = [0, 0], el = dirs.map(a => ({t: 'seg', a: O, b: agP(a)}));
+  parts.forEach((_, i) => { if (labs[i]) el.push({t: 'arc', c: O, a1: dirs[i], a2: dirs[i + 1], lab: labs[i] === 'R' ? '' : labs[i], right: labs[i] === 'R'}); });
+  return {el, rot: o.rot || 0, mir: !!o.mir, note: AG_NOTE, far};
+}
+
+/* A triangle from its true angles at A (bottom left), B (bottom right) and C. drawn: the drawn angles at A and B (from a distortion).
+   labs: labels at A, B, C. ticks: pairs of vertices with equal sides. */
+function agTri(drawn, labs, o = {}) {
+  const [a, b] = drawn, A = [0, 0], B = [1, 0], t = Math.sin(agR(b)) / Math.sin(agR(a + b)), C = agP(a, t), V = {A, B, C};
+  const el = [{t: 'seg', a: A, b: B}, {t: 'seg', a: B, b: C}, {t: 'seg', a: C, b: A}];
+  const at = (v, p, q, lab) => { if (!lab) return; let a1 = agDir(v, p), a2 = agDir(v, q); if (((a2 - a1) % 360 + 360) % 360 > 180) [a1, a2] = [a2, a1]; el.push({t: 'arc', c: v, a1, a2, lab: lab === 'R' ? '' : lab, right: lab === 'R'}); };
+  at(A, B, C, labs[0]); at(B, C, A, labs[1]); at(C, A, B, labs[2]);
+  (o.ticks || []).forEach(([p, q]) => el.push({t: 'tick', a: V[p], b: V[q], n: 1}));
+  return {el, rot: o.rot || 0, mir: !!o.mir, note: AG_NOTE, far: !!o.far};
+}
+
+/* Two parallel lines crossed by a third. Angles are named by line (T top, B bottom) and position: ur (above the line, right of the
+   crossing line), ul, ll, lr. ur and ll are the crossing angle t; ul and lr are 180° − t. labs: {Tur: '65°', Bll: 'x'}. */
+const AG_POS = ['ur', 'ul', 'll', 'lr'];
+const agParVal = (t, p) => p.endsWith('ur') || p.endsWith('ll') ? t : 180 - t;
+const AG_PAR_EDGES = (() => { const e = [];
+  ['T', 'B'].forEach(L => { AG_POS.forEach((p, i) => e.push([L + p, L + AG_POS[(i + 1) % 4], 'line'])); e.push([L + 'ur', L + 'll', 'vo'], [L + 'ul', L + 'lr', 'vo']); });
+  AG_POS.forEach(p => e.push(['T' + p, 'B' + p, 'corr']));
+  e.push(['Tll', 'Bur', 'alt'], ['Tlr', 'Bul', 'alt'], ['Tll', 'Bul', 'coint'], ['Tlr', 'Bur', 'coint']);
+  return e; })();
+function agPar(td, labs, o = {}) {
+  const cx = Math.cos(agR(td)) / Math.sin(agR(td)), Bp = [0, 0], Tp = [cx, 1], xa = Math.min(0, cx) - .85, xb = Math.max(0, cx) + .85, u = agP(td);
+  const el = [{t: 'seg', a: [xa, 0], b: [xb, 0]}, {t: 'seg', a: [xa, 1], b: [xb, 1]}, {t: 'seg', a: [-.8 * u[0], -.8 * u[1]], b: [cx + .8 * u[0], 1 + .8 * u[1]]},
+    {t: 'par', a: [xa, 0], b: [xb, 0], n: 1, at: .86}, {t: 'par', a: [xa, 1], b: [xb, 1], n: 1, at: .86}];
+  const span = {ur: [0, td], ul: [td, 180], ll: [180, 180 + td], lr: [180 + td, 360]};
+  Object.entries(labs).forEach(([k, lab]) => { if (lab) el.push({t: 'arc', c: k[0] === 'T' ? Tp : Bp, a1: span[k.slice(1)][0], a2: span[k.slice(1)][1], lab, bare: !!o.bare, r: o.bare ? 8 : 0}); });
+  return {el, rot: o.rot || 0, mir: !!o.mir, note: AG_NOTE, far: !!o.far};
+}
+// Model working from a route: one line per step, naming the fact.
+function agSteps(route, start, val, L, from) {
+  let v = start; const out = [];
+  route.path.forEach(([pos, f], i) => {
+    const nv = val(pos), last = i === route.path.length - 1, sum = ['line', 'coint'].includes(f);
+    out.push(`${AG_FACT[f]}: ${last ? L + ' = ' : 'the next angle is '}${sum ? `180° − ${v}° = ${nv}°` : nv + '°'}.`);
+    v = nv;
+  });
+  return out;
+}
+
+// AN2 Angles on a straight line. Types: two angles (60%), three (25%), a right angle split in two (15%). Drawn true size.
+function agLineQ(type, o = {}) {
+  const L = o.L || agLet(), rot = o.rot ?? pick([0, 0, 0, 180, ri(-35, 35)]);
+  if (type === 'two') {
+    const g = o.g ?? agPickA(20, 160), x = 180 - g, left = o.left ?? Math.random() < .5, parts = left ? [g, x] : [x, g], labs = left ? [g + '°', L] : [L, g + '°'];
+    return q(agFind(L), x, {suf: '°', L, fig: agFan(parts, labs, {rot}), qw: `A straight line is split into two angles, ${g}° and ${L}. ${agFind(L)}`, show: ['Angles on a straight line add up to 180°.', `${L} = 180° − ${g}° = ${x}°`]});
+  }
+  if (type === 'three') {
+    let g1, g2; if (o.gs) [g1, g2] = o.gs; else do { g1 = agPickA(20, 120); g2 = agPickA(20, 120); } while (g1 + g2 > 160 || g1 === g2);
+    const x = 180 - g1 - g2, i = o.i ?? ri(0, 2), vals = [g1, g2]; vals.splice(i, 0, x);
+    const labs = vals.map((v, j) => j === i ? L : v === 90 ? 'R' : v + '°');
+    const gTxt = `${g1}°, ${g2}°`;
+    return q(agFind(L), x, {suf: '°', L, fig: agFan(vals, labs, {rot}), qw: `A straight line is split into three angles: ${gTxt} and ${L}. ${agFind(L)}`, show: ['Angles on a straight line add up to 180°.', `${L} = 180° − ${g1}° − ${g2}° = ${x}°`]});
+  }
+  const g = o.g ?? agPickA(15, 75), x = 90 - g, first = Math.random() < .5, parts = first ? [g, x, 90] : [x, g, 90], labs = first ? [g + '°', L, 'R'] : [L, g + '°', 'R'];
+  return q(agFind(L), x, {suf: '°', L, fig: agFan(parts, labs, {rot, mir: Math.random() < .5}), qw: `Two angles, ${g}° and ${L}, make a right angle. ${agFind(L)}`, show: ['The square corner shows a right angle, so the two angles add up to 90°.', `${L} = 90° − ${g}° = ${x}°`]});
+}
+sk('AN2', 'GA', 'Angles on a straight line', 'Angles on a straight line add up to 180°. If one angle is 125°, the other is 180° − 125° = 55°. A square corner is 90°, so two angles that make a right angle add up to 90°.',
+  () => { const r = Math.random(); return agLineQ(r < .6 ? 'two' : r < .85 ? 'three' : 'right'); },
+  {pl: false, chain: () => { const g = pick([110, 120, 140]), a = pick([30, 40, 50]), o = {L: 'x', rot: 0};
+    return [agLineQ('two', {...o, g, left: false}), agLineQ('two', {...o, g: g + 10, left: false}), agLineQ('two', {...o, g: g + 10, left: true}), agLineQ('three', {...o, gs: [a, 90], i: 2})]; }});
+
+// AN8 Isosceles and equilateral triangles (gate). The top angle (between the equal sides) or a base angle given. A third of diagrams are distorted, by up to 20°.
+function agIsoQ(type, o = {}) {
+  const L = o.L || agLet(), rot = o.rot ?? (Math.random() < .5 ? ri(0, 359) : pick([0, 0, 180, ri(-25, 25)]));
+  if (type === 'eq') return q(`All three sides are equal. ${agFind(L)}`, 60, {suf: '°', L, fig: agTri([60, 60], [L, '', ''], {rot, ticks: [['A', 'B'], ['B', 'C'], ['C', 'A']]}), qw: `A triangle has three equal sides. ${L} is one of its angles. ${agFind(L)}`, show: ['An equilateral triangle has three equal angles.', `${L} = 180° ÷ 3 = 60°`]});
+  let b; if (o.b) b = o.b; else do { b = ri(20, 80); } while (b === 60 || Math.abs(180 - 2 * b - 90) < 6);
+  const top = 180 - 2 * b, rot2 = top > 100 && o.rot == null ? pick([0, 180, ri(-30, 30), 180 + ri(-30, 30)]) : rot, dist = o.dist ?? [1 / 3, 20], bOk = d => agBandOk(b, (180 - d[0]) / 2);
+  const {d, far} = agDistort([top, 180 - top], ...dist, bOk), bd = (180 - d[0]) / 2, side = Math.random() < .5;
+  const labsAt = (gv, xv) => type === 'top' ? (side ? [xv, '', gv] : ['', xv, gv]) : (side ? [gv, '', xv] : ['', gv, xv]);
+  const fig = agTri([bd, bd], labsAt(type === 'top' ? top + '°' : b + '°', L), {rot: rot2, far, ticks: [['C', 'A'], ['C', 'B']]});
+  const why = agWhy(['iso', 'tri', 'line', 'vo'], [['iso', 'tri']], 'after');
+  if (type === 'top') return q(`The dashes show equal sides. ${agFind(L)}`, b, {suf: '°', L, fig, why, qw: `An isosceles triangle: the angle between the two equal sides is ${top}°. ${L} is one of the other two angles. ${agFind(L)}`,
+    show: ['Base angles of an isosceles triangle are equal.', 'Angles in a triangle add up to 180°.', `${L} = (180° − ${top}°) ÷ 2 = ${b}°`], notes: {[2 * b]: "That's both base angles together. Halve it."}});
+  return q(`The dashes show equal sides. ${agFind(L)}`, top, {suf: '°', L, fig, why, qw: `An isosceles triangle: one of the two equal base angles is ${b}°. ${L} is the angle between the two equal sides. ${agFind(L)}`,
+    show: ['Base angles of an isosceles triangle are equal, so the other base angle is also ' + b + '°.', 'Angles in a triangle add up to 180°.', `${L} = 180° − ${b}° − ${b}° = ${top}°`], notes: {[180 - b]: 'That uses only one base angle. The two base angles are equal, so take away both.'}});
+}
+// A book question asking for the reasons too (self-marked against the model answer).
+const agReasonQ = (Q, why) => q(Q.q + ' Give a reason for each step.', `${Q.L} = ${Q.a}°. ${why}`, {fig: Q.fig, qw: Q.qw + ' Give a reason for each step.', self: true});
+sk('AN8', 'GA', 'Isosceles and equilateral triangles', 'An isosceles triangle has two equal sides, marked with dashes. The two angles at the bottom of those sides (the base angles) are equal. If the top angle is 40°, the other two share 140°, so each is 70°. An equilateral triangle has all three sides equal, so every angle is 60°.',
+  () => { const r = Math.random(); return agIsoQ(r < .45 ? 'top' : r < .9 ? 'base' : 'eq'); },
+  {chain: () => { const s = pick([30, 40]), o = {L: 'x', rot: 0, dist: [0, 0]};
+    return [agIsoQ('top', {...o, b: (180 - s) / 2}), agIsoQ('top', {...o, b: (160 - s) / 2}), agIsoQ('top', {...o, b: (140 - s) / 2}), agIsoQ('base', {...o, b: s + 40})]; },
+   book: () => { const Q = agIsoQ(Math.random() < .5 ? 'top' : 'base'); return Math.random() < .25 ? agReasonQ(Q, 'Base angles of an isosceles triangle are equal, and angles in a triangle add up to 180°.') : Q; }});
+
+// AN11 Parallel lines: corresponding and alternate angles. Corresponding (40%), alternate (40%), one of them and another fact (20%). Half of diagrams distorted.
+const AG11_FACTS = ['corr', 'alt', 'vo', 'line'];
+function agParQ(type, o = {}) {
+  const L = o.L || agLet(), rot = o.rot ?? pick([0, 0, ri(-30, 30), ri(0, 179)]), edges = AG_PAR_EDGES.filter(e => AG11_FACTS.includes(e[2]));
+  let from, to, rt;
+  for (let k = 0; k < 50; k++) {
+    from = o.from || (type === 'alt' ? pick(['Tll', 'Tlr', 'Bul', 'Bur']) : pick(['T', 'B']) + pick(AG_POS));
+    to = o.to || (type === 'corr' ? (from[0] === 'T' ? 'B' : 'T') + from.slice(1) : type === 'alt' ? {Tll: 'Bur', Bur: 'Tll', Tlr: 'Bul', Bul: 'Tlr'}[from] : pick(['T', 'B']) + pick(AG_POS));
+    rt = agRoutes(edges, from, to);
+    if (type !== 'two' || (rt.n === 2 && rt.sets.every(s => s.length === 2))) break;
+  }
+  let g = o.g; if (!g) do { g = agPickA(35, 145); } while (Math.abs(g - 90) < 10);
+  const t = from.endsWith('ur') || from.endsWith('ll') ? g : 180 - g, x = agParVal(t, to), val = p => agParVal(t, p);
+  const {d, far} = agDistort([t, 180 - t], ...(o.dist || [.5, 50]), d => d[0] >= 32 && d[0] <= 148), fig = agPar(d[0], {[from]: g + '°', [to]: L}, {rot, far});
+  const why = agWhy(AG11_FACTS, rt.sets, 'with');
+  return q(`The arrows show parallel lines. ${agFind(L)}`, x, {suf: '°', L, fig, why, qw: `Two parallel lines are crossed by a third line. One angle is ${g}°. ${agFind(L)}`, show: agSteps(rt, g, val, L)});
+}
+sk('AN11', 'GA', 'Parallel lines: corresponding and alternate angles', 'Parallel lines are marked with arrows. A line crossing them makes equal angles in matching positions (corresponding, an F shape) and equal angles on opposite sides between the lines (alternate, a Z shape). Both are equal: if one is 65°, so is the other.',
+  () => { const r = Math.random(); return agParQ(r < .4 ? 'corr' : r < .8 ? 'alt' : 'two'); },
+  {pl: false, chain: () => { const g = pick([55, 60, 65, 70]), o = {L: 'x', rot: 0, dist: [0, 0], g, from: 'Bur'};
+    const all = {Tur: 'a', Tul: 'b', Tll: 'c', Tlr: 'd', Bul: 'e', Bll: 'f', Blr: 'g'}, h = g + 5;
+    return [agParQ('corr', {...o, to: 'Tur'}), agParQ('alt', {...o, to: 'Tll'}), agParQ('two', {...o, to: 'Tlr'}),
+      q('The arrows show parallel lines. Work out every angle marked with a letter. Give a reason for each.', `a = ${h}° (corresponding), b = ${180 - h}° (corresponding with e), c = ${h}° (alternate), d = ${180 - h}° (alternate with e), e = ${180 - h}° (straight line), f = ${h}° (vertically opposite), g = ${180 - h}° (straight line)`,
+        {self: true, fig: agPar(h, {Bur: h + '°', ...all}, {bare: true}), qw: `Two parallel lines are crossed by a third line, making eight angles. One is ${h}°. Work out the other seven and give a reason for each.`})]; },
+   book: () => { const Q = agParQ(pick(['corr', 'alt', 'alt', 'two'])); return Math.random() < .25 ? agReasonQ(Q, Q.show.map(s => s.split(':')[0]).join(', then ') + '.') : Q; }});
+
 const WP = {
 1: [
  ['money left after spending (subtraction)', () => { const n = nm(), a = ri(20, 60), b = ri(5, a - 8); return W(`${n} has £${a} and spends £${b} on a game. How much money does ${n} have left?`, a - b, [`${a} − ${b} = ${a - b}`, `£${a - b} left`], {pre: '£'}); }],
@@ -803,6 +1033,8 @@ const GROUPS = [
   {id: 'R', name: 'Ratio and proportion', short: 'Ratio', col: '--r', tracks: [
     ['RA', 'Ratio', ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10', 'R11'], {mixBook: 2}],
     ['RP', 'Proportion', ['P1', 'P2', 'P3', 'P4'], {mixBook: 2}]]},
+  {id: 'G', name: 'Geometry', short: 'Geometry', col: '--g', tint: '--gt', draft: true, tracks: [
+    ['GA', 'Angles', ['AN2', 'AN8', 'AN11'], {mixBook: 2}]]},
   {id: 'W', name: 'Word problems', short: 'Problems', col: '--w', tracks: [['W', 'Word problems', ['W1', 'W2', 'W3', 'W4', 'W5', 'W6']]]},
 ];
 // A group marked draft is built but not on the home screen yet, unless the address has ?draft (for testing a section before it is finished).
@@ -942,7 +1174,15 @@ setInterval(() => {
 
 // ---------- view + asking ----------
 let V = {view: 'home'};
-function ask(Q, o) { V.ask = {q: Q, left: o.tries || 1, steps: !!o.steps, label: o.label || '', quiet: !!o.quiet, skip: !!o.skip, hint: o.hint || '', onDone: o.onDone, state: 'open', fb: '', cls: '', first: null, val: '', t0: Date.now(), ms: null, lim: o.timed ? autoLimit(Q) : 0, auto: false};
+/* Reasons (Angles, 18 Nov 2026). Q.why = {opts, ok, n, mode}: fact texts to choose from, the sets of facts that are right, how many
+   to pick, and when. 'after': once the typed answer is right, "Which fact did you use?" (it doesn't change the score). 'with': the facts
+   are picked under the answer box and sent with it, so neither confirms the other; a right angle with the wrong facts gets one more
+   try on the facts only (Matt, 18 Nov 2026), and a right second try counts like a right answer after a form slip. Reasons are asked
+   only in a round's typed questions (o.why), not in warm-ups, the level check or the quick quiz. */
+const whyOn = A => !!(A.why && A.q.why);
+const whyRight = A => { const pk = A.wsel.map(i => A.q.why.opts[i]).sort().join('|'); return A.q.why.ok.some(s => s.slice().sort().join('|') === pk); };
+const whyAsk = W => W.n > 1 ? `Which ${['', '', 'two', 'three'][W.n]} facts did you use?` : 'Which fact did you use?';
+function ask(Q, o) { V.ask = {q: Q, left: o.tries || 1, why: !!o.why && !o.quiet, wsel: [], wtry: false, wlock: false, wres: null, steps: !!o.steps, label: o.label || '', quiet: !!o.quiet, skip: !!o.skip, hint: o.hint || '', onDone: o.onDone, state: 'open', fb: '', cls: '', first: null, val: '', t0: Date.now(), ms: null, lim: o.timed ? autoLimit(Q) : 0, auto: false};
   const u = (Q.pre || Q.suf || '').trim();      // word problems with units: the student picks the unit separately from the number
   if (o.steps && u) { const opts = shuf(UNITS.filter(x => x !== u)).slice(0, 3).concat(u); V.ask.units = UNITS.concat(UNITS.includes(u) ? [] : [u]).filter(x => opts.includes(x)); V.ask.cu = u; V.ask.unit = null; }
 }
@@ -957,15 +1197,22 @@ function submitAns(val) {
   if (r.bad) { A.fb = 'Type a number. For a fraction, type the top, tap the fraction key, then type the bottom.'; A.cls = 'warn'; return render(); }
   if (A.units && A.unit === null) { A.fb = 'Choose the units as well.'; A.cls = 'warn'; return render(); }
   if (r.retry) { A.fb = r.retry; A.cls = 'warn'; return render(); }
+  const W = whyOn(A) && A.q.why.mode === 'with' ? A.q.why : null;
+  if (W && A.wsel.length !== W.n) { A.fb = W.n > 1 ? `Choose the ${['', '', 'two', 'three'][W.n]} facts you used as well.` : 'Choose the fact you used as well.'; A.cls = 'warn'; return render(); }
+  if (W && r.ok && !whyRight(A)) {
+    if (!A.wtry) { A.wtry = true; A.wlock = true; A.fb = 'Not quite. The angle is right. Check which facts you used.'; A.cls = 'no'; return render(); }
+    r = {ok: false}; A.wres = false;
+  } else if (W && r.ok) A.wres = true;
   const unitWrong = r.ok && A.units && A.unit !== A.cu;
   if (unitWrong) r = {ok: false};
   if (A.first === null) { A.first = r.ok; A.ms = Date.now() - A.t0; A.auto = r.ok && A.ms <= A.lim * 1000; if (A.lim) fcNote(A.q, r.ok, A.ms, A.lim); }
   if (r.ok) {
     A.state = 'right'; A.cls = 'ok';
-    A.fb = !A.lim || A.left < (A.q.tries || 1) ? '✓ Correct' : A.auto ? `✓ Correct · ${secsTxt(A.ms)}, automatic` : `✓ Correct · ${secsTxt(A.ms)}. Aim for under ${A.lim} s.`;
-    if (A.steps || (A.q.work && !A.quiet)) return render(); render(); setTimeout(() => { if (V.ask === A) nextAsk(); }, A.lim && !A.auto ? 1300 : 700);
+    A.fb = r.est ? `✓ Within ${A.q.near}${A.q.suf || ''}. It was ${nstr(A.q.a)}${A.q.suf || ''}.` : !A.lim || A.left < (A.q.tries || 1) ? '✓ Correct' : A.auto ? `✓ Correct · ${secsTxt(A.ms)}, automatic` : `✓ Correct · ${secsTxt(A.ms)}. Aim for under ${A.lim} s.`;
+    if (whyOn(A) && A.q.why.mode === 'after') { A.state = 'why'; return render(); }
+    if (A.steps || (A.q.work && !A.quiet)) return render(); render(); setTimeout(() => { if (V.ask === A) nextAsk(); }, A.q.fig?.far && !A.quiet ? 2600 : r.est ? 1600 : A.lim && !A.auto ? 1300 : 700);
   }
-  else { A.note = r.note || ''; A.left--; if (A.left > 0) { A.fb = unitWrong ? 'The number is right. Check the units.' : r.note || 'Not yet. Check your working and try again.'; A.cls = 'no'; if (!unitWrong) A.val = ''; render(); } else { A.state = 'wrong'; if (A.quiet) return nextAsk(); render(); } }
+  else { A.note = r.note || ''; if (A.wres === false) A.note = 'The angle is right, but not the facts.'; A.left--; if (A.left > 0) { A.fb = unitWrong ? 'The number is right. Check the units.' : r.note || 'Not yet. Check your working and try again.'; A.cls = 'no'; if (!unitWrong) A.val = ''; render(); } else { A.state = 'wrong'; if (A.quiet) return nextAsk(); render(); } }
 }
 // The answer is typed as plain text (3/4, 2 3/4, 30%) but shown stacked, the way fractions are entered on a computer or calculator.
 function ansView(v) {
@@ -989,6 +1236,21 @@ function padKey(c) {
 function hintAns(t) { if (!V.ask) return; V.ask.fb = t; V.ask.cls = 'warn'; V.ask.val = $('#ans')?.value ?? V.ask.val; render(); }
 document.addEventListener('input', e => { if (e.target.id === 'ans') setAns(e.target.value); });
 function skipAns() { const A = V.ask; if (!A) return; if (A.lim && A.first === null) fcNote(A.q, false); A.first = false; A.skipped = true; A.state = 'wrong'; nextAsk(); }
+function whyPick(i) {
+  const A = V.ask; if (!A || !whyOn(A) || A.wres !== null && A.state !== 'open') return;
+  if ($('#ans')) A.val = $('#ans').value;
+  const n = A.q.why.n; A.wsel = A.wsel.includes(i) ? A.wsel.filter(x => x !== i) : n === 1 ? [i] : [...A.wsel, i].slice(-n);
+  if (A.state === 'open' && A.cls === 'warn') { A.fb = ''; A.cls = ''; }
+  render();
+}
+function whyGo() {
+  const A = V.ask; if (!A || A.state !== 'why') return;
+  if (A.wsel.length !== A.q.why.n) { A.wfb = A.q.why.n > 1 ? `Choose ${['', '', 'two', 'three'][A.q.why.n]} facts.` : 'Choose a fact.'; return render(); }
+  A.wres = whyRight(A); A.state = 'right'; A.wfb = '';
+  render(); if (A.wres && !A.q.fig?.far) setTimeout(() => { if (V.ask === A) nextAsk(); }, 1200);
+}
+const whyBtns = (A, lock) => `<div class="why"><p class="small"><b>${whyAsk(A.q.why)}</b></p>${A.q.why.opts.map((f, i) => `<button class="btn wf ${A.wsel.includes(i) ? 'on' : ''}" data-act="wpick" data-i="${i}" aria-pressed="${A.wsel.includes(i)}" ${lock ? 'disabled' : ''}>${esc(f)}</button>`).join('')}</div>`;
+const whyAns = Q => `<div class="sol"><b>${Q.why.n > 1 ? 'The facts' : 'The fact'}</b><br>${Q.why.ok[0].map(esc).join('<br>')}</div>`;
 function nextAsk() { const A = V.ask; if (!A) return; A.onDone(A.first === true, A.state === 'right', A.auto); }
 function askHTML() {
   const A = V.ask, Q = A.q, wp = !!Q.steps;
@@ -996,17 +1258,25 @@ function askHTML() {
   if (A.state === 'open') {
     h += `<div class="fb ${A.cls}">${esc(A.fb)}</div>${Q.work && !A.quiet ? '<p class="wnote">Work it out in your book first. After you answer, you check your working against the model working.</p>' : ''}`;
     if (Q.kind === 'choice') h += `<div class="row" style="justify-content:center">${Q.opts.map((o, i) => `<button class="btn big" data-act="choice" data-i="${i}">${fmt(o)}</button>`).join('')}</div>`;
+    else if (A.wlock) h += `<div class="wlock">${esc(A.val)}${esc(Q.suf || '')} ✓</div><input id="ans" type="hidden" value="${esc(A.val)}">${whyBtns(A)}<div style="max-width:420px;margin:8px auto"><button class="btn pri big" style="width:100%" data-act="submit">Check</button></div>`;
     else h += `<div style="max-width:420px;margin:0 auto;position:relative"><div class="ansbox" data-act="focusans">${Q.pre && !A.units ? `<span class="pre">${esc(Q.pre)}</span>` : ''}<span id="ansview">${ansView(A.val)}</span></div><input id="ans" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your answer" value="${esc(A.val)}"></div>
       ${A.units ? `<div class="row" style="justify-content:center;margin-top:10px"><span class="muted small">Units</span>${A.units.map(u => `<button class="btn sm ${A.unit === u ? 'pri' : ''}" data-act="unit" data-u="${esc(u)}">${esc(u)}</button>`).join('')}</div>` : ''}
+      ${whyOn(A) && Q.why.mode === 'with' ? whyBtns(A) : ''}
       <div class="pad">${padKeys(Q).map(([k, lab, aria]) => `<button data-act="key" data-k="${k}"${aria ? ` aria-label="${aria}"` : ''}>${lab}</button>`).join('')}<button class="go wide" data-act="submit">Check</button></div>
-      ${isRatio(Q.a) ? `<p class="center muted small">Ratio: type the first number, tap <b>:</b>, then type the next one.</p>` : typeof Q.a === 'string' && /\d/.test(Q.a) && Q.kind !== 'choice' ? `<p class="center muted small">Fraction: type the top number, tap <span class="ic">${FRAC_IC}</span>, type the bottom. Mixed number: type the whole number, tap <span class="ic">${MIXED_IC}</span>, then the fraction.</p>` : ''}`;
+      ${isRatio(Q.a) ? `<p class="center muted small">Ratio: type the first number, tap <b>:</b>, then type the next one.</p>` : Q.form === 'bearing' ? `<p class="center muted small">Bearings have three figures: type 070, not 70.</p>` : typeof Q.a === 'string' && /\d/.test(Q.a) && Q.kind !== 'choice' ? `<p class="center muted small">Fraction: type the top number, tap <span class="ic">${FRAC_IC}</span>, type the bottom. Mixed number: type the whole number, tap <span class="ic">${MIXED_IC}</span>, then the fraction.</p>` : ''}`;
     if (A.skip) h += `<p class="center"><button class="btn ghost sm" data-act="skip">I haven't learned this yet</button></p>`;
+  } else if (A.state === 'why') {
+    h += `<div class="fb ok">${esc(A.fb || '✓ Correct')}</div>${whyBtns(A)}<div class="fb warn">${esc(A.wfb || '')}</div><div style="max-width:460px;margin:8px auto"><button class="btn pri big" style="width:100%" data-act="whygo">Check the facts</button></div>`;
   } else {
-    h += `<div class="fb ${A.state === 'right' ? 'ok' : 'no'}">${A.state === 'right' ? '✓ Correct' : 'The answer is ' + ansHTML(Q)}</div>${A.state === 'wrong' && A.note ? `<p class="center small">${esc(A.note)}</p>` : ''}`;
+    h += `<div class="fb ${A.state === 'right' ? 'ok' : 'no'}">${A.state === 'right' ? esc(A.fb && A.fb.startsWith('✓ Within') ? A.fb : '✓ Correct') : 'The answer is ' + ansHTML(Q)}</div>${A.state === 'wrong' && A.note ? `<p class="center small">${esc(A.note)}</p>` : ''}`;
+    if (A.wres === true && Q.why.mode === 'after') h += `<p class="center small">✓ Yes, those are the facts.</p>`;
+    if (A.wres === false && Q.why.mode === 'after') h += `<p class="center small">Not quite: here are the facts.</p>${whyAns(Q)}`;
+    if (whyOn(A) && Q.why.mode === 'with' && A.state === 'wrong') h += whyAns(Q);
+    if (!A.quiet) h += farHTML(Q);
     if (A.steps && Q.steps?.length) h += `<div class="sol"><b>Worked solution</b><br>${Q.steps.map(fmt).join('<br>')}<br><b>Answer: ${ansHTML(Q)}</b></div><p class="muted small">Compare this with the working in your book. Fix anything that is different.</p>`;
     if (!A.steps) h += showHTML(Q);
     if (Q.work && !A.quiet) h += `<label class="wcheck"><input type="checkbox" data-act="wchk" ${A.wok ? 'checked' : ''}> I've checked my working against this</label>`;
-    if (A.state === 'wrong' || A.steps || (Q.work && !A.quiet)) h += `<p class="center"><button class="btn pri big" data-act="next" ${needsCheck(A) ? 'disabled' : ''}>Next</button></p>`;
+    if (A.state === 'wrong' || A.steps || (Q.work && !A.quiet) || A.wres === false || (Q.fig?.far && !A.quiet)) h += `<p class="center"><button class="btn pri big" data-act="next" ${needsCheck(A) ? 'disabled' : ''}>Next</button></p>`;
   }
   return h;
 }
@@ -1023,10 +1293,13 @@ const picHTML = pic => `<div class="qpic" role="img" aria-label="${pic.map(([n, 
 /* Small tables (Proportion, 18 Nov 2026): Q.tbl = [['Pens', 4, 6], ['Cost (£)', 3, '□']], one row per list, the first item a heading.
    Drawn under the question on screen, in the book list and on sheets. Give Q.qw too, a words version for the ladder and home card. */
 const tblHTML = t => `<table class="qtbl">${t.map(r => `<tr><th>${fmt(String(r[0]))}</th>${r.slice(1).map(c => `<td>${fmt(String(c))}</td>`).join('')}</tr>`).join('')}</table>`;
-const qHTML = (Q, wp) => (Q.pic ? picHTML(Q.pic) : '') + `<div class="qbig ${wp ? 'wp' : String(Q.q).length > 60 ? 'long' : ''}">${fmt(Q.q)}</div>` + (Q.tbl ? tblHTML(Q.tbl) : '');
+// Drawn diagrams (Angles, 18 Nov 2026): Q.fig, drawn by agDraw with its words version (Q.qw) as the label for screen readers.
+const figHTML = Q => Q.fig ? `<div class="qfig">${agDraw(Q.fig, qText(Q))}<div class="fignote">${esc(Q.fig.note)}</div></div>` : '';
+const farHTML = Q => Q.fig?.far ? `<p class="farnote">${esc(AG_FAR)}</p>` : '';
+const qHTML = (Q, wp) => (Q.pic ? picHTML(Q.pic) : '') + figHTML(Q) + `<div class="qbig ${wp ? 'wp' : String(Q.q).length > 60 || Q.fig ? 'long' : ''}">${fmt(Q.q)}</div>` + (Q.tbl ? tblHTML(Q.tbl) : '');
 // Model working (Q.show, a list of lines) shown after the answer. With Q.work the student must tick that they have checked their working against it.
 const showHTML = Q => Q.show?.length ? `<div class="sol"><b>Model working</b><br>${Q.show.map(fmt).join('<br>')}</div>` : '';
-const needsCheck = A => !!(A && A.q.work && !A.quiet && A.state !== 'open' && !A.wok);
+const needsCheck = A => !!(A && (A.state === 'why' || (A.q.work && !A.quiet && A.state !== 'open' && !A.wok)));
 const PADKEYS = [['7', '7'], ['8', '8'], ['9', '9'], ['⌫', '⌫', 'Delete'], ['4', '4'], ['5', '5'], ['6', '6'], ['−', '−', 'Minus'], ['1', '1'], ['2', '2'], ['3', '3'], ['%', '%', 'Percent'],
   ['0', '0'], ['.', '.', 'Decimal point'], ['frac', `<span class="ic">${FRAC_IC}</span>`, 'Fraction'], ['mixed', `<span class="ic">${MIXED_IC}</span>`, 'Mixed number']];
 
@@ -1087,8 +1360,8 @@ function startTyped() {
   V.phase = 'typed';
   if (k.st === 'W') return runQ((k.items || wpSet(k.wl)).map((x, i) => ({q: x, tries: 2, steps: true, label: `Problem ${i + 1} of 3`, hint: 'Work it out in your book first, then type your final answer.'})), (it, first, fin) => { V.sc.n++; V.sc.c += first ? 1 : fin ? .5 : 0; }, () => { V.phase = 'rate'; render(); });
   const tn = k.tn || CONFIG.typedN, bn = k.bn || CONFIG.bookN;
-  runQ(mixedQs(k, tn).map(x => ({q: x, label: 'Quick check', timed: showClock(k, x), hint: k.written ? 'Do the working in your book, then type the answer.' : ''})), (it, first, fin, items, auto) => {
-    if (it.again) return; V.sc.n++; if (first) V.sc.c++; else if (!k.written) items.push({q: it.q, again: true, label: 'Try this one again', timed: it.timed});
+  runQ(mixedQs(k, tn).map(x => ({q: x, label: 'Quick check', why: true, timed: showClock(k, x), hint: k.written ? 'Do the working in your book, then type the answer.' : ''})), (it, first, fin, items, auto) => {
+    if (it.again) return; V.sc.n++; if (first) V.sc.c++; else if (!k.written) items.push({q: it.q, again: true, why: true, label: 'Try this one again', timed: it.timed});
     noteTime(it, auto);
   },
     () => {
@@ -1976,7 +2249,7 @@ function homeHTML() {
   for (const g of shownGroups()) {
     const t = recTrack(g), k = rec(t), tot = gTot(g), got = gGot(g), multi = g.t.length > 1, all = got >= tot;
     const unchecked = S.placed && !['K', 'W'].includes(g.id) && g.t.some(x => !S.chk[x]);
-    h += `<div class="card strand" style="--c:var(${g.col})"><div class="row"><b>${g.name}</b><span class="sp"></span><span class="lvl">${multi ? `${got} of ${tot} levels` : `Level ${Math.min(got + 1, tot)} of ${tot}`}</span></div><div class="pbar"><i style="width:${Math.round(100 * got / tot)}%"></i></div>
+    h += `<div class="card strand" style="--c:var(${g.col})${g.tint ? `;background:var(${g.tint})` : ''}"><div class="row"><b>${g.name}</b><span class="sp"></span><span class="lvl">${multi ? `${got} of ${tot} levels` : `Level ${Math.min(got + 1, tot)} of ${tot}`}</span></div><div class="pbar"><i style="width:${Math.round(100 * got / tot)}%"></i></div>
     <p>${all ? 'Every level is secure. Keep it fresh:' : 'Next up:'} ${multi ? `<span class="muted">${STR[t].name}:</span> ` : ''}<b>${esc(k.name)}</b>${strChip(k)}${k.eg ? `<span class="eg">${fmt(k.eg)}</span>` : ''}</p>
     <div class="row"><button class="btn pri" data-act="go" data-id="${k.id}">Practise</button>${multi ? `<button class="btn" data-act="group" data-g="${g.id}">Choose an area</button>` : `<button class="btn" data-act="ladder" data-st="${t}">All levels</button>`}${unchecked ? `<button class="btn ghost" data-act="gcheck" data-g="${g.id}">Find my level</button>` : ''}</div></div>`;
     if (g.id === 'K') h += fcHomeCard();
@@ -1994,7 +2267,7 @@ function groupHTML() {
   let h = head(g.name) + `<p class="muted small">${g.seq ? 'Each area has its own trophy. If you are still building your facts, start with addition and work down the list.' : 'Pick any area. The app suggests the one you have done least of.'}</p>`;
   g.t.forEach(t => {
     const p = pos(t), n = real(t).length, k = rec(t), fin = p >= L[t].length, got = realBefore(t, p);
-    h += `<div class="card strand" style="--c:var(${g.col})"><div class="row"><b>${STR[t].name}</b>${t === r && !fin ? '<span class="chip learning">Suggested</span>' : ''}<span class="sp"></span><span class="lvl">${fin ? '🏆 Trophy earned' : `Level ${lvNum(k)} of ${n}`}</span></div><div class="pbar"><i style="width:${Math.round(100 * got / n)}%"></i></div>
+    h += `<div class="card strand" style="--c:var(${g.col})${g.tint ? `;background:var(${g.tint})` : ''}"><div class="row"><b>${STR[t].name}</b>${t === r && !fin ? '<span class="chip learning">Suggested</span>' : ''}<span class="sp"></span><span class="lvl">${fin ? '🏆 Trophy earned' : `Level ${lvNum(k)} of ${n}`}</span></div><div class="pbar"><i style="width:${Math.round(100 * got / n)}%"></i></div>
     <p>${fin ? 'Keep it fresh:' : 'Next up:'} <b>${esc(k.name)}</b>${strChip(k)}${k.eg ? `<span class="eg">${fmt(k.eg)}</span>` : ''}</p>${fin ? '' : `<p class="muted small">You haven't earned your ${STR[t].name.toLowerCase()} trophy yet.</p>`}
     <div class="row"><button class="btn ${t === r ? 'pri' : ''}" data-act="go" data-id="${k.id}">Practise</button><button class="btn" data-act="ladder" data-st="${t}">All levels</button>${!S.chk[t] && t !== 'W' && !fin ? `<button class="btn ghost" data-act="tcheck" data-st="${t}">Find my level</button>` : ''}</div></div>`;
   });
@@ -2028,7 +2301,7 @@ function sessHTML() {
     const typedLine = isFacts(k)
       ? `<div class="tline"><span class="chip">⏱ Timed</span><span class="small"><b>${tn} quick questions on screen.</b> Goal: each one straight away, without counting: under ${CONFIG.autoSecs} seconds for small numbers, longer for bigger ones.${k.old ? ' They mix these facts with ones from earlier levels.' : ''}${k.speedOK ? '' : ' Questions with decimals have no clock.'}</span></div>`
       : `<div class="tline"><span class="chip">No time goal</span><span class="small"><b>${tn} quick questions on screen.</b> No clock to beat; how long you take is noted for your teacher.${k.written ? ' Use your book for the working.' : ''}</span></div>`;
-    h += `<div class="card"><h2 style="margin-top:0">${wp ? 'Before you start' : 'Study this first'}${strChip(k)}</h2><p>${esc(k.tip)}</p>${ex ? `<div class="sol"><span class="muted small">Example</span>${ex.pic ? picHTML(ex.pic) : ''}<div style="font-size:26px;font-weight:700">${fmt(ex.q)}</div>${ex.tbl ? tblHTML(ex.tbl) : ''}<div style="font-size:22px">Answer: <b>${ansHTML(ex)}</b></div>${ex.show ? `<div class="small">${ex.show.map(fmt).join('<br>')}</div>` : ''}</div>` : ''}
+    h += `<div class="card"><h2 style="margin-top:0">${wp ? 'Before you start' : 'Study this first'}${strChip(k)}</h2><p>${esc(k.tip)}</p>${ex ? `<div class="sol"><span class="muted small">Example</span>${ex.pic ? picHTML(ex.pic) : ''}${figHTML(ex)}<div style="font-size:26px;font-weight:700">${fmt(ex.q)}</div>${ex.tbl ? tblHTML(ex.tbl) : ''}<div style="font-size:22px">Answer: <b>${ansHTML(ex)}</b></div>${ex.show ? `<div class="small">${ex.show.map(fmt).join('<br>')}</div>` : ''}</div>` : ''}
     ${wp ? `<div class="tline"><span class="chip">Not timed</span><span class="small">3 problems. Do your working in your book, then type the final answer. You get two tries.</span></div>`
       : typedLine + `<div class="tline"><span class="chip">No time goal</span><span class="small"><b>${bn} questions in your book.</b> Take care with these.</span></div>`}<button class="btn pri big" data-act="typed">${wp ? 'Start' : 'Got it, start'}</button></div>`;
   } else if (V.phase === 'book' || V.phase === 'mark') {
@@ -2037,7 +2310,7 @@ function sessHTML() {
     ${!mk && V.chainN ? `<p class="small" style="color:var(--accent)">Questions 1 to ${V.chainN} change one thing at a time. Think about what changes before you work each one out.</p>` : ''}
     ${!mk && V.mixed ? `<p class="small" style="color:var(--accent)">These mix the new facts with ones from earlier levels.</p>` : ''}
     ${!mk && V.earlierN ? `<p class="small" style="color:var(--accent)">${V.earlierN === 1 ? 'One of these is' : V.earlierN + ' of these are'} from earlier levels, to keep them fresh.</p>` : ''}
-    <ul class="blist">${V.book.map((x, i) => `<li><span class="n">${i + 1}</span><span>${x.pic ? picHTML(x.pic) : ''}${fmt(x.q)}${x.tbl ? tblHTML(x.tbl) : ''}</span>${mk ? `<span class="a">${ansHTML(x)}</span><span class="mk"><button class="y ${V.marks[i] === true ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="1" aria-label="Correct">✓</button><button class="x ${V.marks[i] === false ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="0" aria-label="Wrong">✗</button></span>` : ''}</li>`).join('')}</ul>
+    <ul class="blist">${V.book.map((x, i) => `<li><span class="n">${i + 1}</span><span>${x.pic ? picHTML(x.pic) : ''}${figHTML(x)}${fmt(x.q)}${x.tbl ? tblHTML(x.tbl) : ''}</span>${mk ? `<span class="a">${ansHTML(x)}${x.fig?.far ? '<br><span class="small muted">The diagram was drawn far from true size.</span>' : ''}</span><span class="mk"><button class="y ${V.marks[i] === true ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="1" aria-label="Correct">✓</button><button class="x ${V.marks[i] === false ? 'on' : ''}" data-act="mark" data-i="${i}" data-v="0" aria-label="Wrong">✗</button></span>` : ''}</li>`).join('')}</ul>
     ${mk ? `<button class="btn pri big" data-act="marked" ${V.marks.includes(null) ? 'disabled' : ''}>Done</button>` : `<button class="btn pri big" data-act="tomark">I've finished, show the answers</button>`}</div>`;
   } else if (V.phase === 'rate') {
     h += `<div class="card"><h2 style="margin-top:0">How did that feel?</h2><p class="muted small">Be honest. This helps choose what you practise next.</p><div class="rate"><button class="btn" data-act="rate" data-r="hard">😓<br>Tough</button><button class="btn" data-act="rate" data-r="ok">🙂<br>OK</button><button class="btn" data-act="rate" data-r="easy">😎<br>Easy</button></div></div>`;
@@ -2206,9 +2479,9 @@ function sheetSections(k, type) {
 const eqs = s => /[=A-Za-z]/.test(s) ? fmt(s) : fmt(s) + ' =';
 function makeSheet(k, type, who) {
   const secs = sheetSections(k, type); if (!secs) return null;
-  const long = Math.max(...Array.from({length: 15}, () => String(qText(bookGen(k)())).length)), cols = k.written ? 2 : long > 22 ? 1 : long > 11 ? 2 : 3;
+  const long = Math.max(...Array.from({length: 15}, () => String(qText(bookGen(k)())).length)), figs = bookGen(k)().fig, cols = figs ? 3 : k.written ? 2 : long > 22 ? 1 : long > 11 ? 2 : 3;
   let n = 0; const ans = [];
-  const cell = (x, cls = '') => { n++; ans.push([n, x]); return `<div class="${cls}" data-n="${n}"><b>${n}</b><span>${x.tbl ? fmt(x.q) + tblHTML(x.tbl) : eqs(qText(x))}</span></div>`; };
+  const cell = (x, cls = '') => { n++; ans.push([n, x]); return `<div class="${cls}" data-n="${n}"><b>${n}</b><span>${x.fig ? figHTML(x) + `<div class="sqt">${fmt(x.q)}</div>` : x.tbl ? fmt(x.q) + tblHTML(x.tbl) : eqs(qText(x))}</span></div>`; };
   const body = secs.map(s => `<div class="sect">${s.h ? `<div class="sec">${esc(s.h)}</div>` : ''}${s.tip ? `<div class="stip">${esc(s.tip)}</div>` : ''}` +
     (s.pairs ? `<div class="sq" style="grid-template-columns:1fr 1fr">${s.pairs.map(p => `<div class="pair">${p.map((x, i) => cell(x, i < p.length - 1 ? 'known' : 'new')).join('')}</div>`).join('')}</div>`
       : `<div class="sq${k.written ? ' tall' : ''}" style="grid-template-columns:repeat(${cols},1fr)">${s.qs.map(x => cell(x)).join('')}</div>`) + '</div>').join('');
@@ -2224,7 +2497,7 @@ function makeSheet(k, type, who) {
   const lc = last(); if (lc && !lc.querySelector('.pair')) { const per = getComputedStyle(lc).gridTemplateColumns.split(' ').length; while (lastCells().length > per && lastCells().length % per) { const c = lastCells(); c[c.length - 1].remove(); } }
   const kept = pg.querySelectorAll('[data-n]').length; pg.querySelector('.tot').textContent = kept;
   const out = pg.outerHTML; m.remove();
-  const ansPage = `<div class="pg sheet"><div class="shd"><div style="flex:1"><h2>Answers: ${esc(title)}</h2><div class="sub">${sub}${who ? ' · ' + esc(who) : ''}</div></div></div><div class="ans">${ans.slice(0, kept).map(([i, x]) => `<span><b>${i}.</b> ${ansHTML(x)}</span>`).join('')}</div></div>`;
+  const ansPage = `<div class="pg sheet"><div class="shd"><div style="flex:1"><h2>Answers: ${esc(title)}</h2><div class="sub">${sub}${who ? ' · ' + esc(who) : ''}</div></div></div><div class="ans">${ans.slice(0, kept).map(([i, x]) => `<span><b>${i}.</b> ${ansHTML(x)}${x.fig?.far ? ' (diagram far from true size)' : ''}</span>`).join('')}</div></div>`;
   return {page: out, ans: ansPage, n: kept, title};
 }
 function sheetSrc() {
@@ -2319,7 +2592,9 @@ document.addEventListener('click', e => {
     case 'typed': startTyped(); break;
     case 'key': padKey(el.dataset.k); break;
     case 'focusans': $('#ans')?.focus(); break;
-    case 'submit': submitAns($('#ans').value); break;
+    case 'submit': submitAns($('#ans') ? $('#ans').value : V.ask.val); break;
+    case 'wpick': whyPick(+el.dataset.i); break;
+    case 'whygo': whyGo(); break;
     case 'choice': submitAns(V.ask.q.opts[+el.dataset.i]); break;
     case 'skip': skipAns(); break;
     case 'next': if (!needsCheck(V.ask)) nextAsk(); break;
@@ -2385,6 +2660,7 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
   if (V.modal) { e.preventDefault(); return $('[data-act=myes]')?.click(); }
   if (V.ask?.state === 'open' && $('#ans')) { e.preventDefault(); submitAns($('#ans').value); }
+  else if (V.ask?.state === 'why') { e.preventDefault(); whyGo(); }
   else if (V.ask && V.ask.state !== 'open') { e.preventDefault(); if (!needsCheck(V.ask)) nextAsk(); }
   else if (V.view === 'welcome') $('[data-act=setname]')?.click();
 });
