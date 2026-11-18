@@ -948,7 +948,7 @@ sk('AN11', 'GA', 'Parallel lines: corresponding and alternate angles', 'Parallel
 /* ---- Angles build 2 (18 Nov 2026): AN1, AN3, AN4, AN5, AN6, AN7, AN9. ---- */
 const AG_ACC = 'Drawn accurately';
 // Makes another question when a diagram's labels would overlap (very flat shapes), so every diagram the student sees is clear.
-const agClean = f => (...a) => { let Q; for (let k = 0; k < 12; k++) { Q = f(...a); agDraw(Q.fig, ''); if (!agDraw.clash) return Q; } return Q; };
+const agClean = f => (...a) => { let Q; for (let k = 0; k < 12; k++) { Q = f(...a); if (!Q.fig) return Q; agDraw(Q.fig, ''); if (!agDraw.clash) return Q; } return Q; };
 const ag5 = (lo, hi) => Math.random() < .7 ? 5 * ri(Math.ceil(lo / 5), Math.floor(hi / 5)) : ri(lo, hi);
 // A polygon from its corners, anticlockwise: arcs inside each labelled corner, reflex ones too. labs: one per corner.
 function agPoly(pts, labs, o = {}) {
@@ -1138,6 +1138,211 @@ sk('AN9', 'GA', 'Angles in a quadrilateral', 'The angles in a quadrilateral add 
       q('The diagonal splits the quadrilateral into two triangles. Use this to show that the angles of a quadrilateral add up to 360°.', 'Each triangle\'s angles add up to 180°, and together they make the four corners: 2 × 180° = 360°.', {self: true, fig: D.fig, qw: 'A quadrilateral with a diagonal drawn, splitting it into two triangles. Show that its angles add up to 360°.'})]; },
    book: () => { const Q = agClean(agQuadQ)(pick(['any', 'right', 'arrow'])); return Math.random() < .25 ? agReasonQ(Q, 'Angles in a quadrilateral add up to 360°.') : Q; }});
 
+/* ---- Angles build 3 (18 Nov 2026): AN10, AN12, AN13, AN14, AN15 (stretch), AN16 (stretch). ---- */
+// A reason question's choices: the right facts and others to make up the number shown.
+const agOpts = (ok, n = 5) => [...new Set([...ok, ...shuf(['line', 'tri', 'vo', 'iso', 'quad', 'point', 'alt', 'corr'].filter(f => !ok.includes(f)))])].slice(0, n);
+/* A triangle A (bottom left), B (bottom right), C with extras for angle chases. ang: true angles at A, B, C. labs: inside labels at A, B, C.
+   o.extB: label for the outside angle at B (AB carried on past B); o.vo: label for the angle opposite C between AC and BC carried on past C;
+   o.iso: the triangle is isosceles with C the top (only the top angle is distorted); o.ticks. */
+function agTriFig(ang, labs, o = {}) {
+  let d, far;
+  if (o.iso) { const r = agDistort([ang[2], 180 - ang[2]], ...(o.dist || [0, 0]), x => agBandOk(ang[0], (180 - x[0]) / 2)); d = [(180 - r.d[0]) / 2, (180 - r.d[0]) / 2]; far = r.far; }
+  else { const r = agDistort(ang, ...(o.dist || [0, 0])); d = r.d; far = r.far; }
+  const f = agTri([d[0], d[1]], labs, {rot: o.rot ?? ri(-25, 25), far, ticks: o.ticks});
+  const t = Math.sin(agR(d[1])) / Math.sin(agR(d[0] + d[1])), C = agP(d[0], t), B = [1, 0];
+  if (o.extB) f.el.push({t: 'seg', a: B, b: [1.55, 0]}, {t: 'arc', c: B, a1: 0, a2: 180 - d[1], lab: o.extB});
+  if (o.extA) f.el.push({t: 'seg', a: [0, 0], b: [-.55, 0]});
+  if (o.vo) { const e1 = agP(d[0], .5, C), e2 = agP(180 - d[1], .5, C); f.el.push({t: 'seg', a: C, b: e1}, {t: 'seg', a: C, b: e2}, {t: 'arc', c: C, a1: d[0], a2: 180 - d[1], lab: o.vo}); }
+  return f;
+}
+const agWhyWith = ok => agWhy(agOpts(ok), [ok], 'with');
+
+// AN10 Two-step angle chases. Five layouts, each two facts; reasons with the answer. Half of diagrams distorted.
+function agChaseQ(type, o = {}) {
+  const L = o.L || agLet(), dist = o.dist || [.5, 30];
+  if (type === 'triout') {      // two inside angles, the outside angle at B: triangle, then straight line
+    const a = o.a ?? ri(30, 80), c = o.c ?? ri(30, 80), b = 180 - a - c; if (b < 25 || Math.abs(b - 90) < 6) return agChaseQ(type, o);
+    return q(agFind(L), 180 - b, {suf: '°', L, fig: agTriFig([a, b, c], [a + '°', '', c + '°'], {dist, extB: L, rot: o.rot}), why: agWhyWith(['tri', 'line']), qw: `A triangle has angles of ${a}° and ${c}°. The side through the third corner is carried on, making an outside angle ${L}. ${agFind(L)}`,
+      show: [`Angles in a triangle add up to 180°: the third angle is 180° − ${a}° − ${c}° = ${b}°.`, `Angles on a straight line add up to 180°: ${L} = 180° − ${b}° = ${180 - b}°.`]});
+  }
+  if (type === 'isoout') {      // the outside angle at a base corner, the other base angle: straight line, then isosceles
+    let bse; do { bse = ri(35, 80); } while (Math.abs(180 - 2 * bse - 90) < 6 || bse === 60);
+    const g = 180 - bse;
+    return q(`The dashes show equal sides. ${agFind(L)}`, bse, {suf: '°', L, fig: agTriFig([bse, bse, 180 - 2 * bse], [L, '', ''], {dist, iso: true, extB: g + '°', ticks: [['C', 'A'], ['C', 'B']], rot: o.rot}), why: agWhyWith(['line', 'iso']), qw: `An isosceles triangle has its base carried on past one corner, making an outside angle of ${g}°. ${L} is the other base angle. ${agFind(L)}`,
+      show: [`Angles on a straight line add up to 180°: the base angle next to ${g}° is ${bse}°.`, `Base angles of an isosceles triangle are equal: ${L} = ${bse}°.`]});
+  }
+  if (type === 'vo') {      // vertically opposite at the top, then the triangle
+    const g = ri(35, 80), h = ri(35, 80), x = 180 - g - h; if (x < 25 || Math.abs(x - 90) < 6 || Math.abs(g - 90) < 6) return agChaseQ(type, o);
+    return q(agFind(L), x, {suf: '°', L, fig: agTriFig([x, h, g], [L, h + '°', ''], {dist, vo: g + '°', rot: o.rot}), why: agWhyWith(['vo', 'tri']), qw: `Two sides of a triangle are carried on past their corner, making an angle of ${g}° opposite the triangle. Another angle of the triangle is ${h}°. ${agFind(L)}`,
+      show: [`Vertically opposite angles are equal: the triangle's top angle is ${g}°.`, `Angles in a triangle add up to 180°: ${L} = 180° − ${g}° − ${h}° = ${x}°.`]});
+  }
+  if (type === 'lineout') {      // the outside angle at B, then the triangle
+    const b = ri(40, 130), a = ri(30, 75), c = 180 - a - b; if (c < 25 || [a, b, c].some(v => Math.abs(v - 90) < 6)) return agChaseQ(type, o);
+    return q(agFind(L), c, {suf: '°', L, fig: agTriFig([a, b, c], [a + '°', '', L], {dist, extB: (180 - b) + '°', rot: o.rot}), why: agWhyWith(['line', 'tri']), qw: `A triangle has one angle of ${a}°. The side through another corner is carried on, making an outside angle of ${180 - b}°. ${L} is the third angle. ${agFind(L)}`,
+      show: [`Angles on a straight line add up to 180°: the angle inside the triangle is 180° − ${180 - b}° = ${b}°.`, `Angles in a triangle add up to 180°: ${L} = 180° − ${a}° − ${b}° = ${c}°.`]});
+  }
+  // quadout: three angles of a quadrilateral, the outside angle at B
+  for (let k = 0; k < 40; k++) {
+    const ang = [ri(65, 125), ri(65, 125), ri(65, 125)]; ang.splice(1, 0, 360 - ang.reduce((x, y) => x + y)); const b = ang[1];
+    if (b < 60 || b > 130 || ang.some(v => Math.abs(v - 90) < 6)) continue;
+    const {d, far} = agDistort(ang, ...dist), P = agQuadPts(d); if (!P) continue;
+    const fig = agPoly(P, [ang[0] + '°', '', ang[2] + '°', ang[3] + '°'], {rot: o.rot ?? ri(-20, 20), far, extra: [{t: 'seg', a: P[1], b: [1.55, 0]}, {t: 'arc', c: P[1], a1: 0, a2: agDir(P[1], P[2]), lab: L}]});
+    return q(agFind(L), 180 - b, {suf: '°', L, fig, why: agWhyWith(['quad', 'line']), qw: `A quadrilateral has angles of ${ang[0]}°, ${ang[2]}° and ${ang[3]}°. One side is carried on past the fourth corner, making an outside angle ${L}. ${agFind(L)}`,
+      show: [`Angles in a quadrilateral add up to 360°: the fourth angle is 360° − ${ang[0]}° − ${ang[2]}° − ${ang[3]}° = ${b}°.`, `Angles on a straight line add up to 180°: ${L} = 180° − ${b}° = ${180 - b}°.`]});
+  }
+  return agChaseQ('triout', o);
+}
+sk('AN10', 'GA', 'Two-step angle chases', 'Sometimes the angle you want needs another angle first. Find the angle you can, write it on the diagram, then use it. Say which fact you used at each step.',
+  () => agClean(agChaseQ)(pick(['triout', 'isoout', 'vo', 'lineout', 'quadout'])),
+  {pl: false, chain: () => { const o = {L: 'x', rot: 0, dist: [0, 0]};
+    const inside = q(agFind('x'), 75, {suf: '°', L: 'x', fig: agTriFig([65, 75, 40], ['65°', 'x', '40°'], {rot: 0}), qw: 'A triangle has angles of 65° and 40°. x is the third angle. ' + agFind('x')});
+    return [inside, agChaseQ('triout', {...o, a: 65, c: 40}), agChaseQ('triout', {...o, a: 65, c: 50}),
+      q('Work out x straight from 65° and 50°. What do you notice?', 'x = 115°, which is 65° + 50°: the outside angle of a triangle equals the two inside angles opposite it added together.', {self: true, fig: agTriFig([65, 65, 50], ['65°', '', '50°'], {rot: 0, extB: 'x'}), qw: 'A triangle has angles of 65° and 50°, and an outside angle x at the third corner. Work out x straight from 65° and 50°. What do you notice?'})]; },
+   book: () => { const Q = agClean(agChaseQ)(pick(['triout', 'isoout', 'vo', 'lineout', 'quadout'])); return Math.random() < .25 ? agReasonQ(Q, Q.show.map(s => s.split(':')[0]).join(', then ') + '.') : Q; }});
+
+// AN12 Parallel lines: co-interior angles (gate). Co-interior (50%), any of the three facts (50%); reasons with the answer.
+const AG12_FACTS = ['corr', 'alt', 'coint', 'line'];
+function agCoQ(type, o = {}) {
+  const L = o.L || agLet(), rot = o.rot ?? pick([0, 0, ri(-30, 30), ri(0, 179)]), edges = AG_PAR_EDGES.filter(e => AG12_FACTS.includes(e[2]) || e[2] === 'vo');
+  const from = o.from || (type === 'co' ? pick(['Tll', 'Tlr', 'Bul', 'Bur']) : pick(['T', 'B']) + pick(AG_POS));
+  const to = o.to || (type === 'co' ? {Tll: 'Bul', Bul: 'Tll', Tlr: 'Bur', Bur: 'Tlr'}[from] : pick(edges.filter(e => ['corr', 'alt', 'coint'].includes(e[2]) && (e[0] === from || e[1] === from)).map(e => e[0] === from ? e[1] : e[0])));
+  let g = o.g; if (!g) do { g = agPickA(35, 145); } while (Math.abs(g - 90) < 10);
+  const t = from.endsWith('ur') || from.endsWith('ll') ? g : 180 - g, x = agParVal(t, to), rt = agRoutes(edges, from, to);
+  const {d, far} = agDistort([t, 180 - t], ...(o.dist || [.5, 50]), d => d[0] >= 32 && d[0] <= 148);
+  return q(`The arrows show parallel lines. ${agFind(L)}`, x, {suf: '°', L, fig: agPar(d[0], {[from]: g + '°', [to]: L}, {rot, far}), why: agWhy(AG12_FACTS, rt.sets, 'with'),
+    qw: `Two parallel lines are crossed by a third line. One angle is ${g}°. ${agFind(L)}`, show: agSteps(rt, g, p => agParVal(t, p), L),
+    notes: x !== g && rt.sets.some(s => s.includes('coint')) ? {[g]: "Co-interior angles add up to 180°. They aren't equal."} : undefined});
+}
+sk('AN12', 'GA', 'Parallel lines: co-interior angles', "Between two parallel lines, on the same side of the crossing line, the two angles add up to 180°: they're co-interior (a C or U shape). If one is 65°, the other is 115°. They're not equal: that's the mistake to look for.",
+  () => agCoQ(Math.random() < .5 ? 'co' : 'one'),
+  {chain: () => { const o = {L: 'x', rot: 0, dist: [0, 0], from: 'Bur'}; return [agCoQ('co', {...o, g: 65, to: 'Tlr'}), agCoQ('co', {...o, g: 75, to: 'Tlr'}), agCoQ('one', {...o, g: 75, to: 'Tll'}), agCoQ('one', {...o, g: 75, to: 'Tur'})]; },
+   book: () => { const Q = agCoQ(Math.random() < .5 ? 'co' : 'one'); return Math.random() < .25 ? agReasonQ(Q, Q.show.map(s => s.split(':')[0]).join(', then ') + '.') : Q; }});
+
+// Polygons. Corners anticlockwise from (0, 0) along direction 0, with these interior angles; null if it can't be drawn simply.
+function agPolyPts(ang) {
+  const n = ang.length, dirs = [0]; for (let k = 1; k < n; k++) dirs.push(dirs[k - 1] + 180 - ang[k]);
+  for (let tr = 0; tr < 60; tr++) {
+    const len = dirs.map(() => .6 + Math.random() * .6); let sx = 0, sy = 0;
+    for (let k = 0; k < n - 2; k++) { sx += len[k] * Math.cos(agR(dirs[k])); sy += len[k] * Math.sin(agR(dirs[k])); }
+    const u = agP(dirs[n - 2]), v = agP(dirs[n - 1]), det = u[0] * v[1] - v[0] * u[1]; if (Math.abs(det) < 1e-6) continue;
+    const p = (-sx * v[1] + v[0] * sy) / det, qq = (-u[0] * sy + sx * u[1]) / det; if (p < .35 || qq < .35 || p > 1.6 || qq > 1.6) continue;
+    len[n - 2] = p; len[n - 1] = qq;
+    const P = [[0, 0]]; for (let k = 0; k < n - 1; k++) P.push(agP(dirs[k], len[k], P[k]));
+    const X = (a, b, c, d) => { const den = (b[0] - a[0]) * (d[1] - c[1]) - (b[1] - a[1]) * (d[0] - c[0]); if (Math.abs(den) < 1e-9) return false; const s = ((c[0] - a[0]) * (d[1] - c[1]) - (c[1] - a[1]) * (d[0] - c[0])) / den, t = ((c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0])) / den; return s > 0 && s < 1 && t > 0 && t < 1; };
+    let bad = false; for (let i = 0; i < n && !bad; i++) for (let j = i + 2; j < n; j++) { if (i === 0 && j === n - 1) continue; if (X(P[i], P[(i + 1) % n], P[j], P[(j + 1) % n])) { bad = true; break; } }
+    if (!bad) return P;
+  }
+  return null;
+}
+const AG_PNM = {3: 'triangle', 4: 'quadrilateral', 5: 'pentagon', 6: 'hexagon', 7: 'heptagon', 8: 'octagon', 9: 'nonagon', 10: 'decagon'};
+const agName = n => AG_PNM[n] ? 'a ' + AG_PNM[n] : `a polygon with ${n} sides`;
+const agRegPts = n => Array.from({length: n}, (_, i) => agP(-90 - 180 / n + 360 * i / n));
+const agRegFig = (n, labs = [], o = {}) => agPoly(agRegPts(n), labs, {rot: o.rot ?? ri(0, 359), extra: o.extra || []});
+
+// AN13 Angles in a polygon. The angle sum (30%), the missing angle in a drawn pentagon or hexagon (50%), the number of sides from the sum (20%, in words).
+function agPolyQ(type, o = {}) {
+  const L = o.L || agLet();
+  if (type === 'sum') {
+    const n = o.n ?? ri(5, 12), s = (n - 2) * 180;
+    return q(`What do the angles in ${agName(n)} add up to?`, s, {suf: '°', fig: n <= 10 ? agRegFig(n) : undefined, wo: n > 10, qw: `What do the interior angles of ${agName(n)} add up to?`, show: [`${agName(n).replace(/^a /, 'A ')} splits into ${n} − 2 = ${n - 2} triangles from one corner.`, `${n - 2} × 180° = ${s}°`]});
+  }
+  if (type === 'sides') {
+    const n = ri(5, 14), s = (n - 2) * 180;
+    return q(`The angles in a polygon add up to ${s}°. How many sides does it have?`, n, {wo: true, qw: `The angles in a polygon add up to ${s}°. How many sides does it have?`, show: [`${s}° ÷ 180° = ${n - 2} triangles.`, `It has 2 more sides than triangles: ${n} sides.`]});
+  }
+  for (let k = 0; k < 60; k++) {
+    const n = o.n ?? pick([5, 5, 6]), s = (n - 2) * 180, ang = Array.from({length: n - 1}, () => ri(n === 5 ? 85 : 100, n === 5 ? 140 : 150)); ang.push(s - ang.reduce((a, b) => a + b));
+    if (ang[n - 1] < (n === 5 ? 80 : 95) || ang[n - 1] > 160 || ang.some(a => Math.abs(a - 90) < 6)) continue;
+    const {d, far} = agDistort(ang, ...(o.dist || [.5, 25])), P = agPolyPts(d); if (!P) continue;
+    const xi = ri(0, n - 1), labs = ang.map((a, i) => i === xi ? L : a + '°'), gs = ang.filter((a, i) => i !== xi);
+    return q(agFind(L), ang[xi], {suf: '°', L, fig: agPoly(P, labs, {rot: ri(0, 359), far}), qw: `${agName(n).replace(/^a /, 'A ')} has angles of ${gs.map(a => a + '°').join(', ')} and ${L}. ${agFind(L)}`,
+      show: [`The angles of ${agName(n)} add up to (${n} − 2) × 180° = ${s}°.`, `${L} = ${s}° − ${gs.reduce((a, b) => a + b)}° = ${ang[xi]}°`]});
+  }
+  return agPolyQ('sum', o);
+}
+sk('AN13', 'GA', 'Angles in a polygon', 'A polygon with n sides splits into n − 2 triangles from one corner, so its angles add up to (n − 2) × 180°. A pentagon (5 sides) is 3 triangles: 540°.',
+  () => { const r = Math.random(); return agClean(agPolyQ)(r < .3 ? 'sum' : r < .8 ? 'missing' : 'sides'); },
+  {pl: false, chain: () => [4, 5, 6, 10].map(n => agPolyQ('sum', {n})),
+   book: () => { const Q = agClean(agPolyQ)(pick(['sum', 'missing', 'missing', 'sides'])); return Q.fig && Q.L && Math.random() < .25 ? agReasonQ(Q, 'The angles of a polygon add up to (n − 2) × 180°.') : Q; }});
+
+// AN14 Regular polygons: exterior and interior angles (gate). Exterior from n (35%), interior from n (35%), n from an angle (30%, in words).
+const AG_REG = [3, 4, 5, 6, 8, 9, 10, 12, 15, 18, 20, 24, 30, 36];
+function agRegQ(type, o = {}) {
+  const L = o.L || agLet(), n = o.n ?? pick(type === 'n' ? AG_REG.slice(2) : AG_REG), ext = 360 / n, int = 180 - ext, nmR = AG_PNM[n] && n > 4 ? 'a regular ' + AG_PNM[n] : n === 3 ? 'an equilateral triangle' : n === 4 ? 'a square' : `a regular polygon with ${n} sides`;
+  if (type === 'n') {
+    const byExt = Math.random() < .6;
+    return q(byExt ? `A regular polygon has exterior angles of ${ext}°. How many sides does it have?` : `A regular polygon has interior angles of ${int}°. How many sides does it have?`, n, {wo: true, qw: byExt ? `A regular polygon has exterior angles of ${ext}°. How many sides?` : `A regular polygon has interior angles of ${int}°. How many sides?`,
+      show: byExt ? [`The exterior angles add up to 360°, so there are 360° ÷ ${ext}° = ${n} sides.`] : [`Each exterior angle is 180° − ${int}° = ${ext}°.`, `360° ÷ ${ext}° = ${n} sides.`]});
+  }
+  const draw = n <= 12, P = draw ? agRegPts(n) : null, isExt = type === 'ext';
+  const fig = draw ? agPoly(P, isExt ? [] : [L], {rot: o.rot ?? ri(0, 359), extra: isExt ? [{t: 'seg', a: P[0], b: agP(agDir(P[n - 1], P[0]), .45 * Math.hypot(P[1][0] - P[0][0], P[1][1] - P[0][1]), P[0])}, {t: 'arc', c: P[0], a1: agDir(P[n - 1], P[0]), a2: agDir(P[0], P[1]), lab: L}] : []}) : undefined;
+  return q(`${draw ? 'This is ' + nmR + '. ' : `Think of ${nmR}. `}Work out ${isExt ? 'the exterior angle' : 'the interior angle'}${draw ? ' ' + L : ''}.`, isExt ? ext : int, {suf: '°', L, fig, wo: !draw, qw: `Work out ${isExt ? 'an exterior' : 'an interior'} angle of ${nmR}.`,
+    show: isExt ? [`Walking round, you turn 360° in ${n} equal turns: 360° ÷ ${n} = ${ext}°.`] : [`The exterior angle is 360° ÷ ${n} = ${ext}°.`, `The interior angle is 180° − ${ext}° = ${int}°.`],
+    notes: ext === int ? undefined : {[isExt ? int : ext]: isExt ? "That's the interior angle. The exterior angle is 180° minus it." : "That's the exterior angle. The interior angle is 180° minus it."}});
+}
+sk('AN14', 'GA', 'Regular polygons: exterior and interior angles', 'A regular polygon has equal sides and equal angles. Walking round it you turn a full 360°, so each exterior angle is 360° ÷ n. The interior angle is 180° minus the exterior angle. For a regular hexagon: exterior 360° ÷ 6 = 60°, interior 120°.',
+  () => { const r = Math.random(); return agRegQ(r < .35 ? 'ext' : r < .7 ? 'int' : 'n'); },
+  {chain: () => [['ext', 6], ['int', 6], ['ext', 8], ['int', 8]].map(([t, n]) => agRegQ(t, {n, L: 'x', rot: 0}))});
+
+// AN15 Longer angle chases (stretch). Three facts; reasons with the answer and the working check.
+function agLongQ(type, o = {}) {
+  const L = o.L || agLet(), dist = o.dist || [.5, 30];
+  if (type === 'paraiso') {      // a parallel line through the top of an isosceles triangle: alternate, isosceles, triangle
+    let a = o.a; if (!a) do { a = ri(35, 80); } while (Math.abs(180 - 2 * a - 90) < 6 || a === 60);
+    const ask = o.ask || 'top', {d, far} = agDistort([a, 180 - a], ...dist, x => x[0] >= 30 && x[0] <= 82), ad = d[0], hb = 1 / Math.tan(agR(ad));
+    const P = [0, 1], Q = [-hb, 0], R = [hb, 0], xl = -hb - .6, xr = hb + .6;
+    const el = [{t: 'seg', a: [xl, 1], b: [xr, 1]}, {t: 'seg', a: [xl, 0], b: [xr, 0]}, {t: 'par', a: [xl, 1], b: [xr, 1], n: 1, at: .9}, {t: 'par', a: [xl, 0], b: [xr, 0], n: 1, at: .9},
+      {t: 'seg', a: P, b: Q}, {t: 'seg', a: P, b: R}, {t: 'tick', a: P, b: Q, n: 1}, {t: 'tick', a: P, b: R, n: 1}, {t: 'arc', c: P, a1: 180, a2: 180 + ad, lab: a + '°'}];
+    const x = ask === 'Q' ? a : ask === 'R' ? a : 180 - 2 * a;
+    if (ask === 'Q') el.push({t: 'arc', c: Q, a1: 0, a2: ad, lab: L}); else if (ask === 'R') el.push({t: 'arc', c: R, a1: 180 - ad, a2: 180, lab: L}); else el.push({t: 'arc', c: P, a1: 180 + ad, a2: 360 - ad, lab: L});
+    const steps = [`Alternate angles are equal: the angle at the bottom left is ${a}°.`, `Base angles of an isosceles triangle are equal: the angle at the bottom right is ${a}°.`, `Angles in a triangle add up to 180°: ${L} = 180° − ${a}° − ${a}° = ${180 - 2 * a}°.`];
+    const k = ask === 'Q' ? 1 : ask === 'R' ? 2 : 3;
+    return q(`The arrows show parallel lines and the dashes equal sides. ${agFind(L)}`, x, {suf: '°', L, fig: {el, rot: o.rot ?? ri(-15, 15), note: AG_NOTE, far}, why: k === 3 ? agWhyWith(['alt', 'iso', 'tri']) : undefined, work: k === 3, show: steps.slice(0, k).map((s, i) => i === k - 1 ? s.replace(/the angle at the bottom (left|right) is/, `${L} =`) : s),
+      qw: `An isosceles triangle stands between two parallel lines, its top on the upper line. The upper line makes ${a}° with one equal side. ${agFind(L)}`});
+  }
+  if (type === 'isoext') {      // the base carried on: straight line, isosceles, triangle
+    let bse; do { bse = ri(35, 80); } while (Math.abs(180 - 2 * bse - 90) < 6 || bse === 60);
+    const g = 180 - bse;
+    return q(`The dashes show equal sides. ${agFind(L)}`, 180 - 2 * bse, {suf: '°', L, fig: agTriFig([bse, bse, 180 - 2 * bse], ['', '', L], {dist, iso: true, extB: g + '°', ticks: [['C', 'A'], ['C', 'B']], rot: o.rot}), why: agWhyWith(['line', 'iso', 'tri']), work: true,
+      qw: `An isosceles triangle has its base carried on past one corner, making an outside angle of ${g}°. ${L} is the angle between the equal sides. ${agFind(L)}`,
+      show: [`Angles on a straight line add up to 180°: the base angle is 180° − ${g}° = ${bse}°.`, `Base angles of an isosceles triangle are equal: the other base angle is ${bse}°.`, `Angles in a triangle add up to 180°: ${L} = 180° − ${bse}° − ${bse}° = ${180 - 2 * bse}°.`]});
+  }
+  // voext: vertically opposite at the top, the outside angle at B, then the triangle
+  const g = ri(35, 80), b = ri(40, 120), x = 180 - g - b; if (x < 25 || [g, b, x].some(v => Math.abs(v - 90) < 6)) return agLongQ(type, o);
+  return q(agFind(L), x, {suf: '°', L, fig: agTriFig([x, b, g], [L, '', ''], {dist, vo: g + '°', extB: (180 - b) + '°', rot: o.rot}), why: agWhyWith(['vo', 'line', 'tri']), work: true,
+    qw: `A triangle's two sides are carried on past the top corner, making ${g}° opposite it, and its base is carried on past another corner, making an outside angle of ${180 - b}°. ${agFind(L)}`,
+    show: [`Vertically opposite angles are equal: the top angle is ${g}°.`, `Angles on a straight line add up to 180°: the angle at the bottom right is 180° − ${180 - b}° = ${b}°.`, `Angles in a triangle add up to 180°: ${L} = 180° − ${g}° − ${b}° = ${x}°.`]});
+}
+sk('AN15', 'GA', 'Longer angle chases', "Plan the route before you start: what do you need, and what can you find straight away? Fill the diagram in one angle at a time, writing the fact for each. There's often more than one route: any route with a correct reason at each step is right.",
+  () => agClean(agLongQ)(pick(['paraiso', 'isoext', 'voext'])),
+  {pl: false, stretch: true, chain: () => { const a = pick([55, 65, 70]), o = {L: 'x', rot: 0, dist: [0, 0], a}; return [agLongQ('paraiso', {...o, ask: 'Q'}), agLongQ('paraiso', {...o, ask: 'R'}), agLongQ('paraiso', o), agLongQ('paraiso', {...o, a: a - 5})]; },
+   book: () => { const Q = agClean(agLongQ)(pick(['paraiso', 'isoext', 'voext'])); return Math.random() < .5 ? agReasonQ(Q, Q.show.map(s => s.split(':')[0]).join(', then ') + '.') : Q; }});
+
+// AN16 Bearings in diagrams (stretch). Back bearings in words (40%) and from a diagram (30%, with reasons), a third point (30%).
+const agBdir = b => 90 - b;      // a bearing as a direction in plain coordinates
+const agNorth = (p, s = 'N') => [{t: 'seg', a: p, b: [p[0], p[1] + .7]}, {t: 'par', a: p, b: [p[0], p[1] + .7], n: 1, at: .97}, {t: 'txt', p: [p[0], p[1] + .84], s}];
+function agBackQ(type, o = {}) {
+  let b = o.b; if (!b) do { b = ri(20, 340); } while ([90, 180, 270].some(v => Math.abs(b - v) < 8));
+  const back = (b + 180) % 360, ans = agB3(back);
+  const show = [`The bearing back is the bearing there plus 180°${b >= 180 ? ', take away 360°' : ''}: ${b}° + 180°${b >= 180 ? ' − 360°' : ''} = ${back}°.`];
+  if (type === 'words') return q(`The bearing of B from A is ${agB3(b)}°. Find the bearing of A from B.`, ans, {suf: '°', form: 'bearing', wo: true, qw: `The bearing of B from A is ${agB3(b)}°. Find the bearing of A from B.`, show});
+  const A = [0, 0], B = agP(agBdir(b), 1.3), arcA = b <= 180 ? [agBdir(b), 90] : [90, agBdir(b) + 360];
+  const el = [...agNorth(A), ...agNorth(B), {t: 'seg', a: A, b: B}, {t: 'txt', p: agAway(agBdir(b), null), s: 'A'}, {t: 'txt', p: [B[0] + .15 * Math.sign(Math.cos(agR(agBdir(b))) || 1), B[1] - .12], s: 'B'}, {t: 'arc', c: A, a1: arcA[0], a2: arcA[1], lab: b + '°'}];
+  return q('Find the bearing of A from B.', ans, {suf: '°', form: 'bearing', fig: {el, rot: 0, note: AG_NOTE, far: false}, why: b < 180 ? agWhy(['coint', 'point', 'alt', 'line', 'corr'], [['coint', 'point'], ['alt', 'line']], 'with') : undefined,
+    qw: `The bearing of B from A is ${agB3(b)}°, shown with north lines at A and B. Find the bearing of A from B.`, show: b < 180 ? [`The north lines are parallel. Co-interior angles add up to 180°: at B, the angle from north round to A (anticlockwise) is 180° − ${b}° = ${180 - b}°.`, `Angles round a point add up to 360°: the bearing is 360° − ${180 - b}° = ${back}°.`] : show});
+}
+function agThirdQ() {
+  let b, k, s, c; for (;;) { b = ri(30, 150); k = ri(40, 120); s = pick([1, -1]); c = ((b + 180 + s * k) % 360 + 360) % 360; if (![0, 90, 180, 270].some(v => Math.abs(c - v) < 8)) break; }
+  const A = [0, 0], B = agP(agBdir(b), 1.2), C = agP(agBdir((b + 180 + s * k) % 360), 1, B), dBA = agBdir(b + 180), dBC = agBdir(b + 180 + s * k);
+  const el = [...agNorth(A), ...agNorth(B), {t: 'seg', a: A, b: B}, {t: 'seg', a: B, b: C}, {t: 'txt', p: [-.12, -.12], s: 'A'}, {t: 'txt', p: [B[0] + .1, B[1] - .14], s: 'B'}, {t: 'txt', p: agP(dBC, 1.14, B), s: 'C'},
+    {t: 'arc', c: A, a1: agBdir(b), a2: 90, lab: b + '°'}, {t: 'arc', c: B, a1: s > 0 ? dBC : dBA, a2: s > 0 ? dBA : dBC, lab: k + '°'}];
+  return q('Find the bearing of C from B.', agB3(c), {suf: '°', form: 'bearing', fig: {el, rot: 0, note: AG_NOTE, far: false}, qw: `The bearing of B from A is ${agB3(b)}°. At B, the angle between A and C is ${k}°. Find the bearing of C from B.`,
+    show: [`The bearing of A from B is ${b}° + 180° = ${b + 180}°.`, `C is ${k}° ${s > 0 ? 'clockwise' : 'anticlockwise'} from A, so the bearing of C from B is ${b + 180}° ${s > 0 ? '+' : '−'} ${k}°${b + 180 + s * k >= 360 ? ' − 360°' : ''} = ${c}°.`]});
+}
+sk('AN16', 'GA', 'Bearings in diagrams', 'North lines at different points are parallel, so the parallel-line facts work on bearings. The bearing back from B to A is the bearing from A to B plus 180° (or minus 180° if that passes 360°). If B is on a bearing of 070° from A, A is on a bearing of 250° from B.',
+  () => { const r = Math.random(); return r < .4 ? agBackQ('words') : r < .7 ? agClean(agBackQ)('fig') : agClean(agThirdQ)(); },
+  {pl: false, stretch: true, chain: () => [70, 110, 250, 290].map(b => agBackQ('fig', {b}))});
+
 const WP = {
 1: [
  ['money left after spending (subtraction)', () => { const n = nm(), a = ri(20, 60), b = ri(5, a - 8); return W(`${n} has £${a} and spends £${b} on a game. How much money does ${n} have left?`, a - b, [`${a} − ${b} = ${a - b}`, `£${a - b} left`], {pre: '£'}); }],
@@ -1229,7 +1434,7 @@ const GROUPS = [
     ['RA', 'Ratio', ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10', 'R11'], {mixBook: 2}],
     ['RP', 'Proportion', ['P1', 'P2', 'P3', 'P4'], {mixBook: 2}]]},
   {id: 'G', name: 'Geometry', short: 'Geometry', col: '--g', tint: '--gt', tracks: [
-    ['GA', 'Angles', ['AN1', 'AN2', 'AN3', 'AN4', 'AN5', 'AN6', 'AN7', 'AN8', 'AN9', 'AN11'], {mixBook: 2}]]},
+    ['GA', 'Angles', ['AN1', 'AN2', 'AN3', 'AN4', 'AN5', 'AN6', 'AN7', 'AN8', 'AN9', 'AN10', 'AN11', 'AN12', 'AN13', 'AN14', 'AN15', 'AN16'], {mixBook: 2}]]},
   {id: 'W', name: 'Word problems', short: 'Problems', col: '--w', tracks: [['W', 'Word problems', ['W1', 'W2', 'W3', 'W4', 'W5', 'W6']]]},
 ];
 // A group marked draft is built but not on the home screen yet, unless the address has ?draft (for testing a section before it is finished).
@@ -2674,7 +2879,7 @@ function sheetSections(k, type) {
 const eqs = s => /[=A-Za-z]/.test(s) ? fmt(s) : fmt(s) + ' =';
 function makeSheet(k, type, who) {
   const secs = sheetSections(k, type); if (!secs) return null;
-  const long = Math.max(...Array.from({length: 15}, () => String(qText(bookGen(k)())).length)), figs = bookGen(k)().fig, cols = figs ? 3 : k.written ? 2 : long > 22 ? 1 : long > 11 ? 2 : 3;
+  const long = Math.max(...Array.from({length: 15}, () => String(qText(bookGen(k)())).length)), figs = (k.chain ? k.chain() : []).concat(Array.from({length: 20}, () => bookGen(k)())).some(x => x.fig), cols = figs ? 3 : k.written ? 2 : long > 22 ? 1 : long > 11 ? 2 : 3;
   let n = 0; const ans = [];
   const cell = (x, cls = '') => { n++; ans.push([n, x]); return `<div class="${cls}" data-n="${n}"><b>${n}</b><span>${x.fig ? figHTML(x) + `<div class="sqt">${fmt(x.q)}</div>` : x.tbl ? fmt(x.q) + tblHTML(x.tbl) : eqs(qText(x))}</span></div>`; };
   const body = secs.map(s => `<div class="sect">${s.h ? `<div class="sec">${esc(s.h)}</div>` : ''}${s.tip ? `<div class="stip">${esc(s.tip)}</div>` : ''}` +
