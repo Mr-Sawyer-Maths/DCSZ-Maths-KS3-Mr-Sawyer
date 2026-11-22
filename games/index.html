@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Maths Games</title>
+<style>
+:root{--bg:#f4f2ec;--panel:#fff;--ink:#1c2230;--muted:#646c7a;--line:#dedad0;--accent:#274c77;--accent-ink:#fff;
+--k:#3d7a5a;--n:#2f6f8f;--f:#8a5a9e;--w:#b4682a;--ok:#2f8a53;--warn:#b97a14;--bad:#c2482f;--soft:#eef2f7;--gold:#c99a1d;
+--font:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15181e;--panel:#1f242d;--ink:#eceef2;--muted:#9aa3b2;--line:#343b48;--accent:#7fb0e6;--accent-ink:#0f1620;--soft:#262d39;--k:#7cc79c;--n:#6bb3d6;--f:#c29ad6;--w:#e3a063;--ok:#5cc487;--warn:#e6b455;--bad:#ef8a73}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,input{font:inherit;color:inherit}
+main{max-width:760px;margin:0 auto;padding:14px 16px 70px}
+h1{font-size:24px;margin:6px 0 4px}h2{font-size:19px;margin:18px 0 8px}
+p{margin:6px 0}.muted{color:var(--muted)}.small{font-size:14px}.center{text-align:center}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:12px 0}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 16px;cursor:pointer;min-height:44px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.big{font-size:19px;padding:13px 22px}.btn.ghost{background:transparent}.btn.sm{min-height:34px;padding:5px 10px;font-size:14px}
+.btn:disabled{opacity:.45}
+.homelink{display:inline-block;margin:4px 12px 2px 0;color:var(--muted);font-size:14px;text-decoration:none}.homelink:hover{text-decoration:underline}
+.top{display:flex;align-items:center;gap:10px;margin:0 -16px 4px;padding:8px 16px;position:sticky;top:0;z-index:10;background:var(--bg)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:none;padding:7px 14px;cursor:pointer;min-height:38px}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.chip{display:inline-block;border-radius:99px;padding:1px 9px;font-size:13px;font-weight:600;background:var(--soft)}
+.game{border-left:6px solid var(--c)}
+.game.soon{opacity:.75}
+.tick{border:1.5px solid var(--line);background:var(--panel);border-radius:10px;padding:6px 12px;min-height:40px;cursor:pointer;font-weight:600}
+.tick.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tick.sm{min-height:34px;padding:3px 10px;font-size:14px;font-weight:500}
+.fams{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.qbig{font-size:38px;font-weight:700;text-align:center;margin:18px 0 10px;line-height:1.3}
+.box{display:inline-block;width:1.3em;height:1.15em;border:.08em solid currentColor;border-radius:.2em;vertical-align:middle;opacity:.65}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;max-width:420px;margin-left:auto;margin-right:auto}
+.pad button{font-size:22px;padding:10px 0;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;min-height:50px;touch-action:manipulation}
+.fb{min-height:30px;text-align:center;font-weight:600;margin:8px 0}.fb.ok{color:var(--ok)}.fb.no{color:var(--bad)}.fb.warn{color:var(--warn)}
+.rcv{display:block;width:100%;max-width:720px;margin:6px auto 0;image-rendering:crisp-edges;image-rendering:pixelated;border:1px solid var(--line);border-radius:10px}
+.rkey{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.rv{max-width:420px;margin:0 auto;font-size:28px;text-align:center;padding:8px;min-height:56px;border:2px solid var(--line);border-radius:12px;background:var(--panel)}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+'use strict';
+/* ============================================================================
+   MATHS GAMES  ·  one file, no server. Progress is saved in this browser only.
+   Started 22 Nov 2026 (Matt): the games area of the student site. The race moved here from Maths Practice;
+   the guessing games (Angle guesser, Number line, Equation hunt) are to come, see claude/guessing-games-brief.md.
+   If Maths Practice has been used in this browser (same site, so the same storage), the race reads its levels and
+   typed times to set "my level" and where a first-time racer starts. It only reads them; it never changes them.
+   ============================================================================ */
+const $ = (s, e = document) => e.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const pad2 = n => String(n).padStart(2, '0');
+const nstr = x => String(parseFloat(Number(x).toFixed(6)));
+const fmt = s => esc(s).replace(/□/g, '<span class="box"></span>');
+const median = a => { const b = a.slice().sort((x, y) => x - y); return b.length ? b[Math.floor((b.length - 1) / 2)] : null; };
+const today = () => { const d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
+
+// ---------- number facts: the same families and level ids as Maths Practice, in Kane's order ----------
+const OPS = {A: {name: 'Addition', sym: '+'}, S: {name: 'Subtraction', sym: '−'}, M: {name: 'Multiplication', sym: '×'}, D: {name: 'Division', sym: '÷'}};
+const FAM = {A: [], S: [], M: [], D: []}, FBY = {};
+const q = (t, a) => ({q: t, a});
+const com = (a, b, op = '+') => Math.random() < .5 ? `${a} ${op} ${b}` : `${b} ${op} ${a}`;
+const fam = (id, op, lab, gen, easy = false) => { const f = {id, op, lab, gen, easy, idx: FAM[op].length}; FAM[op].push(f); FBY[id] = f; };
+const addF = (ns, lo = 1) => () => { const n = pick(ns), a = ri(lo, 10); return q(com(a, n), a + n); };
+const subF = (ns, hi) => () => { const n = pick(ns), x = ri(n + 1, hi); return q(`${x} − ${n}`, x - n); };
+const difF = (ns, hi) => () => { const n = pick(ns), x = ri(n + 2, hi); return q(`${x} − ${x - n}`, n); };
+fam('A1', 'A', '+1', addF([1]), true);
+fam('A2', 'A', '+2', addF([2]));
+fam('A3', 'A', '+0', addF([0], 0), true);
+fam('A4', 'A', 'Doubles', () => { const a = ri(1, 10); return q(`${a} + ${a}`, 2 * a); });
+fam('A5', 'A', 'Near doubles', () => { const a = ri(1, 9); return q(com(a, a + 1), 2 * a + 1); });
+fam('A6', 'A', '+3, +4', addF([3, 4]));
+fam('A7', 'A', '+5, +6, +7', addF([5, 6, 7], 3));
+fam('S1', 'S', '−1, −2', subF([1, 2], 12));
+fam('S2', 'S', 'Difference of 1 or 2', difF([1, 2], 12));
+fam('S3', 'S', 'All or nothing', () => { const x = ri(1, 12); return pick([q(`${x} − ${x}`, 0), q(`${x} − 0`, x)]); }, true);
+fam('S4', 'S', '−3, −4', subF([3, 4], 13));
+fam('S5', 'S', 'Difference of 3 or 4', difF([3, 4], 13));
+fam('S6', 'S', '−9', subF([9], 18));
+fam('S7', 'S', '−5, −6', subF([5, 6], 15));
+fam('S8', 'S', '−7, −8', subF([7, 8], 17));
+[2, 10, 5, 0, 4, 3, 11, 9, 6, 8, 7, 12].forEach(n => n === 0
+  ? fam('M01', 'M', '×0, ×1', () => { const m = pick([0, 1]), k = ri(1, 10); return q(com(m, k, '×'), m * k); }, true)
+  : fam('M' + n, 'M', '×' + n, () => { const k = ri(2, n === 12 ? 12 : 10); return q(com(n, k, '×'), n * k); }));
+[2, 10, 5, 0, 4, 3, 11, 9, 6, 8, 7, 12].forEach(n => n === 0
+  ? fam('D01', 'D', '÷1', () => { const k = ri(2, 12); return pick([q(`${k} ÷ 1`, k), q(`${k} ÷ ${k}`, 1)]); }, true)
+  : fam('D' + n, 'D', '÷' + n, () => { const k = ri(2, n === 12 ? 12 : 10); return q(`${n * k} ÷ ${n}`, k); }));
+const real = op => FAM[op].filter(f => !f.easy);
+// Families shown in table order (×2, ×3 ... ×12) when choosing by hand; Kane's order is kept for "my level".
+const byTable = op => real(op).slice().sort((a, b) => (parseInt(a.lab.replace(/\D/g, '')) || 0) - (parseInt(b.lab.replace(/\D/g, '')) || 0));
+
+// ---------- reading Maths Practice (same site, same storage), never writing to it ----------
+let P = null; try { P = JSON.parse(localStorage.getItem('mathsPractice.v1') || 'null'); } catch (e) { P = null; }
+const hasPractice = () => !!(P && P.skills && Object.keys(P.skills).length);
+function fDone(f) { if (f.easy) return true; const r = P?.skills?.[f.id]; return !!(r && !r.support && (r.st === 'secure' || r.as)); }
+const nextUp = op => real(op).find(f => !fDone(f));
+
+// ---------- saved data ----------
+/* mathsGames.v1 = {v: 1, race, rset}
+   race: {st, best: {car index: {secs, right, slips, d, won}}, fr: {questions: best secs}}; missing = never raced.
+     Copied once from Maths Practice's S.race (the race lived there 16-22 Nov 2026) if this page has none.
+   rset: the facts in a race: ops (any of A S M D; default ['M']), scope ('level' | 'all' | 'pick'), fam (ids for 'pick'). */
+const KEY = 'mathsGames.v1';
+const fresh = () => ({v: 1, race: null, rset: {ops: ['M'], scope: null, fam: []}});
+let G; try { G = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { G = fresh(); }
+if (!G.race && P?.race?.best) G.race = {st: P.race.st || 0, best: P.race.best, fr: P.race.fr || {}};
+G.rset = Object.assign(fresh().rset, G.rset || {});
+let storageOK = true;
+function save() { try { localStorage.setItem(KEY, JSON.stringify(G)); } catch (e) { storageOK = false; } }
+
+// ---------- the race ----------
+/* A timed race against one computer car (Matt, 15-16 Nov 2026; moved here 22 Nov 2026).
+   Each right answer moves the student's car one step; a wrong answer shows the right one and holds the car for 2 seconds.
+   A lap is 10 questions. The cars are a ladder: beat one to unlock the next.
+   "With a friend": both devices count down to the same 15-second mark on their own clocks. Nothing leaves the device. */
+const RC = {
+  lap: 10, holdMs: 2000, friendMark: 15000, friendLead: 5000, soloCount: 3000,
+  // nm: name, q: questions, s: the car's time in seconds, after: the car whose defeat unlocks this one. A car's place here is its saved index.
+  opp: [['Tractor', 20, 240], ['Milk float', 20, 210], ['Camper van', 20, 180], ['Taxi', 20, 150], ['Hatchback', 20, 120], ['Rally car', 20, 90],
+    ['Pickup', 30, 120], ['Sports car', 30, 90], ['Racer', 30, 60], ['Turbo', 30, 45], ['Rocket', 30, 30],
+    ['Endurance', 60, 120, 8], ['Grand tourer', 60, 90], ['Hypercar', 60, 60]].map(([nm, q_, s, after], i) => ({nm, q: q_, s, after: after ?? i - 1}))
+};
+const OPP_COL = ['--w', '--k', '--f', '--n', '--bad', '--gold'];
+let rClock = () => Date.now();                 // the tests swap this for a scripted clock
+const tSecs = (s, dp = 0) => { const m = Math.floor(s / 60), r = s - m * 60; return m + ':' + (dp ? r.toFixed(dp).padStart(3 + dp, '0') : pad2(Math.round(r))); };
+// The student's pace in seconds a question, from Maths Practice: median of recent typed medians on facts levels done,
+// plus the 2-second hold for their usual share of misses. Used once, to choose where a first-time racer starts.
+function racePace() {
+  const fs = Object.values(FBY).filter(f => !f.easy && fDone(f) && P?.skills?.[f.id]?.times?.length); if (!fs.length) return null;
+  const med = median(fs.map(f => { const t = P.skills[f.id].times; return t[t.length - 1].med; })) / 1000;
+  const miss = Math.min(.3, Math.max(0, 1 - median(fs.map(f => P.skills[f.id].last?.acc ?? .9))));
+  return med + miss * RC.holdMs / 1000;
+}
+function raceStartIdx() { const p = racePace(); if (p == null) return 0; let st = 0; RC.opp.forEach((o, i) => { if (o.q < 60 && o.s / o.q >= p) st = i; }); return st; }
+const rData = () => G.race || {st: raceStartIdx(), best: {}, fr: {}};
+const rBeaten = (D, i) => i >= 0 && (D.best[i]?.won || i < D.st);
+const rUnlocked = (D, i) => i === 0 || i <= D.st || rBeaten(D, RC.opp[i].after);
+// Which facts: the operations ticked, then my level (done families weighted to recent ones, plus the next-up family),
+// all the families of those operations, or the families chosen by hand.
+const scopeOf = () => G.rset.scope || (hasPractice() ? 'level' : 'all');
+function racePool() {
+  const ops = G.rset.ops.filter(o => FAM[o]), sc = scopeOf();
+  if (sc === 'all') return {dn: ops.flatMap(real), cur: [], flat: true};
+  if (sc === 'pick') return {dn: G.rset.fam.map(id => FBY[id]).filter(f => f && ops.includes(f.op)), cur: [], flat: true};
+  const dn = ops.flatMap(o => real(o).filter(fDone)), cur = ops.map(nextUp).filter(Boolean);
+  if (!dn.length && !cur.length) return {dn: ops.flatMap(real), cur: [], flat: true};      // every family done: the full set
+  return {dn, cur};
+}
+function raceQ(R) {
+  const {dn, cur, flat} = R.pool;
+  for (let t = 0; t < 40; t++) {
+    let f;
+    if (flat) f = pick(dn);
+    else if (cur.length && (!dn.length || Math.random() < .3)) f = pick(cur);
+    else { const tot = dn.reduce((a, x) => a + x.idx + 1, 0); let r = Math.random() * tot, i = 0; while ((r -= dn[i].idx + 1) > 0) i++; f = dn[i]; }
+    const Q = f.gen(); if (R.seen.has(Q.q) && t < 30) continue;
+    if (R.cur && Q.q === R.cur.q) continue;
+    R.seen.add(Q.q); return Q;
+  }
+  return {q: '2 × 3', a: 6};
+}
+const poolOK = () => { const p = racePool(); return p.dn.length + p.cur.length > 0; };
+function poolText() {
+  const ops = G.rset.ops, sc = scopeOf(), names = ops.map(o => OPS[o].name.toLowerCase());
+  const list = names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0] || 'nothing';
+  if (sc === 'all') return `All the ${list} facts.`;
+  if (sc === 'pick') { const fs = G.rset.fam.map(id => FBY[id]).filter(f => f && ops.includes(f.op)); return fs.length ? 'Just these: ' + fs.map(f => f.lab).join(', ') + '.' : 'Choose some facts below.'; }
+  const p = racePool();
+  if (p.flat) return `You've done every level here, so all the ${list} facts.`;
+  return `Your level in ${list}: facts you've done${p.cur.length ? `, and some from ${p.cur.map(f => f.lab).join(', ')} (next up)` : ''}.`;
+}
+function racePick(o = {}) { const old = V.view === 'race' ? V.r : {}; return {ph: 'pick', friend: o.friend ?? old.friend ?? false}; }
+function raceMenu() { V = {view: 'race', r: racePick({friend: false})}; if (!G.race) { G.race = rData(); save(); } render(); window.scrollTo(0, 0); }
+// When the race starts: a short countdown alone, or the next 15-second mark (at least 5 seconds away) with a friend.
+const raceStartAt = (now, friend) => friend ? Math.ceil((now + RC.friendLead) / RC.friendMark) * RC.friendMark : now + RC.soloCount;
+function raceStart(i, n) {
+  if (!poolOK()) return;
+  const P_ = V.r, o = i >= 0 ? RC.opp[i] : null, N = o ? o.q : n;
+  V.r = {ph: 'count', friend: P_.friend, i, N, oppS: o ? o.s : null, t0: raceStartAt(rClock(), P_.friend), right: 0, slips: 0, val: '', hold: 0, cur: null, seen: new Set(), pool: racePool(), pd: 0, w: innerWidth < 600 ? 160 : 240};
+  render(); raceLoop();
+}
+function raceTick() {             // moves the race on: countdown to start, end of a hold
+  const R = V.r, now = rClock();
+  if (R.ph === 'count' && now >= R.t0) { R.ph = 'run'; R.cur = raceQ(R); raceDom(); }
+  if (R.ph === 'run' && R.hold && now >= R.hold) { R.hold = 0; R.val = ''; R.cur = raceQ(R); raceDom(); }
+}
+function raceKey(c) {
+  const R = V.r; if (V.view !== 'race' || R.ph !== 'run') return;
+  raceTick(); if (R.hold) return;
+  R.val = c === '⌫' ? R.val.slice(0, -1) : R.val + c;
+  const tgt = nstr(R.cur.a);
+  if (R.val.length >= tgt.length) {
+    if (R.val === tgt) { R.right++; if (R.right >= R.N) return raceEnd(); R.val = ''; R.cur = raceQ(R); }
+    else { R.slips++; R.hold = rClock() + RC.holdMs; R.val = tgt; }
+  }
+  raceDom();
+}
+function raceEnd() {
+  const R = V.r, secs = (rClock() - R.t0) / 1000, won = R.oppS == null ? null : secs < R.oppS;
+  const res = {secs: +secs.toFixed(1), right: R.N, slips: R.slips, won, i: R.i, N: R.N, newU: [], best: false, prev: null};
+  const D = G.race = rData(), before = RC.opp.map((_, j) => rUnlocked(D, j));
+  if (R.i >= 0) {
+    const b = D.best[R.i]; res.prev = b ? b.secs : null;
+    if (!b || secs < b.secs) { D.best[R.i] = {secs: res.secs, right: R.N, slips: R.slips, d: today(), won: !!(won || b?.won)}; res.best = !!b; }
+    else if (won) b.won = true;
+    RC.opp.forEach((o, j) => { if (!before[j] && rUnlocked(D, j)) res.newU.push(j); });
+  } else { const p = D.fr[R.N]; res.prev = p ?? null; if (p == null || secs < p) { D.fr[R.N] = res.secs; res.best = p != null; } }
+  save();
+  V.r = {ph: 'done', friend: R.friend, res};
+  render(); window.scrollTo(0, 0);
+}
+// Only the moving parts of the race screen are updated while it runs, so the road keeps drawing.
+function raceDom() {
+  const R = V.r, qq = $('#rq'), v = $('#rv'), lp = $('#rlap'); if (!qq || R.ph === 'count') return;
+  qq.innerHTML = fmt(R.cur.q);
+  v.textContent = R.hold ? '= ' + R.val : R.val; v.style.borderColor = R.hold ? 'var(--bad)' : 'var(--line)'; v.style.color = R.hold ? 'var(--bad)' : '';
+  if (lp) lp.textContent = `Lap ${Math.min(R.N / RC.lap, Math.floor(R.right / RC.lap) + 1)} of ${R.N / RC.lap}`;
+}
+// The road: a pixel-art strip drawn on a small canvas and scaled up. Two wheel frames, scrolling dashes, a puff when held.
+const CAR = ['....bbbbbb......', '...bwwbbwwb.....', '..bbwwbbwwbbb...', 'bbbbbbbbbbbbbbbb', 'bbbbbbbbbbbbbbbl', 'bbbTTbbbbbbTTbbb', '...TT......TT...'];
+const RH = 52, R_SX = 6;           // the road is 240 pixels wide (160 on a phone, so the cars come out bigger), scaled up
+const reduceMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+let raceRaf = 0, raceFrames = 0;
+function raceLoop() {
+  cancelAnimationFrame(raceRaf);
+  const R0 = V.r;
+  const frame = () => {
+    if (V.view !== 'race' || V.r !== R0 || !['count', 'run'].includes(R0.ph)) { raceRaf = 0; return; }
+    raceFrames++; raceTick(); raceDraw(); raceRaf = requestAnimationFrame(frame);
+  };
+  raceRaf = requestAnimationFrame(frame);
+}
+function raceDraw() {
+  const R = V.r, cv = $('#rcv'); if (!cv) return;
+  const RW = R.w, R_FX = RW - 10;
+  const c = cv.getContext('2d'), cs = getComputedStyle(document.documentElement), col = n => cs.getPropertyValue(n).trim() || '#888', now = rClock();
+  const still = reduceMotion(), el = Math.max(0, (now - R.t0) / 1000);
+  const tp = R.right / R.N; R.pd = still ? tp : R.pd + (tp - R.pd) * .25;
+  const op = R.oppS == null ? null : still ? Math.floor(Math.min(1, el / R.oppS) * R.N) / R.N : Math.min(1, el / R.oppS);
+  c.fillStyle = col('--panel'); c.fillRect(0, 0, RW, RH);
+  c.fillStyle = col('--soft'); c.fillRect(0, 4, RW, RH - 8);
+  c.fillStyle = col('--line'); c.fillRect(0, 4, RW, 1); c.fillRect(0, RH - 5, RW, 1);
+  const off = still ? 0 : Math.floor(R.pd * R.N * 6) % 8;           // dashes scroll with the student's car
+  c.fillStyle = col('--muted'); for (let x = -off; x < RW; x += 8) c.fillRect(x, 26, 4, 1);
+  for (let l = 1; l < R.N / RC.lap; l++) { const x = Math.round(R_SX + 16 + (R_FX - R_SX - 16) * l * RC.lap / R.N); c.fillRect(x, 5, 1, 3); c.fillRect(x, RH - 8, 1, 3); }
+  for (let y = 5; y < RH - 5; y += 2) for (let x = 0; x < 4; x += 2) { c.fillStyle = ((y - 5) / 2 + x / 2) % 2 ? '#111' : '#fff'; c.fillRect(R_FX + x, y, 2, 2); }
+  c.fillStyle = col('--muted'); c.fillRect(R_SX + 16, 5, 1, RH - 10);
+  const car = (p, y, body, fr) => {
+    const x0 = Math.round(R_SX + p * (R_FX - R_SX - 16));
+    CAR.forEach((row, j) => [...row].forEach((ch, i) => {
+      if (ch === '.') return;
+      let f = ch === 'b' ? body : ch === 'w' ? '#d6e8f7' : ch === 'l' ? '#ffd34d' : '#16181c';
+      if (ch === 'T' && fr && (i + j) % 2) f = '#8a8f98';               // second wheel frame
+      c.fillStyle = f; c.fillRect(x0 + i, y + j, 1, 1);
+    }));
+    return x0;
+  };
+  if (op != null) car(op, 11, col(R.i >= 0 ? OPP_COL[R.i % 6] : '--w'), Math.floor(op * R.N * 2) % 2);
+  const px = car(R.pd, 33, col('--accent'), Math.floor(R.pd * R.N * 2) % 2);
+  if (R.hold) { c.fillStyle = col('--muted'); const f = Math.floor(now / 150) % 2; [[-2, 37], [-4, 35 + f], [-5, 38 - f], [-7, 36]].forEach(([dx, y]) => { if (px + dx >= 0) c.fillRect(px + dx, y, 2, 2); }); }
+  const ck = $('#rclk');
+  if (ck) ck.textContent = R.ph === 'count' ? '0:00.0' : tSecs(el, 1);
+  if (R.ph === 'count') {
+    const left = Math.ceil((R.t0 - now) / 1000), qq = $('#rq');
+    if (qq && qq.dataset.n !== String(left)) { qq.dataset.n = left; qq.textContent = left > 0 ? left : 'Go'; }
+  }
+}
+function factsCard() {
+  const s = G.rset, sc = scopeOf(), ops = s.ops;
+  const scBtn = (k, lab) => `<button class="${sc === k ? 'on' : ''}" data-act="rscope" data-s="${k}">${lab}</button>`;
+  return `<div class="card"><b>Which facts?</b>
+    <div class="fams" role="group" aria-label="Operations">${Object.keys(OPS).map(o => `<button class="tick ${ops.includes(o) ? 'on' : ''}" data-act="rop" data-o="${o}" aria-pressed="${ops.includes(o)}">${OPS[o].sym} ${OPS[o].name}</button>`).join('')}</div>
+    <div class="seg" role="group" aria-label="Which ones" style="margin-top:6px">${scBtn('level', 'My level')}${scBtn('all', 'All of them')}${scBtn('pick', 'Choose')}</div>
+    ${sc === 'pick' ? ops.map(o => `<div class="fams" aria-label="${OPS[o].name}">${byTable(o).map(f => `<button class="tick sm ${s.fam.includes(f.id) ? 'on' : ''}" data-act="rfam" data-f="${f.id}">${esc(f.lab)}</button>`).join('')}</div>`).join('') : ''}
+    <p class="small" style="margin-bottom:0">${esc(poolText())}</p>
+    ${sc === 'level' && !hasPractice() ? `<p class="muted small" style="margin:4px 0 0">Your level comes from Maths Practice on this device. Nothing was found, so this starts with the first facts.</p>` : ''}
+    ${poolOK() ? '' : '<p class="fb warn" style="margin:6px 0 0">Tick at least one kind of fact to race.</p>'}</div>`;
+}
+const head = t => `<div class="top"><button class="btn sm ghost" data-act="up" aria-label="Back">✕</button><h1 style="margin:0">${esc(t)}</h1></div>`;
+function raceHTML() {
+  const R = V.r, D = rData(), ok = poolOK();
+  if (R.ph === 'pick') {
+    const p = racePace(), row = (o, i) => {
+      const b = D.best[i], open = rUnlocked(D, i), won = b?.won;
+      return `<div class="row" style="margin:6px 0;padding:6px 0;border-bottom:1px solid var(--line)"><span>${won ? '🏁' : open ? '🚗' : '🔒'} <b>${esc(o.nm)}</b> <span class="muted small">${o.q} questions in ${tSecs(o.s)}</span>${b ? `<br><span class="muted small">Your best: ${tSecs(b.secs, 1)}${b.won ? ', beaten' : ''}</span>` : ''}</span><span class="sp"></span>${open ? `<button class="btn sm${won ? '' : ' pri'}" data-act="rgo" data-i="${i}" ${ok ? '' : 'disabled'}>Race</button>` : `<span class="muted small">Beat the ${esc(RC.opp[o.after].nm)} first</span>`}</div>`;
+    };
+    const grp = (t, f) => `<div class="card"><b>${t}</b>${RC.opp.map((o, i) => f(o) ? row(o, i) : '').join('')}</div>`;
+    return head('Race') + `<div class="card"><p style="margin-top:0">Answer number facts as fast as you can. Each right answer moves your car on. <b>A wrong answer shows the right one and holds your car for 2 seconds</b>, so think before you tap. A lap is 10 questions.</p><p class="muted small">Beat a car to unlock the next one.</p>
+      <div class="seg" role="group" aria-label="Who are you racing"><button class="${R.friend ? '' : 'on'}" data-act="rfriend" data-f="0">On my own</button><button class="${R.friend ? 'on' : ''}" data-act="rfriend" data-f="1">With a friend</button></div>
+      ${R.friend ? `<p class="small">Sit next to your friend. You both choose the same race and tap it at about the same time. <b>Both screens count down to the same moment</b> and show the start time, so check they match. Compare your times at the end.</p>` : ''}
+      ${p ? `<p class="muted small">Your recent pace in Maths Practice: about ${p.toFixed(1)} seconds a question.</p>` : ''}</div>
+      ${factsCard()}
+      ${R.friend ? `<div class="card"><b>Just you and your friend, no computer car</b><div class="row" style="margin-top:6px">${[20, 30, 60].map(n => `<button class="btn" data-act="rgo" data-i="-1" data-n="${n}" ${ok ? '' : 'disabled'}>${n} questions</button>`).join('')}</div>${Object.keys(D.fr).length ? `<p class="muted small">Your best: ${Object.entries(D.fr).map(([n, s]) => `${n} in ${tSecs(s, 1)}`).join(', ')}</p>` : ''}</div>` : ''}
+      ${grp('Short races: 2 laps', o => o.q === 20)}${grp('Longer races: 3 laps', o => o.q === 30)}${grp('The long track: 6 laps', o => o.q === 60)}`;
+  }
+  if (R.ph === 'done') {
+    const x = R.res, o = x.i >= 0 ? RC.opp[x.i] : null;
+    const title = o ? (x.won ? `You beat the ${esc(o.nm)}!` : `The ${esc(o.nm)} won this time`) : `${x.N} questions`;
+    return head('Race') + `<div class="card center"><div style="font-size:44px">${o ? (x.won ? '🏁' : '🚗') : '⏱'}</div><h2>${title}</h2>
+      <p style="font-size:26px;font-weight:700;margin:6px 0">${tSecs(x.secs, 1)}</p>${o ? `<p class="muted">The ${esc(o.nm)}: ${tSecs(o.s)}</p>` : ''}
+      <p>${x.right} right, ${x.slips} slip${x.slips === 1 ? '' : 's'}.</p>
+      <p class="muted small">${x.prev == null ? 'Your first time for this race.' : x.best ? `A new best. It was ${tSecs(x.prev, 1)}.` : `Your best is ${tSecs(Math.min(x.prev, x.secs), 1)}.`}</p>
+      ${x.newU.length ? `<p class="fb ok">Unlocked: ${x.newU.map(j => 'the ' + esc(RC.opp[j].nm)).join(' and ')}</p>` : ''}
+      <div class="row" style="justify-content:center"><button class="btn pri" data-act="rgo" data-i="${x.i}" data-n="${x.N}">Race again</button><button class="btn" data-act="rlist">All races</button><button class="btn" data-act="up">Back</button></div></div>`;
+  }
+  const o = R.i >= 0 ? RC.opp[R.i] : null, at = new Date(R.t0);
+  return `<div class="top"><button class="btn sm ghost" data-act="up" aria-label="Back">✕</button><b>${o ? esc(o.nm) : R.N + ' questions'}</b><span class="sp"></span><span id="rlap" class="small" style="white-space:nowrap">Lap 1 of ${R.N / RC.lap}</span><span id="rclk" class="chip">0:00.0</span></div>
+  <canvas id="rcv" class="rcv" width="${R.w}" height="${RH}" aria-label="The race track"></canvas>
+  <div class="row small muted" style="justify-content:center;gap:14px;margin:4px 0"><span><i class="rkey" style="background:var(--accent)"></i>You</span>${o ? `<span><i class="rkey" style="background:var(${OPP_COL[R.i % 6]})"></i>The ${esc(o.nm)}: ${o.q} in ${tSecs(o.s)}</span>` : ''}</div>
+  ${R.friend && R.ph === 'count' ? `<p class="center small">Starts at <b>${pad2(at.getHours())}:${pad2(at.getMinutes())}:${pad2(at.getSeconds())}</b>. Check your friend's screen says the same.</p>` : ''}
+  <div class="qbig" id="rq">${R.ph === 'count' ? 'Get ready' : fmt(R.cur.q)}</div><div id="rv" class="rv"></div>
+  <div class="pad">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0'].map(c => `<button data-act="rkey" data-k="${c}">${c}</button>`).join('')}</div>`;
+}
+
+// ---------- the games list ----------
+const GAMES = [
+  {id: 'race', ic: '🏁', name: 'Race', col: '--accent', blurb: 'Number facts against the clock. Beat a car to unlock a faster one, or race a friend on another device.'},
+  {id: 'angles', ic: '📐', name: 'Angle guesser', col: '--k', blurb: 'Estimate the size of an angle, then see how close you were.', soon: true},
+  {id: 'numline', ic: '📏', name: 'Number line', col: '--n', blurb: 'Where does the number sit on the line? Whole numbers, negatives, decimals and fractions.', soon: true},
+  {id: 'equation', ic: '🟩', name: 'Equation hunt', col: '--f', blurb: 'Find the hidden equation in six guesses.', soon: true},
+];
+function homeHTML() {
+  const fromP = /\/practice\//.test(document.referrer);
+  const won = G.race ? RC.opp.filter((_, i) => G.race.best[i]?.won).length : 0;
+  return `<a class="homelink" href="../">← Mr Sawyer's Maths</a>${fromP ? '<a class="homelink" href="../practice/">← Maths Practice</a>' : ''}<h1>Maths Games</h1>
+  <p class="muted">Games that are still maths. Everything you do here is saved on this device only.</p>
+  ${GAMES.map(g => `<div class="card game ${g.soon ? 'soon' : ''}" style="--c:var(${g.col})"><div class="row"><span style="font-size:26px">${g.ic}</span><b style="font-size:19px">${g.name}</b><span class="sp"></span>${g.soon ? '<span class="chip">Coming soon</span>' : `<button class="btn pri" data-act="${g.id}">Play</button>`}</div><p class="small" style="margin-bottom:0">${g.blurb}${g.id === 'race' && won ? ` <span class="muted">${won} of ${RC.opp.length} cars beaten.</span>` : ''}</p></div>`).join('')}
+  ${storageOK ? '' : '<p class="fb warn">This browser is not saving progress.</p>'}`;
+}
+
+// ---------- navigation and events ----------
+/* ✕ and the device's Back gesture go up one step: a race to the list of cars, the list to the games list.
+   The page keeps one extra history entry while inside a game, so Back never leaves the page by accident. */
+let V = {view: 'home'};
+function render() {
+  $('#app').innerHTML = ({home: homeHTML, race: raceHTML})[V.view]();
+  const atHome = V.view === 'home', extra = history.state && history.state.mg;
+  try { if (!atHome && !extra) history.pushState({mg: 1}, ''); else if (atHome && extra) history.back(); } catch (e) {}
+}
+function backBtn() {
+  if (V.view === 'race' && V.r.ph !== 'pick') { V.r = racePick(); render(); window.scrollTo(0, 0); return; }
+  V = {view: 'home'}; render(); window.scrollTo(0, 0);
+}
+addEventListener('popstate', () => { if (V.view !== 'home') backBtn(); });
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el || el.disabled) return;
+  const a = el.dataset.act, s = G.rset;
+  switch (a) {
+    case 'up': backBtn(); break;
+    case 'race': raceMenu(); break;
+    case 'rfriend': V.r.friend = el.dataset.f === '1'; render(); break;
+    case 'rop': { const o = el.dataset.o; s.ops = s.ops.includes(o) ? s.ops.filter(x => x !== o) : Object.keys(OPS).filter(x => x === o || s.ops.includes(x)); save(); render(); break; }
+    case 'rscope': s.scope = el.dataset.s; if (s.scope === 'pick' && !s.fam.some(id => s.ops.includes(FBY[id]?.op))) s.fam = s.fam.concat(s.ops.flatMap(o => real(o).map(f => f.id))); save(); render(); break;
+    case 'rfam': { const id = el.dataset.f; s.fam = s.fam.includes(id) ? s.fam.filter(x => x !== id) : s.fam.concat(id); save(); render(); break; }
+    case 'rlist': V.r = racePick(); render(); window.scrollTo(0, 0); break;
+    case 'rgo': raceStart(+el.dataset.i, +el.dataset.n || 0); window.scrollTo(0, 0); break;
+    case 'rkey': raceKey(el.dataset.k); break;
+  }
+});
+document.addEventListener('keydown', e => {
+  if (V.view === 'race' && V.r.ph === 'run') { if (/^\d$/.test(e.key)) raceKey(e.key); else if (e.key === 'Backspace') raceKey('⌫'); }
+});
+addEventListener('pagehide', save);
+render();
+</script>
+</body>
+</html>

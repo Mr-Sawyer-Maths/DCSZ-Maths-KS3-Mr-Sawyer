@@ -606,7 +606,7 @@ function render(){
   $("#title").innerHTML = esc(S().title).replace(/(\S+)$/, "<span>$1</span>");
   const c = myClass(); $("#sub").textContent = (c ? c.name + " · " : "") + "Your progress is saved on this device";
   const tabs = {quests:"Quests", compete:"Competitions", mine:"My progress", teacher:"Teacher"};
-  $("#tabs").innerHTML = Object.keys(tabs).map(k => '<a href="#' + k + '"' + (ui.view === k ? ' aria-current="page"' : "") + ">" + tabs[k] + "</a>").join("");
+  $("#tabs").innerHTML = Object.keys(tabs).map(k => '<a href="#' + k + '"' + (ui.view === k ? ' aria-current="page"' : "") + ">" + tabs[k] + "</a>").join("") + '<a href="../games/">Games →</a>';  // the Maths Games page, always linked from here (Matt, 22 Nov 2026)
   const pg = ui.page && item(ui.page);
   let h = pg ? viewPage(pg) : ({quests:viewQuests, compete:viewCompete, mine:viewMine, teacher:viewTeacher})[ui.view]();
   if(ui.flash && ui.view !== "teacher") h = '<p class="note plain">' + esc(ui.flash) + "</p>" + h;
