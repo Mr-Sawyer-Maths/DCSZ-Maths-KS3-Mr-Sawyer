@@ -5,12 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mr Sawyer's Maths</title>
 <style>
-:root{--bg:#f4f2ec;--panel:#fff;--ink:#1c2230;--muted:#646c7a;--line:#dedad0;--accent:#274c77;--accent-ink:#fff}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15181e;--panel:#1f242d;--ink:#eceef2;--muted:#9aa3b2;--line:#343b48;--accent:#7fb0e6;--accent-ink:#0f1620}}
+:root{--bg:#f4f2ec;--panel:#fff;--ink:#1c2230;--muted:#646c7a;--line:#dedad0;--accent:#274c77;--accent-ink:#fff;--soft:#eef2f7;
+--sp:#2f6f8f;--sc:#a86f00;--sg:#7d4f96}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15181e;--panel:#1f242d;--ink:#eceef2;--muted:#9aa3b2;--line:#343b48;--accent:#7fb0e6;--accent-ink:#0f1620;--soft:#262d39;
+--sp:#6bb3d6;--sc:#f0b64e;--sg:#c29ad6}}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;font-size:17px;line-height:1.45}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit}
 main{max-width:640px;margin:0 auto;padding:24px 16px 60px}
 h1{font-size:26px;margin:0 0 4px}
+h2{font-size:20px;margin:0}
 .muted{color:var(--muted)}.small{font-size:14px}
 a.card{display:block;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:14px 0;color:inherit;text-decoration:none}
 a.card:hover{border-color:var(--accent)}
@@ -19,6 +23,29 @@ a.card b{font-size:19px;color:var(--accent)}
 .tip ol{margin:6px 0 0;padding-left:20px}
 footer{margin-top:30px}
 footer a{color:var(--muted)}
+/* my record: practice, challenges and games together (Matt, 23 Nov 2026) */
+.rec{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:26px}
+.rhead{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.tile{border:1px solid var(--line);border-top:4px solid var(--c);border-radius:10px;padding:8px 10px;min-width:0}
+.tile .n{font-size:22px;font-weight:700;line-height:1.2}
+.tile .l{font-size:13px;color:var(--muted)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:none;padding:6px 12px;cursor:pointer;min-height:36px;font-size:15px}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.day{margin-top:14px}
+.day h3{font-size:15px;margin:0 0 4px;color:var(--muted);font-weight:600}
+.ent{display:grid;grid-template-columns:3.2em 1fr auto;gap:2px 10px;padding:7px 0 7px 10px;border-top:1px solid var(--line);border-left:4px solid var(--c)}
+.ent .tm{font-size:13px;color:var(--muted);padding-top:2px}
+.ent .wh{min-width:0}
+.ent .sec{font-size:12px;font-weight:700;color:var(--c);text-transform:uppercase;letter-spacing:.05em}
+.ent .rs{text-align:right;font-size:15px}
+.ent .rs b{font-weight:700}
+.ent .sub{font-size:13px;color:var(--muted)}
+.ok::before{content:"✓ "}.no::before{content:"○ "}
+.sp{--c:var(--sp)}.sc{--c:var(--sc)}.sg{--c:var(--sg)}
+.more{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 14px;cursor:pointer;margin-top:12px;min-height:40px}
+@media (max-width:420px){.tiles{grid-template-columns:1fr}.tile{display:flex;gap:10px;align-items:baseline}}
 </style>
 </head>
 <body>
@@ -32,6 +59,8 @@ footer a{color:var(--muted)}
 
 <a class="card" href="games/"><b>Maths Games →</b><br>Games that are still maths: race against the clock with your number facts, or a friend on another device. Guessing games are coming.</a>
 
+<section class="rec" id="record" aria-labelledby="rh"></section>
+
 <div class="tip"><b>On an iPad</b>
 <ol class="small">
 <li>Open this page in Safari, then open Maths Practice or Maths Challenges.</li>
@@ -40,5 +69,62 @@ footer a{color:var(--muted)}
 </ol></div>
 
 </main>
+<script>
+'use strict';
+/* My record: what this device has saved from Maths Practice, Maths Challenges and Maths Games, read together. Nothing is
+   sent anywhere. It only reads the three pages' saved data; it never changes it. The shared record shape is in the README. */
+const SEC = {p: {nm: 'Practice', cls: 'sp', href: 'practice/'}, c: {nm: 'Challenges', cls: 'sc', href: 'challenges/#mine'}, g: {nm: 'Games', cls: 'sg', href: 'games/'}};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const pad2 = n => String(n).padStart(2, '0');
+const iso = d => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+const dAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return iso(d); };
+const niceD = s => { const [y, m, d] = s.split('-').map(Number); return s === iso(new Date()) ? 'Today' : s === dAgo(1) ? 'Yesterday' : new Date(y, m - 1, d).toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long'}); };
+const hhmm = t => { const x = new Date(t); return pad2(x.getHours()) + ':' + pad2(x.getMinutes()); };
+const dur = s => s == null ? '' : s < 60 ? Math.max(1, Math.round(s)) + ' s' : Math.floor(s / 60) + ':' + pad2(Math.round(s % 60));
+const read = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+const P = read('mathsPractice.v1'), C = read('mathsChallenges.mine.v1'), G = read('mathsGames.v1');
+
+// Each page's entries in one shape: {s: section, t, d, nm, res, ok, secs, sub}
+const ALL = [];
+(P?.log || []).forEach(l => ALL.push({s: 'p', t: l.t || null, d: l.d, nm: (l.w || l.nm || l.id) + (l.speed ? ' ⚡ speed round' : '') + (l.quiz ? ' 📝 quick quiz' : ''),
+  res: l.sc + '/' + l.n, ok: l.pass ? true : null, secs: l.secs ?? (l.mins ? l.mins * 60 : null), sub: [l.rate, l.pass ? 'level passed' : '', l.above ? 'above my level' : ''].filter(Boolean).join(' · ')}));
+(C?.log || []).forEach(e => ALL.push({s: 'c', t: e.t, d: e.d, nm: e.nm, res: e.res + (e.v != null ? ' (' + e.v + ')' : ''), ok: e.ok, secs: e.secs, sub: [e.note ? '“' + e.note + '”' : '', e.early ? 'before the record started' : ''].filter(Boolean).join(' · ')}));
+(G?.log || []).forEach(e => ALL.push({s: 'g', t: e.t, d: e.d, nm: e.nm, res: e.res, ok: e.ok, secs: e.secs, sub: [e.fx, e.n ? e.sc + '/' + e.n + ' right' + (e.slips ? ', ' + e.slips + ' slip' + (e.slips === 1 ? '' : 's') : '') : '', e.early ? 'before the record started' : ''].filter(Boolean).join(' · ')}));
+ALL.sort((a, b) => a.d !== b.d ? (a.d < b.d ? 1 : -1) : (b.t || 0) - (a.t || 0));
+
+let F = 'all', every = false;
+function render() {
+  const wk = dAgo(6), w = ALL.filter(e => e.d >= wk), by = s => w.filter(e => e.s === s);
+  const pMin = Math.round(Object.keys(P?.days || {}).filter(d => d >= wk).reduce((a, d) => a + (P.days[d].t || 0), 0) / 60);
+  const tgMin = Math.round(Object.keys(P?.days || {}).filter(d => d >= wk).reduce((a, d) => a + (P.days[d].g || 0), 0) / 60);
+  const cDone = by('c').filter(e => e.ok).length, cNot = by('c').filter(e => e.ok === false).length;
+  const gMin = Math.round(by('g').reduce((a, e) => a + (e.secs || 0), 0) / 60);
+  const tile = (s, n, l) => `<div class="tile ${SEC[s].cls}"><div class="n">${n}</div><div class="l">${l}</div></div>`;
+  let h = `<div class="rhead"><h2 id="rh">${P?.name ? esc(P.name) + "'s record" : 'My record'}</h2><span class="muted small">Saved on this device only</span></div>`;
+  if (!ALL.length) { document.getElementById('record').innerHTML = h + '<p class="muted small">Nothing yet. Practice, challenges and games you do on this device will show here, so you and Mr Sawyer can see what you have been up to.</p>'; return; }
+  h += `<p class="small" style="margin:8px 0 0"><b>Last 7 days</b></p><div class="tiles">
+    ${tile('p', pMin + ' min', `practice · ${by('p').length} round${by('p').length === 1 ? '' : 's'}${tgMin ? ` · ${tgMin} min target game` : ''}`)}
+    ${tile('c', cDone + ' done', `challenges${cNot ? ` · ${cNot} not finished` : ''}`)}
+    ${tile('g', by('g').length + ' played', `games${gMin ? ` · ${gMin} min` : ''}`)}</div>`;
+  h += `<div class="seg" role="group" aria-label="Show">${[['all', 'Everything'], ['p', 'Practice'], ['c', 'Challenges'], ['g', 'Games']].map(([k, l]) => `<button class="${F === k ? 'on' : ''}" data-f="${k}" aria-pressed="${F === k}">${l}</button>`).join('')}</div>`;
+  const list = ALL.filter(e => F === 'all' || e.s === F), cut = dAgo(13), shown = every ? list : list.filter(e => e.d >= cut).slice(0, 60);
+  if (!shown.length) h += `<p class="muted small">${list.length ? 'Nothing in the last two weeks.' : 'Nothing here yet.'}</p>`;
+  let day = '';
+  shown.forEach(e => {
+    if (e.d !== day) { h += (day ? '</div>' : '') + `<div class="day"><h3>${niceD(e.d)}</h3>`; day = e.d; }
+    h += `<div class="ent ${SEC[e.s].cls}"><div class="tm">${e.t ? hhmm(e.t) : ''}</div><div class="wh"><div class="sec">${SEC[e.s].nm}</div>${esc(e.nm)}${e.sub ? `<div class="sub">${esc(e.sub)}</div>` : ''}</div>
+      <div class="rs"><b class="${e.ok ? 'ok' : e.ok === false ? 'no' : ''}">${esc(e.res)}</b>${e.secs != null ? `<div class="sub">${dur(e.secs)}</div>` : ''}</div></div>`;
+  });
+  if (day) h += '</div>';
+  if (list.length > shown.length || every) h += `<button class="more" data-more="1">${every ? 'Show the last two weeks' : 'Show everything (' + list.length + ')'}</button>`;
+  h += `<p class="muted small" style="margin-bottom:0">Each page has its own record too: the Record tab under ⚙ in <a href="practice/">Maths Practice</a>, My progress in <a href="challenges/#mine">Maths Challenges</a>, and My games record in <a href="games/">Maths Games</a>.</p>`;
+  document.getElementById('record').innerHTML = h;
+}
+document.addEventListener('click', e => {
+  const f = e.target.closest('[data-f]'), m = e.target.closest('[data-more]');
+  if (f) { F = f.dataset.f; render(); } else if (m) { every = !every; render(); }
+});
+render();
+</script>
 </body>
 </html>
