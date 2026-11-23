@@ -42,6 +42,27 @@ p{margin:6px 0}.muted{color:var(--muted)}.small{font-size:14px}.center{text-alig
 .rcv{display:block;width:100%;max-width:720px;margin:6px auto 0;image-rendering:crisp-edges;image-rendering:pixelated;border:1px solid var(--line);border-radius:10px}
 .rkey{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
 .rv{max-width:420px;margin:0 auto;font-size:28px;text-align:center;padding:8px;min-height:56px;border:2px solid var(--line);border-radius:12px;background:var(--panel)}
+.pad button.ok{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-size:19px;font-weight:600}.pad button:disabled{opacity:.45}
+.afig{max-width:440px;margin:2px auto 0}
+svg.ang{display:block;width:100%;height:auto;max-height:var(--mh,40vh);margin:0 auto;overflow:visible}
+.ang path,.ang circle{vector-effect:non-scaling-stroke}
+.ang .arm{stroke:var(--ink);stroke-width:3;fill:none;stroke-linecap:round}.ang .marc{stroke:var(--ink);stroke-width:2;fill:none}.ang .avx{fill:var(--ink)}
+.ang .aguess{stroke:var(--w);stroke-width:3;stroke-dasharray:7 6;fill:none;stroke-linecap:round}
+.ang .prot{opacity:0;transition:opacity .35s}.ang .prot.on{opacity:1}
+.ang .pbody{fill:var(--accent);fill-opacity:.07;stroke:var(--accent);stroke-width:1.5}.ang .ptick{stroke:var(--accent);stroke-width:1}
+.ang .plab{fill:var(--accent);font-size:8px;text-anchor:middle;dominant-baseline:central;font-family:var(--font)}
+.ang .asw{fill:var(--accent);fill-opacity:.2}
+.ang .alab{fill:var(--accent);font-size:15px;font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:var(--font);opacity:0;transition:opacity .3s}.ang .alab.on{opacity:1}
+.aq{font-size:19px;font-weight:600;margin:8px 0 6px}
+.fbband{font-size:19px;margin:4px 0}.band{display:inline-block;padding:1px 9px;border-radius:99px;background:var(--soft);font-size:14px;font-weight:600;margin-left:8px}
+.glist{max-width:420px;margin:6px auto}.grow{display:flex;align-items:center;gap:6px;padding:2px;min-height:30px;border-bottom:1px solid var(--line)}.gn{color:var(--muted);font-size:13px;width:16px}
+.share{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin:8px auto;max-width:520px}.share code{font-family:var(--font);font-size:14px;background:var(--soft);padding:6px 10px;border-radius:8px;word-break:break-word}
+.emrow{font-size:19px;letter-spacing:1px;margin:4px 0}
+.ttl{font-size:16px;line-height:1.25}.top .chip{white-space:nowrap}.acc{color:var(--accent)}
+.rkey.dash{background:none;border-top:2px dashed var(--w);height:0;border-radius:0;width:14px}
+table.stats{border-collapse:collapse;margin:4px 0}table.stats td,table.stats th{padding:3px 10px 3px 0;text-align:left}table.stats th{color:var(--muted);font-weight:600}
+.seg.tiers{display:flex}.seg.tiers button{flex:1 1 0;padding:7px 4px}
+.card.ask{border-color:var(--warn)}
 </style>
 </head>
 <body>
@@ -51,7 +72,7 @@ p{margin:6px 0}.muted{color:var(--muted)}.small{font-size:14px}.center{text-alig
 /* ============================================================================
    MATHS GAMES  ·  one file, no server. Progress is saved in this browser only.
    Started 22 Nov 2026 (Matt): the games area of the student site. The race moved here from Maths Practice;
-   the guessing games (Angle guesser, Number line, Equation hunt) are to come, see claude/guessing-games-brief.md.
+   the guessing games are in claude/guessing-games-brief.md: the Angle guesser (23 Nov 2026), then Number line and Equation hunt.
    If Maths Practice has been used in this browser (same site, so the same storage), the race reads its levels and
    typed times to set "my level" and where a first-time racer starts. It only reads them; it never changes them.
    ============================================================================ */
@@ -106,12 +127,15 @@ function fDone(f) { if (f.easy) return true; const r = P?.skills?.[f.id]; return
 const nextUp = op => real(op).find(f => !fDone(f));
 
 // ---------- saved data ----------
-/* mathsGames.v1 = {v: 1, race, rset}
+/* mathsGames.v1 = {v: 1, race, rset, ang}
    race: {st, best: {car index: {secs, right, slips, d, won}}, fr: {questions: best secs}}; missing = never raced.
      Copied once from Maths Practice's S.race (the race lived there 16-22 Nov 2026) if this page has none.
-   rset: the facts in a race: ops (any of A S M D; default ['M']), scope ('level' | 'all' | 'pick'), fam (ids for 'pick'). */
+   rset: the facts in a race: ops (any of A S M D; default ['M']), scope ('level' | 'all' | 'pick'), fam (ids for 'pick').
+   ang (Angle guesser, added 23 Nov 2026; missing = never played): {tier, daily: {date: {t, g: [guesses]}},
+     today: {'tier|date': {a: [guesses], fin}} (kept two weeks), best: {tier: points}, played: {tier: rounds finished}}.
+   Each later guessing game gets its own object here, the same way. */
 const KEY = 'mathsGames.v1';
-const fresh = () => ({v: 1, race: null, rset: {ops: ['M'], scope: null, fam: []}});
+const fresh = () => ({v: 1, race: null, rset: {ops: ['M'], scope: null, fam: []}, ang: null});
 let G; try { G = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { G = fresh(); }
 if (!G.race && P?.race?.best) G.race = {st: P.race.st || 0, best: P.race.best, fr: P.race.fr || {}};
 G.rset = Object.assign(fresh().rset, G.rset || {});
@@ -322,33 +346,297 @@ function raceHTML() {
   <div class="pad">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0'].map(c => `<button data-act="rkey" data-k="${c}">${c}</button>`).join('')}</div>`;
 }
 
+// ---------- shared pieces for the guessing games (built with the Angle guesser, 23 Nov 2026) ----------
+/* Seeded puzzles: the same seed always gives the same puzzle, so every device makes today's puzzle with no server.
+   Today's seed is the device's own date. NEVER change hashSeed, mulberry32 or a game's makers once students have played:
+   that would change today's puzzle part-way through the day, and the puzzles behind saved results. */
+function hashSeed(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; }
+  h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); return (h ^ h >>> 16) >>> 0;
+}
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const seeded = s => { const r = mulberry32(hashSeed(String(s))); return {f: r, i: (a, b) => a + Math.floor(r() * (b - a + 1))}; };
+const shuffled = (a, rng) => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = rng.i(0, i); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+let gClock = () => Date.now();                 // the tests swap this to cross midnight
+const dayOf = t => { const d = new Date(t); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
+const gToday = () => dayOf(gClock());
+const prevDay = d => { const [y, m, dd] = d.split('-').map(Number); return dayOf(new Date(y, m - 1, dd - 1, 12).getTime()); };
+const dayLabel = d => { const [, m, dd] = d.split('-').map(Number); return dd + ' ' + 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[m - 1]; };
+// Bands: one ladder for both the points in a round and the clues in the daily puzzle (Matt, 23 Nov 2026).
+// No red or green (principle 21), and every band has a word as well as a colour.
+const bandOf = (off, B) => B.find(b => off <= b.max);
+// The result line to copy, Wordle-style: no name in it. Falls back to a hidden text box where the clipboard isn't allowed.
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch (e) {
+    try { const a = document.createElement('textarea'); a.value = t; a.setAttribute('readonly', ''); a.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(a); a.select(); const ok = document.execCommand('copy'); a.remove(); return ok; } catch (e2) { return false; }
+  }
+}
+const shareHTML = (line, copied) => `<div class="share"><code id="gline">${esc(line)}</code><button class="btn sm${copied ? '' : ' pri'}" data-act="gcopy">${copied ? 'Copied ✓' : 'Copy'}</button></div>`;
+// The number pad for typing a guess: digits, delete, and Check.
+const guessPad = ok => `<div class="pad">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0'].map(c => `<button data-act="akey" data-k="${c}" aria-label="${c === '⌫' ? 'Delete' : c}">${c}</button>`).join('')}<button class="ok" data-act="akey" data-k="ok" ${ok ? '' : 'disabled'}>Check</button></div>`;
+
+// ---------- the Angle guesser ----------
+/* Rounds: 10 angles, each estimated in degrees and scored by the band it lands in; a round is out of 150.
+   Today's angle (Angledle-style): one angle, six guesses, each told its band and whether to go bigger or smaller.
+   Today's angle and each tier's today's round are the same on every device for the day (seed = the date);
+   one go of each counts, saved as it is played so leaving and coming back carries on. Practice is unlimited.
+   Competing (Matt, 23 Nov 2026): today's puzzles, or the same tier and compare scores. No codes, no pass and play. */
+const AR = {R: 68, round: 10, guesses: 6};
+const ANG_BANDS = [
+  {max: 2, pts: 15, word: 'Bullseye', em: '🎯'},
+  {max: 5, pts: 10, word: 'So close', em: '🟪'},
+  {max: 15, pts: 5, word: 'Hot', em: '🟧'},
+  {max: 22.5, pts: 1, word: 'Warm', em: '🟨'},
+  {max: Infinity, pts: 0, word: 'Cold', em: '⬜'}];
+const angBand = off => bandOf(Math.abs(off), ANG_BANDS);
+const angPts = off => angBand(off).pts;
+const ANG_MAX = AR.round * ANG_BANDS[0].pts;
+const ANG_TIERS = [
+  {id: 'starter', name: 'Starter', say: 'Acute and obtuse angles, with one arm flat.'},
+  {id: 'turned', name: 'Turned', say: 'Acute and obtuse angles turned any way, with arms of different lengths.'},
+  {id: 'reflex', name: 'Reflex', say: 'Reflex angles too (more than 180°).'},
+  {id: 'expert', name: 'Expert', say: 'All of these, with no arc to show the angle.'}];
+const ANG_T = Object.fromEntries(ANG_TIERS.map(t => [t.id, t]));
+const angNear = t => [90, 180, 270].some(b => Math.abs(t - b) <= 2);       // never exactly on a right angle or a straight line
+// Sizes for a round: one from each of 10 slices of the range, so a round is spread out and never repeats, then shuffled.
+function angSizes(rng, tier) {
+  const span = (lo, hi, n) => Array.from({length: n}, (_, k) => { const a = lo + Math.round((hi - lo + 1) * k / n), z = lo + Math.round((hi - lo + 1) * (k + 1) / n) - 1; let t; do t = rng.i(a, z); while (angNear(t)); return t; });
+  const nR = tier === 'reflex' ? 4 : tier === 'expert' ? 3 : 0;
+  return shuffled(span(10, 170, AR.round - nR).concat(nR ? span(190, 350, nR) : []), rng);
+}
+// An angle: size t, first arm in direction b (degrees anticlockwise from east), turning s (+1 anticlockwise, −1 clockwise), arm lengths.
+function angShape(rng, tier, t) {
+  if (tier === 'starter') { const left = rng.f() < .5; return {t, b: left ? 180 : 0, s: left ? -1 : 1, L1: 100, L2: 100, arc: true}; }
+  const L1 = rng.i(78, 115); let L2; do L2 = rng.i(78, 115); while (Math.abs(L1 - L2) < 15);
+  return {t, b: rng.i(0, 359), s: rng.f() < .5 ? 1 : -1, L1, L2, arc: tier !== 'expert'};
+}
+function angRound(seed, tier) { const rng = seeded(seed); return angSizes(rng, tier).map(t => angShape(rng, tier, t)); }
+function angOne(seed) { const rng = seeded(seed); let t; do t = rng.i(10, 350); while (angNear(t)); return angShape(rng, 'reflex', t); }
+const angDailyItem = d => angOne('angles|daily|' + d);
+const angTodaySeed = (tier, d) => 'angles|round|' + tier + '|' + d;
+// What the size is near, in words: the benchmark every reveal names.
+const BENCH = [[0, ''], [45, 'half a right angle'], [90, 'a right angle'], [135, 'one and a half right angles'], [180, 'a straight line'], [225, 'two and a half right angles'], [270, 'three right angles'], [315, 'three and a half right angles'], [360, 'a full turn']];
+function benchText(t) {
+  const [b, nm] = BENCH.reduce((a, x) => Math.abs(x[0] - t) < Math.abs(a[0] - t) ? x : a), d = t - b;
+  const s = b === 0 ? 'Less than half a right angle (45°)' : Math.abs(d) <= 3 ? `About ${nm} (${b}°)` : `A bit ${d > 0 ? 'more' : 'less'} than ${nm} (${b}°)`;
+  return (t > 180 ? 'A reflex angle: ' + s.charAt(0).toLowerCase() + s.slice(1) : s) + '.';
+}
+// Drawing, in SVG (crisp at any size). y is up in the maths and down on screen.
+const rad = d => d * Math.PI / 180, PT = (d, r) => [r * Math.cos(rad(d)), -r * Math.sin(rad(d))];
+const f1 = n => +n.toFixed(1), xy = p => f1(p[0]) + ' ' + f1(p[1]);
+function arcPath(it, from, span, r, wedge) {
+  if (span <= 0) return 'M0 0';
+  const a = PT(from, r), b = PT(from + it.s * span, r), sw = it.s > 0 ? 0 : 1;
+  return (wedge ? `M0 0L${xy(a)}` : `M${xy(a)}`) + `A${r} ${r} 0 ${span > 180 ? 1 : 0} ${sw} ${xy(b)}` + (wedge ? 'Z' : '');
+}
+function protSvg(it, full) {
+  const R = AR.R, out = [full ? `<circle class="pbody" r="${R}"/>` : `<path class="pbody" d="${arcPath(it, it.b, 180, R)}Z"/>`];
+  for (let k = 0; k <= (full ? 355 : 180); k += 5) {
+    const d = it.b + it.s * k, len = k % 30 === 0 ? 11 : k % 10 === 0 ? 7 : 4;
+    out.push(`<path class="ptick" d="M${xy(PT(d, R))}L${xy(PT(d, R - len))}"/>`);
+    // 0 and 180 sit just off the arm, so the arm doesn't run through them
+    if (k % 30 === 0) { const p = PT(k === 0 ? d + it.s * 7 : k === 180 && !full ? d - it.s * 7 : d, R - 19); out.push(`<text class="plab" x="${f1(p[0])}" y="${f1(p[1])}">${k}</text>`); }
+  }
+  return out.join('');
+}
+/* o.prot: the protractor and the true size (the reveal); o.on: already swept; o.guess: a guess to show as a dashed arm. */
+function angSvg(it, o = {}) {
+  const R = AR.R, full = it.t > 180, d2 = it.b + it.s * it.t, lp = PT(it.b + it.s * it.t / 2, R + 15);
+  const pts = [[0, 0], PT(it.b, it.L1), PT(d2, it.L2), [lp[0] - 20, lp[1] - 9], [lp[0] + 20, lp[1] + 9]];
+  // The question is framed on the angle alone (bigger on screen); the reveal makes room for the protractor and the label.
+  if (o.prot) for (let k = 0; k <= (full ? 360 : 180); k += 15) pts.push(PT(it.b + it.s * k, R + 2)); else pts.splice(3);
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), x0 = Math.min(...xs) - 12, y0 = Math.min(...ys) - 12, w = Math.max(...xs) + 12 - x0, h = Math.max(...ys) + 12 - y0;
+  const out = [];
+  if (o.prot) out.push(`<g class="prot${o.on ? ' on' : ''}" id="aprot">${protSvg(it, full)}</g><path class="asw" id="asw" d="${o.on ? arcPath(it, it.b, it.t, R - 1, true) : 'M0 0'}"/>`);
+  if (it.arc) out.push(`<path class="marc" d="${arcPath(it, it.b, it.t, it.t < 25 ? 42 : 24)}"/>`);
+  out.push(`<path class="arm" d="M0 0L${xy(PT(it.b, it.L1))}M0 0L${xy(PT(d2, it.L2))}"/>`);
+  if (o.guess != null) out.push(`<path class="aguess" d="M0 0L${xy(PT(it.b + it.s * o.guess, R + 14))}"/>`);
+  out.push('<circle class="avx" r="2.6"/>');
+  if (o.prot) out.push(`<text class="alab${o.on ? ' on' : ''}" id="alab" x="${f1(lp[0])}" y="${f1(lp[1])}">${it.t}°</text>`);
+  return `<svg class="ang" viewBox="${f1(x0)} ${f1(y0)} ${f1(w)} ${f1(h)}" role="img" aria-label="${o.prot ? `An angle of ${it.t} degrees` : 'An angle to estimate'}">${out.join('')}</svg>`;
+}
+// The reveal: the protractor fades in and the shading sweeps round to the true size.
+let angAnim = 0;
+function angAfter() {
+  const A = V.a, sw = $('#asw'); if (!sw || !A) return;
+  const it = A.ph === 'rev' ? A.items[A.i] : A.it, tag = A.ph + A.i;
+  if (A.swept === tag) return;
+  A.swept = tag;
+  const prot = $('#aprot'), lab = $('#alab'), fin = () => { sw.setAttribute('d', arcPath(it, it.b, it.t, AR.R - 1, true)); lab.classList.add('on'); };
+  prot.getBoundingClientRect(); prot.classList.add('on');
+  if (reduceMotion()) return fin();
+  const me = ++angAnim, t0 = performance.now() + 250, dur = 900;
+  const step = now => {
+    if (me !== angAnim || !sw.isConnected) return;
+    const k = Math.min(1, Math.max(0, (now - t0) / dur)), e = 1 - Math.pow(1 - k, 3);
+    sw.setAttribute('d', arcPath(it, it.b, it.t * e, AR.R - 1, true));
+    if (k < 1) requestAnimationFrame(step); else fin();
+  };
+  requestAnimationFrame(step);
+}
+// Saved data for the Angle guesser (G.ang): see the note on saved data above.
+function angData() {
+  const A = G.ang = Object.assign({daily: {}, today: {}, best: {}, played: {}, tier: 'starter'}, G.ang || {});
+  const cut = dayOf(gClock() - 14 * 864e5);
+  Object.keys(A.today).forEach(k => { if (k.split('|')[1] < cut) delete A.today[k]; });   // today's rounds are kept two weeks
+  return A;
+}
+const angDDone = (g, t) => g.length >= AR.guesses || g.some(x => angPts(x - t) === ANG_BANDS[0].pts);
+const angDSolved = (g, t) => g.some(x => angPts(x - t) === ANG_BANDS[0].pts);
+function angStats() {
+  const A = angData(), D = A.daily, done = d => D[d] && angDDone(D[d].g, D[d].t), days = Object.keys(D).filter(done).sort();
+  let cur = 0, d = gToday(); if (!done(d)) d = prevDay(d); while (done(d)) { cur++; d = prevDay(d); }
+  let best = 0, run = 0; days.forEach((x, i) => { run = i && prevDay(x) === days[i - 1] ? run + 1 : 1; best = Math.max(best, run); });
+  return {played: days.length, solved: days.filter(x => angDSolved(D[x].g, D[x].t)).length, cur, best};
+}
+const angRoundScore = (items, ans) => ans.reduce((s, g, k) => s + angPts(g - items[k].t), 0);
+const angLine = A => {
+  if (A.ph === 'done') { const em = A.ans.map((g, k) => angBand(g - A.items[k].t).em).join(''), sc = angRoundScore(A.items, A.ans);
+    return A.mode === 'today' ? `Angles ${dayLabel(A.key.split('|')[1])} · ${ANG_T[A.tier].name} round · ${sc}/${ANG_MAX} · ${em}` : `Angles · ${ANG_T[A.tier].name} practice · ${sc}/${ANG_MAX} · ${em}`; }
+  const sol = angDSolved(A.g, A.it.t), em = A.g.map(g => angBand(g - A.it.t).em).join('');
+  return `Angles ${A.mode === 'today' ? dayLabel(A.date) : 'practice'} · ${sol ? A.g.length : 'X'}/${AR.guesses} · ${em}`;
+};
+function angMenu() { angData(); V = {view: 'angles', a: {ph: 'menu'}}; render(); window.scrollTo(0, 0); }
+function angRoundStart(mode, tier = G.ang.tier) {
+  const A = angData(), td = gToday();
+  if (mode === 'today') {
+    const key = tier + '|' + td, rec = A.today[key] || (A.today[key] = {a: []}); save();
+    V = {view: 'angles', a: {ph: 'q', mode, tier, key, items: angRound(angTodaySeed(tier, td), tier), ans: rec.a.slice(), i: rec.a.length, val: ''}};
+    if (V.a.i >= AR.round) return angFinish();
+  } else V = {view: 'angles', a: {ph: 'q', mode, tier, items: angRound('angles|practice|' + Math.random(), tier), ans: [], i: 0, val: ''}};
+  render(); window.scrollTo(0, 0);
+}
+function angDailyStart(mode) {
+  const A = angData(), td = gToday();
+  const it = mode === 'today' ? angDailyItem(td) : angOne('angles|practice|' + Math.random());
+  V = {view: 'angles', a: {ph: 'daily', mode, date: td, it, g: mode === 'today' && A.daily[td] ? A.daily[td].g.slice() : [], val: '', i: 0}};
+  render(); window.scrollTo(0, 0);
+}
+function angKey(k) {
+  const A = V.a; if (V.view !== 'angles' || !(A.ph === 'q' || (A.ph === 'daily' && !angDDone(A.g, A.it.t)))) return;
+  if (k === 'ok') return angCheck();
+  if (k === '⌫') A.val = A.val.slice(0, -1);
+  else if (/^\d$/.test(k)) { const v = (A.val === '0' ? '' : A.val) + k; if (v.length <= 3 && +v <= 360) A.val = v; }
+  const box = $('#av'), ok = $('[data-k=ok]');
+  if (box) box.innerHTML = A.val ? esc(A.val) + '°' : '<span class="muted">?°</span>';
+  if (ok) ok.disabled = !A.val;
+}
+function angCheck() {
+  const A = V.a; if (A.val === '') return; const g = +A.val; A.val = '';
+  if (A.ph === 'q') { A.ans.push(g); if (A.key) { G.ang.today[A.key].a = A.ans.slice(); save(); } A.ph = 'rev'; }
+  else { A.g.push(g); A.i = A.g.length; if (A.mode === 'today') { G.ang.daily[A.date] = {t: A.it.t, g: A.g.slice()}; save(); } }
+  render();
+}
+function angNext() { const A = V.a; if (A.ph !== 'rev') return; A.i++; if (A.i >= AR.round) return angFinish(); A.ph = 'q'; render(); window.scrollTo(0, 0); }
+function angFinish() {
+  const A = V.a, D = angData(), sc = angRoundScore(A.items, A.ans), rec = A.key && D.today[A.key];
+  A.prevBest = D.best[A.tier] ?? null;
+  if (!rec || !rec.fin) { D.played[A.tier] = (D.played[A.tier] || 0) + 1; D.best[A.tier] = Math.max(sc, D.best[A.tier] ?? 0); if (rec) rec.fin = true; save(); }
+  A.ph = 'done'; A.score = sc; render(); window.scrollTo(0, 0);
+}
+// Leaving a practice go part-way asks first (principle 17); today's goes are saved as they are played, so they never need to.
+const angAsk = () => { const A = V.a; return A.mode === 'practice' && ((A.ph === 'q' || A.ph === 'rev') ? A.ans.length > 0 : A.ph === 'daily' && A.g.length > 0 && !angDDone(A.g, A.it.t)); };
+const angTop = (t, right) => `<div class="top"><button class="btn sm ghost" data-act="up" aria-label="Back">✕</button><b class="ttl">${t}</b><span class="sp"></span>${right}</div>`
+  + (V.a.ask ? `<div class="card ask"><b>Leave this practice?</b> <span class="muted">Your answers won't be kept.</span><div class="row" style="margin-top:8px"><button class="btn pri" data-act="aleave">Leave</button><button class="btn" data-act="astay">Keep playing</button></div></div>` : '');
+const bandChip = off => { const b = angBand(off); return `<span class="band">${b.em} ${b.word}</span>`; };
+function angMenuHTML() {
+  const A = angData(), td = gToday(), dr = A.daily[td], dIt = angDailyItem(td), st = angStats(), tier = A.tier;
+  const dDone = dr && angDDone(dr.g, dr.t), rec = A.today[tier + '|' + td], rn = rec ? rec.a.length : 0;
+  const dLine = dDone ? angLine({ph: 'daily', mode: 'today', date: td, it: dIt, g: dr.g}) : '';
+  const ptsLine = ANG_BANDS.slice(0, -1).map(b => `${b.em} within ${b.max === 22.5 ? '22½' : b.max}°: <b>${b.pts}</b>`).join(' · ');
+  return head('Angle guesser') + `<div class="card"><div class="row"><b style="font-size:19px">Today's angle</b><span class="sp"></span><span class="chip">${dayLabel(td)}</span></div>
+    <p class="small">One angle, six guesses. Each guess is told how close it is and whether to go bigger or smaller. Hit the bullseye (within 2°) to solve it. Everyone gets the same angle today.</p>
+    ${dDone ? `<p style="margin:8px 0 4px"><b>${angDSolved(dr.g, dr.t) ? `Solved in ${dr.g.length}` : `Not solved: it was ${dr.t}°`}</b>. A new angle tomorrow.</p>${shareHTML(dLine, V.a.copied)}` : ''}
+    <div class="row" style="margin-top:8px">${dDone ? `<button class="btn" data-act="adaily">See it</button>` : `<button class="btn pri" data-act="adaily">${dr && dr.g.length ? `Carry on (${dr.g.length} of ${AR.guesses} used)` : "Play today's angle"}</button>`}<button class="btn" data-act="adprac">Practice angle</button></div></div>
+  <div class="card"><b style="font-size:19px">Rounds of 10</b>
+    <div class="seg tiers" role="group" aria-label="Tier" style="margin:8px 0 4px">${ANG_TIERS.map(t => `<button class="${t.id === tier ? 'on' : ''}" data-act="atier" data-t="${t.id}">${t.name}</button>`).join('')}</div>
+    <p class="small muted" style="margin-top:2px">${ANG_T[tier].say}</p>
+    <p class="small">Points for each angle: ${ptsLine}. A round is out of ${ANG_MAX}.</p>
+    <div class="row">${rn >= AR.round ? `<button class="btn" data-act="around" data-m="today">Today's round: ${angRoundScore(angRound(angTodaySeed(tier, td), tier), rec.a)}/${ANG_MAX}</button>` : `<button class="btn pri" data-act="around" data-m="today">${rn ? `Carry on today's round (${rn} of ${AR.round})` : "Today's round"}</button>`}<button class="btn" data-act="around" data-m="practice">Practice round</button></div>
+    <p class="muted small" style="margin-bottom:0">Today's round is the same for everyone in this tier, and only your first go counts. Practice rounds have new angles every time: pick the same tier as a friend and compare scores.</p></div>
+  <div class="card"><b>Your stats</b>
+    <p class="small" style="margin:6px 0">Today's angle: played ${st.played}, solved ${st.solved}. Streak: <b>${st.cur} day${st.cur === 1 ? '' : 's'}</b>${st.best > st.cur ? ` (best ${st.best})` : ''}.</p>
+    <table class="stats small"><tr><th></th><th>Rounds</th><th>Best</th><th>Today</th></tr>${ANG_TIERS.map(t => { const r = A.today[t.id + '|' + td]; return `<tr><td>${t.name}</td><td>${A.played[t.id] || 0}</td><td>${A.best[t.id] != null ? A.best[t.id] + '/' + ANG_MAX : '–'}</td><td>${r && r.a.length >= AR.round ? angRoundScore(angRound(angTodaySeed(t.id, td), t.id), r.a) + '/' + ANG_MAX : r && r.a.length ? r.a.length + ' of ' + AR.round : '–'}</td></tr>`; }).join('')}</table></div>`;
+}
+function angRoundHTML() {
+  const A = V.a, it = A.items[A.i], sc = angRoundScore(A.items, A.ans.slice(0, A.ph === 'rev' ? A.i + 1 : A.i));
+  const top = angTop(`${ANG_T[A.tier].name} · ${A.mode === 'today' ? "Today's round" : 'Practice'}`, `<span class="small" style="white-space:nowrap">${Math.min(A.i + 1, AR.round)} of ${AR.round}</span><span class="chip">${sc} pts</span>`);
+  if (A.ph === 'q') {
+    const ask = !it.arc ? (it.t > 180 ? 'How big is the reflex angle?' : 'How big is this angle?') : 'How big is the marked angle?';
+    return top + `<div class="afig">${angSvg(it)}</div><p class="center aq">${ask}</p><div id="av" class="rv">${A.val ? esc(A.val) + '°' : '<span class="muted">?°</span>'}</div>${guessPad(!!A.val)}`;
+  }
+  const g = A.ans[A.i], off = Math.abs(g - it.t), b = angBand(off);
+  return top + `<div class="afig">${angSvg(it, {prot: true, guess: g, on: A.swept === 'rev' + A.i})}</div>
+    <div class="row small muted" style="justify-content:center;gap:14px;margin:2px 0"><span><i class="rkey" style="background:var(--accent)"></i>The angle</span><span><i class="rkey dash"></i>Your guess</span></div>
+    <div class="center"><p class="aq" style="margin:4px 0 2px">It's <span class="acc">${it.t}°</span>. You said ${g}°: ${off ? `${off}° off` : 'spot on'}.</p>
+    <p class="fbband">${b.em} <b>${b.word}</b> +${b.pts}</p><p class="muted small">${esc(benchText(it.t))}</p>
+    <button class="btn pri big" data-act="anext">${A.i + 1 >= AR.round ? 'See your score' : 'Next angle'}</button></div>`;
+}
+function angDoneHTML() {
+  const A = V.a, D = angData(), sc = angRoundScore(A.items, A.ans), best = D.best[A.tier];
+  const note = A.mode === 'today' ? `Today's ${ANG_T[A.tier].name} round. Everyone in this tier had these angles today.` : `A practice round in ${ANG_T[A.tier].name}.`;
+  const bestTxt = A.prevBest == null ? 'Your first round in this tier.' : sc > A.prevBest ? `A new best! It was ${A.prevBest}.` : `Your best in this tier: ${best}.`;
+  return head('Angle guesser') + `<div class="card center"><div style="font-size:40px">📐</div><h2 style="margin:4px 0">${sc} out of ${ANG_MAX}</h2>
+    <p class="emrow">${A.ans.map((g, k) => angBand(g - A.items[k].t).em).join('')}</p><p class="small">${note}</p>${bestTxt ? `<p class="muted small">${bestTxt}</p>` : ''}
+    ${shareHTML(angLine(A), A.copied)}
+    <table class="stats small" style="margin:10px auto"><tr><th></th><th>Angle</th><th>You</th><th>Off</th><th>Points</th></tr>${A.items.map((it, k) => { const g = A.ans[k], off = Math.abs(g - it.t); return `<tr><td>${k + 1}</td><td>${it.t}°</td><td>${g}°</td><td>${off}°</td><td>${angBand(off).em} ${angPts(off)}</td></tr>`; }).join('')}</table>
+    <div class="row" style="justify-content:center"><button class="btn pri" data-act="around" data-m="practice">Practice round</button><button class="btn" data-act="amenu">All angle games</button></div></div>`;
+}
+function angDailyHTML() {
+  const A = V.a, it = A.it, done = angDDone(A.g, it.t), sol = angDSolved(A.g, it.t), last = A.g[A.g.length - 1];
+  const rows = A.g.map((g, k) => { const off = g - it.t, b = angBand(off); return `<div class="grow"><span class="gn">${k + 1}</span><b>${g}°</b>${bandChip(off)}<span class="sp"></span><span class="muted small">${b === ANG_BANDS[0] ? '' : off < 0 ? 'Go bigger ↑' : 'Go smaller ↓'}</span></div>`; }).join('');
+  const top = angTop(A.mode === 'today' ? `Today's angle · ${dayLabel(A.date)}` : 'Practice angle', `<span class="chip">${A.g.length} of ${AR.guesses}</span>`);
+  // The picture shrinks as guesses are added, so the guesses, the box and the pad all fit on a phone without scrolling.
+  if (!done) return top + `<div class="afig" style="--mh:${Math.max(22, 38 - 3.5 * A.g.length)}vh">${angSvg(it)}</div>${rows ? `<div class="glist">${rows}</div>` : ''}
+    <p class="center aq">${A.g.length ? 'Next guess?' : 'Guess the size of the marked angle.'}</p><div id="av" class="rv">${A.val ? esc(A.val) + '°' : '<span class="muted">?°</span>'}</div>${guessPad(!!A.val)}`;
+  const st = angStats();
+  return top + `<div class="afig">${angSvg(it, {prot: true, guess: last, on: A.swept === 'daily' + A.i})}</div>
+    <div class="center"><p class="aq" style="margin:4px 0 2px">${sol ? `Found it in ${A.g.length}! It's <span class="acc">${it.t}°</span>.` : `Not this time. It was <span class="acc">${it.t}°</span>.`}</p><p class="muted small">${esc(benchText(it.t))}</p></div>
+    <div class="glist">${rows}</div>${shareHTML(angLine(A), A.copied)}
+    ${A.mode === 'today' ? `<p class="small center">Streak: <b>${st.cur} day${st.cur === 1 ? '' : 's'}</b>. A new angle tomorrow.</p>` : ''}
+    <div class="row" style="justify-content:center"><button class="btn pri" data-act="adprac">${A.mode === 'today' ? 'Practice angle' : 'Another practice angle'}</button><button class="btn" data-act="amenu">All angle games</button></div>`;
+}
+const angHTML = () => ({menu: angMenuHTML, q: angRoundHTML, rev: angRoundHTML, done: angDoneHTML, daily: angDailyHTML})[V.a.ph]();
+async function gCopy() {
+  const el = $('#gline'); if (!el) return;
+  if (await copyText(el.textContent)) { V.a.copied = true; render(); }
+}
+
 // ---------- the games list ----------
 const GAMES = [
   {id: 'race', ic: '🏁', name: 'Race', col: '--accent', blurb: 'Number facts against the clock. Beat a car to unlock a faster one, or race a friend on another device.'},
-  {id: 'angles', ic: '📐', name: 'Angle guesser', col: '--k', blurb: 'Estimate the size of an angle, then see how close you were.', soon: true},
+  {id: 'angles', ic: '📐', name: 'Angle guesser', col: '--k', blurb: 'Estimate the size of an angle, then see how close you were. A new angle to find every day.'},
   {id: 'numline', ic: '📏', name: 'Number line', col: '--n', blurb: 'Where does the number sit on the line? Whole numbers, negatives, decimals and fractions.', soon: true},
   {id: 'equation', ic: '🟩', name: 'Equation hunt', col: '--f', blurb: 'Find the hidden equation in six guesses.', soon: true},
 ];
+function angHome() {
+  const r = G.ang?.daily?.[gToday()]; if (!r || !angDDone(r.g, r.t)) return G.ang ? ' <span class="muted">Today\'s angle is waiting.</span>' : '';
+  return ` <span class="muted">Today's angle: ${angDSolved(r.g, r.t) ? r.g.length : 'X'}/${AR.guesses}.</span>`;
+}
 function homeHTML() {
   const fromP = /\/practice\//.test(document.referrer);
   const won = G.race ? RC.opp.filter((_, i) => G.race.best[i]?.won).length : 0;
   return `<a class="homelink" href="../">← Mr Sawyer's Maths</a>${fromP ? '<a class="homelink" href="../practice/">← Maths Practice</a>' : ''}<h1>Maths Games</h1>
   <p class="muted">Games that are still maths. Everything you do here is saved on this device only.</p>
-  ${GAMES.map(g => `<div class="card game ${g.soon ? 'soon' : ''}" style="--c:var(${g.col})"><div class="row"><span style="font-size:26px">${g.ic}</span><b style="font-size:19px">${g.name}</b><span class="sp"></span>${g.soon ? '<span class="chip">Coming soon</span>' : `<button class="btn pri" data-act="${g.id}">Play</button>`}</div><p class="small" style="margin-bottom:0">${g.blurb}${g.id === 'race' && won ? ` <span class="muted">${won} of ${RC.opp.length} cars beaten.</span>` : ''}</p></div>`).join('')}
+  ${GAMES.map(g => `<div class="card game ${g.soon ? 'soon' : ''}" style="--c:var(${g.col})"><div class="row"><span style="font-size:26px">${g.ic}</span><b style="font-size:19px">${g.name}</b><span class="sp"></span>${g.soon ? '<span class="chip">Coming soon</span>' : `<button class="btn pri" data-act="${g.id}">Play</button>`}</div><p class="small" style="margin-bottom:0">${g.blurb}${g.id === 'race' && won ? ` <span class="muted">${won} of ${RC.opp.length} cars beaten.</span>` : ''}${g.id === 'angles' ? angHome() : ''}</p></div>`).join('')}
   ${storageOK ? '' : '<p class="fb warn">This browser is not saving progress.</p>'}`;
 }
 
 // ---------- navigation and events ----------
-/* ✕ and the device's Back gesture go up one step: a race to the list of cars, the list to the games list.
+/* ✕ and the device's Back gesture go up one step: a race to the list of cars, the list to the games list;
+   an angle round or puzzle to the Angle guesser's menu (a practice go part-way asks first), the menu to the games list.
    The page keeps one extra history entry while inside a game, so Back never leaves the page by accident. */
 let V = {view: 'home'};
 function render() {
-  $('#app').innerHTML = ({home: homeHTML, race: raceHTML})[V.view]();
+  $('#app').innerHTML = ({home: homeHTML, race: raceHTML, angles: angHTML})[V.view]();
+  if (V.view === 'angles') angAfter();
   const atHome = V.view === 'home', extra = history.state && history.state.mg;
   try { if (!atHome && !extra) history.pushState({mg: 1}, ''); else if (atHome && extra) history.back(); } catch (e) {}
 }
 function backBtn() {
   if (V.view === 'race' && V.r.ph !== 'pick') { V.r = racePick(); render(); window.scrollTo(0, 0); return; }
+  if (V.view === 'angles' && V.a.ph !== 'menu') { if (angAsk() && !V.a.ask) { V.a.ask = true; render(); window.scrollTo(0, 0); return; } angMenu(); return; }
   V = {view: 'home'}; render(); window.scrollTo(0, 0);
 }
 addEventListener('popstate', () => { if (V.view !== 'home') backBtn(); });
@@ -365,10 +653,23 @@ document.addEventListener('click', e => {
     case 'rlist': V.r = racePick(); render(); window.scrollTo(0, 0); break;
     case 'rgo': raceStart(+el.dataset.i, +el.dataset.n || 0); window.scrollTo(0, 0); break;
     case 'rkey': raceKey(el.dataset.k); break;
+    case 'angles': case 'amenu': case 'aleave': angMenu(); break;
+    case 'astay': V.a.ask = false; render(); break;
+    case 'atier': G.ang.tier = el.dataset.t; save(); render(); break;
+    case 'around': angRoundStart(el.dataset.m); break;
+    case 'adaily': angDailyStart('today'); break;
+    case 'adprac': angDailyStart('practice'); break;
+    case 'akey': angKey(el.dataset.k); break;
+    case 'anext': angNext(); break;
+    case 'gcopy': gCopy(); break;
   }
 });
 document.addEventListener('keydown', e => {
   if (V.view === 'race' && V.r.ph === 'run') { if (/^\d$/.test(e.key)) raceKey(e.key); else if (e.key === 'Backspace') raceKey('⌫'); }
+  if (V.view === 'angles') {
+    if (/^\d$/.test(e.key)) angKey(e.key); else if (e.key === 'Backspace') angKey('⌫');
+    else if (e.key === 'Enter') { e.preventDefault(); if (V.a.ph === 'rev') angNext(); else angKey('ok'); }
+  }
 });
 addEventListener('pagehide', save);
 render();
