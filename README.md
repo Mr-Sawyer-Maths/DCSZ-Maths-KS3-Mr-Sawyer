@@ -5,12 +5,33 @@ https://mr-sawyer-maths.github.io/DCSZ-Maths-KS3-Mr-Sawyer/ (repo: Mr-Sawyer-Mat
 
 | Folder | What it is | Who it's for |
 |---|---|---|
-| `/` | Landing page with links | Students |
+| `/` | Landing page with links, and **My record**: practice, challenges and games done on this device, together, by day | Students, and the teacher looking at a student's screen |
 | `practice/` | Maths Practice: levelled practice in number facts, number skills, fractions/decimals/percentages and word problems. The ⚙ screen (teacher PIN) also prints one-page practice sheets and makes backups | Students, and the teacher |
 | `practice/packs.js` | Extra word problems (optional; the app works without it) | Students |
 | `challenges/` | Maths Challenges: extension quests by topic, a competition ladder and reports; each student's progress is logged on their own device | Students who want more |
 | `challenges/data.js` | The content Mr Sawyer controls in Maths Challenges: classes and open topics, quests, ladder rungs, resources. No student information. Written by its Teacher tab (Setup and publish > Copy data.js), then pasted here | Students |
 | `fact-sessions/` | Fact practice sessions for 1–3 students who need fact families: session screen, printable sheets, fact maps, parent reports. Its fact ladder is older than the app's; sheets matching the app's levels come from the app's Sheets tab. Not linked from the landing page: open `…/fact-sessions/` directly | Teacher |
+
+## Records
+
+Every section keeps a record of what the student did, and the landing page reads all three together (it only reads; it never changes them). New sections and games should keep one in the same shape.
+
+| Section | Where | Kept in |
+|---|---|---|
+| Maths Practice | ⚙ > Record tab | `mathsPractice.v1` → `log` (its own richer entries, plus `t` and `w`) |
+| Maths Challenges | My progress > My record | `mathsChallenges.mine.v1` → `log` |
+| Maths Games | 📋 My games record (top of the games list) | `mathsGames.v1` → `log` |
+
+One entry: `{t, d, id, nm, ok, res, secs, note?}`
+- `t` when, in ms (`null` for entries copied from before the record started, 23 Nov 2026); `d` the local day, `YYYY-MM-DD`
+- `id` the quest, game or level; `nm` its name in words (so the landing page never needs the section's own lists)
+- `ok` `true` completed / won / passed, `false` not completed / lost / stopped early, `null` no answer or not applicable
+- `res` the result in words, as the student sees it; `secs` time spent, or `null`; `note` the student's own words
+- extras a section may add: games `sc`, `n`, `slips`, `fx` (which facts); challenges `v` (a score). Each record keeps its last 400.
+
+Practice entries keep their own fields (`sc`, `n`, `rate`, `pass`, `above`, `secs` …); the landing page maps them: `w` → name, `sc/n` → result, `pass` → ok.
+
+**Leaving for another site (Maths Challenges).** Quest links that open another website are marked `data-away`. When the student comes back to the page, a box asks what they did (Completed it / Not completed, an optional note, and a score for quests that keep one) and stays until they choose. The time away is recorded. If they come back more than 3 hours later, the visit is recorded as "Opened, no answer". The visit in progress is kept in `mathsChallenges.away.v1`.
 
 All progress is saved in each person's own browser. Nothing about students is stored in this repo.
 

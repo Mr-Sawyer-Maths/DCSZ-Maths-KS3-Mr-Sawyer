@@ -184,6 +184,19 @@ details.help ol{margin:6px 0;padding-left:1.3em;display:flex;flex-direction:colu
 .dirs span.off{opacity:.35}
 .chk{color:var(--ok);font-weight:700}
 footer{color:var(--muted);font-size:.8rem;padding:0 0 32px}
+.rtab td{vertical-align:top}
+.rtab .when{white-space:nowrap;color:var(--muted);font-size:.85rem}
+.res-ok{font-weight:700;color:var(--ink)}.res-ok::before{content:"✓ "}
+.res-no{color:var(--muted)}.res-no::before{content:"○ "}
+.res-q{color:var(--wait)}
+/* back from a quest: what did you do? (Matt, 23 Nov 2026) */
+.ov{position:fixed;inset:0;z-index:50;background:rgba(9,13,24,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.dlg{background:var(--card);color:var(--ink);border-radius:14px;border-top:6px solid var(--kc,var(--gold));max-width:460px;width:100%;padding:18px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 40px rgba(0,0,0,.35);max-height:calc(100vh - 32px);overflow:auto}
+.dlg h2{font-size:1.3rem}
+.dlg .acts{display:flex;flex-wrap:wrap;gap:10px}
+.dlg .acts .btn{flex:1 1 150px;justify-content:center;min-height:48px;font-size:1rem}
+.dlg input{width:100%}
+body.locked{overflow:hidden}
 @media (max-width:480px){.grid{grid-template-columns:1fr}.boards{grid-template-columns:1fr}.pts{margin-left:0}}
 @media (prefers-reduced-motion:no-preference){.btn,.chip{transition:border-color .12s,background .12s}}
 </style>
@@ -194,6 +207,7 @@ footer{color:var(--muted);font-size:.8rem;padding:0 0 32px}
   <nav class="tabs" id="tabs" aria-label="Sections"></nav>
 </div></header>
 <main><div class="wrap" id="app"></div></main>
+<div id="backdlg"></div>
 <footer><div class="wrap">Many of these quests come from Dylan Kane's <a href="https://fivetwelvethirteen.substack.com/p/glimpses" target="_blank" rel="noopener">Glimpses</a> list, Play With Your Math, Naoki Inaba, Transum and Math With Bad Drawings. Everything you tick is saved on this device only. Nothing about you is sent anywhere.</div></footer>
 
 <script src="data.js"></script>
@@ -281,12 +295,23 @@ function fill(d){ // tolerate a hand-edited or older data file, and drop anythin
 /* ---------- data ---------- */
 const PUB = window.SQ_DATA ? fill(clone(window.SQ_DATA)) : null;
 let me = Object.assign({cls:"", clsName:"", q:{}, rung:0, days:{}}, store.get(KEY_ME, {}));
+/* The record (23 Nov 2026): me.log, one entry each time a student finishes, or comes back from, a quest.
+   Same shape as Maths Games' record, so the landing page can show them together (see README, "Records"):
+   {t: ms, d: "YYYY-MM-DD", id, nm: title, ok: true completed | false not completed | null no answer, res: words shown,
+    secs: time away from the page (null if not timed), note: the student's own words, v: a score}. Last 400 kept. */
+if(!Array.isArray(me.log)){ // first visit since the record started: what was already done goes in, undated in the day
+  me.log = PUB ? Object.keys(me.q).filter(id => me.q[id].s === "done" && me.q[id].d).map(id => { const q = PUB.quests.find(x => x.id === id);
+    return {t:null, d:me.q[id].d, id, nm:q ? q.title : id, ok:true, res:"Completed", secs:null, early:true}; }).sort((a, b) => a.d < b.d ? -1 : 1) : [];
+}
 let T = PUB ? store.get(KEY_T, null) : null; // the teacher's working copy of the content; used only while the Teacher tab is unlocked
 if(T) T = fill(T);
 let unlocked = false, checking = false;      // Teacher tab unlocked; teacher checking a student's progress on this device
 const ui = {view:"quests", dir:"all", q:"", todo:false, claiming:null, tsub:"classes", edit:null, flash:"", code:"", restore:false};
 
 function saveMe(){ const cut = iso(new Date(Date.now() - 400 * 864e5)); Object.keys(me.days).forEach(k => { if(k < cut) delete me.days[k]; }); if(!store.set(KEY_ME, me)) ui.flash = "This browser isn't saving progress. Ask your teacher."; }
+function addRec(e){ me.log.push(Object.assign({t:Date.now(), d:today()}, e)); if(me.log.length > 400) me.log = me.log.slice(-400); }
+function unRec(id){ for(let i = me.log.length - 1; i >= 0; i--) if(me.log[i].id === id && me.log[i].ok){ me.log.splice(i, 1); return; } } // Undo / Remove takes back the last "Completed"
+const doneRec = (it, extra) => addRec(Object.assign({id:it.id, nm:it.title, ok:true, res:"Completed", secs:null}, extra || {}));
 function saveT(){ T.rev = (T.rev||0) + 1; store.set(KEY_T, T); }
 const D = () => (unlocked && T) ? T : PUB;
 const S = () => D().settings;
@@ -383,7 +408,7 @@ function mineLine(it){
 const rulesLabel = it => it.dir === "play" ? "How to play →" : "How it works →";
 function goBtn(it){ // a quest with rules opens its own page first; the outside site is at the bottom of that page
   if(it.rules) return '<a class="btn primary" href="#q/' + esc(it.id) + '">' + rulesLabel(it) + "</a>";
-  if(it.url) return '<a class="btn primary" href="' + esc(it.url) + '" target="_blank" rel="noopener">Open ↗</a>';
+  if(it.url) return '<a class="btn primary" href="' + esc(it.url) + '" target="_blank" rel="noopener" data-away="' + esc(it.id) + '">Open ↗</a>';
   return it.dir === "report" ? "" : '<span class="tag">It\'s all in the question</span>';
 }
 function stateActs(it){
@@ -411,7 +436,7 @@ function viewPage(it){ // rules first, the outside site last
   if(it.how) h += '<p class="fin"><b>To finish:</b> ' + esc(it.how) + (it.pass != null ? " Move up a rung with " + it.pass + " or more." : "") + "</p>";
   if(ml) h += '<div class="social">' + ml + "</div>";
   h += '<div class="acts">' + (inToday ? (doneToday(it.id) ? '<span class="status ok">Done today ✓</span>' : '<button class="btn gold" data-act="today" data-id="' + it.id + '">Done today</button>') : stateActs(it)) + "</div>";
-  if(it.url) h += '<div class="away"><span class="small muted">' + esc(it.go || "The original is on another website.") + '</span><a class="btn" href="' + esc(it.url) + '" target="_blank" rel="noopener">Go to the site ↗</a></div>';
+  if(it.url) h += '<div class="away"><span class="small muted">' + esc(it.go || "The original is on another website.") + '</span><a class="btn" href="' + esc(it.url) + '" target="_blank" rel="noopener" data-away="' + esc(it.id) + '">Go to the site ↗</a></div>';
   return h + "</article></div>";
 }
 function todayCard(o){
@@ -495,6 +520,7 @@ function viewMine(){
   let h = '<div class="stack"><section class="stack"><h2>My progress</h2><p class="muted small">Saved on this device only. Show ' + T_ + " or a friend how you are doing." + (c ? " Class: " + esc(c.name) + "." : "") + "</p>";
   h += '<div class="sum"><div class="tile"><div class="big">' + t.pts + '</div><div class="lab">Points</div></div><div class="tile"><div class="big">' + t.n + '</div><div class="lab">Quests done</div></div><div class="tile"><div class="big">' + streak() + '</div><div class="lab">Days in a row</div></div><div class="tile"><div class="big">' + (top || "–") + '</div><div class="lab">Highest rung</div></div><div class="tile"><div class="big">' + Object.keys(t.dirs).length + " / " + DIR_ORDER.length + '</div><div class="lab">Directions tried</div></div></div>';
   h += '<div class="dirs">' + DIR_ORDER.map(k => '<span class="k-' + k + (t.dirs[k] ? "" : " off") + '">' + DIRS[k].n + (t.dirs[k] ? " " + t.dirs[k] : "") + "</span>").join("") + "</div></section>";
+  h += recHTML();
   if(bests.length) h += '<section class="panel"><h2>Personal bests</h2><ul class="list">' + bests.map(q => "<li><b>" + esc(q.title) + ":</b> " + esc(mine(q.id).v) + ' <span class="muted small">' + esc(q.record.label) + "</span></li>").join("") + "</ul></section>";
   if(reps.length) h += '<section class="panel"><h2>My report</h2><ul class="list">' + reps.map(q => "<li><b>" + esc(q.title) + '</b> <span class="status wait">' + STAGES[mine(q.id).st] + "</span></li>").join("") + "</ul></section>";
   h += '<section class="panel"><h2>Done</h2>';
@@ -515,6 +541,68 @@ function viewMine(){
   if(ui.restore) h += '<form data-form="restore" class="stack"><textarea id="codein" aria-label="Backup code to restore" placeholder="MC1. …"></textarea><div class="row"><button class="btn primary">Restore (replaces what is on this device)</button></div></form>';
   return h + "</section></div>";
 }
+
+/* ---------- the record, and "what did you do?" when a student comes back from a quest's website ---------- */
+const hhmm = t => { const x = new Date(t); return String(x.getHours()).padStart(2,"0") + ":" + String(x.getMinutes()).padStart(2,"0"); };
+const mins = s => s == null ? "" : s < 60 ? Math.max(1, Math.round(s)) + " s" : Math.round(s / 60) + " min";
+function recHTML(){
+  const L = me.log.slice().reverse(), shown = ui.recAll ? L : L.slice(0, 15), T_ = esc(S().teacher);
+  let h = '<section class="panel" id="record"><h2>My record</h2><p class="lede">Everything you have done here, newest first. Time is how long you were away on the quest\'s website. ' + T_ + ' can see this on your device, or on the home page with your practice and games.</p>';
+  if(!L.length) return h + '<p class="muted small">Nothing yet. Open a quest, and when you come back you\'ll be asked what you did.</p></section>';
+  h += '<div class="tw"><table class="rtab"><thead><tr><th>When</th><th>Quest</th><th>What happened</th><th>Time</th></tr></thead><tbody>' + shown.map(e =>
+    '<tr><td class="when">' + nice(e.d) + (e.t ? "<br>" + hhmm(e.t) : "") + "</td><td>" + esc(e.nm) + (e.note ? '<br><span class="muted small">“' + esc(e.note) + '”</span>' : "") + "</td>" +
+    '<td class="' + (e.ok ? "res-ok" : e.ok === false ? "res-no" : "res-q") + '">' + esc(e.res) + (e.v != null ? ' <span class="muted small">(' + esc(e.v) + ")</span>" : "") + (e.early ? '<br><span class="muted small">before the record started</span>' : "") + '</td><td class="small">' + mins(e.secs) + "</td></tr>").join("") + "</tbody></table></div>";
+  if(L.length > 15) h += '<div><button class="btn quiet" data-act="recall">' + (ui.recAll ? "Show fewer" : "Show all " + L.length) + "</button></div>";
+  return h + "</section>";
+}
+/* A quest's website opens in a new tab. When the student comes back to this page, a box asks what they did, and stays until
+   they choose Completed or Not completed. The time away is recorded. If they don't come back within 3 hours (a different
+   session), the visit goes in the record as "Opened, no answer". KEY_AWAY is a separate key so a backup never carries it. */
+const KEY_AWAY = "mathsChallenges.away.v1", AWAY_MAX = 3 * 3600e3;
+let away = store.get(KEY_AWAY, null), awayLeft = !!away; // left: the page has been hidden since the link was tapped (true after a reload)
+function goAway(id){ away = {id, t:Date.now()}; awayLeft = false; store.set(KEY_AWAY, away); }
+function clearAway(){ away = null; try { localStorage.removeItem(KEY_AWAY); } catch(e){} }
+function checkBack(){
+  if(!away || !awayLeft || $("#backdlg").innerHTML) return;
+  const it = PUB && item(away.id), gone = Date.now() - away.t;
+  if(!it){ clearAway(); return; }
+  if(gone > AWAY_MAX || gone < 0){ addRec({t:away.t, d:iso(new Date(away.t)), id:it.id, nm:it.title, ok:null, res:"Opened, no answer", secs:null}); clearAway(); saveMe(); render(); return; }
+  const secs = Math.round(gone / 1000), c = mine(it.id), was = c && c.s === "done";
+  $("#backdlg").innerHTML = '<div class="ov"><div class="dlg k-' + it.dir + '" role="dialog" aria-modal="true" aria-labelledby="bkh">' +
+    '<p class="small muted">Welcome back · you were away ' + (secs < 60 ? "under a minute" : "about " + mins(secs)) + "</p>" +
+    '<h2 id="bkh">What did you do on ' + esc(it.title) + "?</h2>" +
+    (it.how ? '<p class="small"><b>To finish:</b> ' + esc(it.how) + "</p>" : "") + (was ? '<p class="small muted">You finished this before, on ' + nice(c.d) + ". Completed again counts as another go.</p>" : "") +
+    (it.record ? '<label>' + esc(it.record.label) + ' <span class="muted small" style="font-weight:400">(if you finished)</span><input type="number" step="any" id="bkv"></label>' : "") +
+    '<label>What did you get done? <span class="muted small" style="font-weight:400">(optional)</span><input type="text" id="bknote" maxlength="140" placeholder="For example: got to level 3"></label>' +
+    '<div class="acts"><button class="btn gold" data-bk="1">✓ Completed it</button><button class="btn" data-bk="0">Not completed</button></div>' +
+    '<p class="small muted">This goes in your record. Choose one to carry on.</p></div></div>';
+  document.body.classList.add("locked");
+  const b = $("#backdlg .btn"); if(b) b.focus();
+  $("#backdlg").dataset.secs = secs;
+}
+function answerBack(ok){
+  const it = item(away.id), secs = +$("#backdlg").dataset.secs, note = ($("#bknote").value || "").trim(), vi = $("#bkv"), raw = vi ? vi.value : "", c = mine(it.id) || {};
+  const e = {t:away.t + secs * 1000, id:it.id, nm:it.title, ok, res:ok ? (it.dir === "report" ? "Finished" : "Completed") : "Not completed", secs};
+  if(note) e.note = note;
+  if(ok){
+    const v = raw === "" ? null : +raw;
+    me.q[it.id] = Object.assign(c, {s:"done", d:c.s === "done" ? c.d : today()}, it.dir === "report" ? {st:3} : {}, it.record && v != null ? {v:better(it, c.v, v)} : {});
+    if(it.record && v != null) e.v = v;
+    logDay(it.id); ui.flash = "Saved in your record. Nice work.";
+  } else {
+    if(!c.s) me.q[it.id] = {s:"try", d:today()};
+    ui.flash = c.s === "done" ? "Saved in your record." : "Saved in your record, and it's on your list for next time.";
+  }
+  addRec(e); clearAway(); saveMe();
+  $("#backdlg").innerHTML = ""; document.body.classList.remove("locked"); render();
+}
+document.addEventListener("click", ev => { const a = ev.target.closest("a[data-away]"); if(a) goAway(a.dataset.away); }, true);
+document.addEventListener("click", ev => { const b = ev.target.closest("[data-bk]"); if(b && away) answerBack(b.dataset.bk === "1"); });
+document.addEventListener("keydown", ev => { if($("#backdlg").innerHTML && ev.key === "Enter" && ev.target.id === "bknote") ev.preventDefault(); });
+document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden"){ if(away) awayLeft = true; } else checkBack(); });
+window.addEventListener("blur", () => { if(away) setTimeout(() => { if(!document.hasFocus()) awayLeft = true; }, 300); });
+window.addEventListener("focus", () => setTimeout(checkBack, 50));
+window.addEventListener("pageshow", () => { if(away){ awayLeft = true; checkBack(); } });
 
 /* ---------- teacher view (content only) ---------- */
 function viewTeacher(){
@@ -635,13 +723,14 @@ document.addEventListener("click", ev => {
     case "toggle": ui[el.dataset.f] = !ui[el.dataset.f]; break;
     case "pickcls": me.cls = id; me.clsName = id && id !== "*" && cls(id) ? cls(id).name : ""; saveMe(); break;
     case "surprise": { ui.q = ""; const pool = filtered().filter(it => !myState(it.id) && !OPEN_ENDED.includes(it.dir)); if(pool.length) ui.q = pool[Math.floor(Math.random()*pool.length)].title; break; }
-    case "today": { const c = mine(id); logDay(id); if(!c || c.s !== "done") me.q[id] = Object.assign(c || {}, {s:"done", d:today()}); saveMe(); break; }
+    case "today": { const c = mine(id); logDay(id); if(!c || c.s !== "done") me.q[id] = Object.assign(c || {}, {s:"done", d:today()}); doneRec(item(id)); saveMe(); break; }
     case "try": { const c = mine(id); if(c && c.s === "try") delete me.q[id]; else me.q[id] = {s:"try", d:today()}; saveMe(); break; }
-    case "done": { if(item(id).record) ui.claiming = id; else { me.q[id] = Object.assign(mine(id) || {}, {s:"done", d:today()}); logDay(id); saveMe(); } break; }
+    case "done": { if(item(id).record) ui.claiming = id; else { me.q[id] = Object.assign(mine(id) || {}, {s:"done", d:today()}); logDay(id); doneRec(item(id)); saveMe(); } break; }
     case "claim": { const it = item(id), raw = el.closest(".card").querySelector("input[type=number]").value, c = mine(id) || {}, v = raw === "" ? null : +raw;
-      me.q[id] = Object.assign(c, {s:"done", d:c.s === "done" ? c.d : today(), v: v == null ? (c.v == null ? null : c.v) : better(it, c.v, v)}); logDay(id); ui.claiming = null; saveMe(); break; }
+      me.q[id] = Object.assign(c, {s:"done", d:c.s === "done" ? c.d : today(), v: v == null ? (c.v == null ? null : c.v) : better(it, c.v, v)}); logDay(id); doneRec(it, v == null ? null : {v}); ui.claiming = null; saveMe(); break; }
     case "cancelclaim": ui.claiming = null; break;
-    case "undo": delete me.q[id]; saveMe(); break;
+    case "undo": delete me.q[id]; unRec(id); saveMe(); break;
+    case "recall": ui.recAll = !ui.recAll; break;
     case "chk": { const c = mine(id); if(checking && c){ if(c.chk) delete c.chk; else c.chk = today(); saveMe(); } break; }
     case "lockcheck": checking = false; break;
     case "mkcode": ui.code = backupCode(); break;
@@ -668,7 +757,7 @@ document.addEventListener("submit", ev => {
   const f = ev.target.dataset.form, v = id => ($("#" + id).value || "").trim();
   if(f === "pin"){ if(hash(v("pin")) === PUB.settings.pinHash || (T && hash(v("pin")) === T.settings.pinHash)){ unlocked = true; if(!T){ T = clone(PUB); store.set(KEY_T, T); } } else ui.flash = "That PIN isn't right."; }
   if(f === "checkpin"){ if(hash(v("cpin")) === PUB.settings.pinHash) checking = true; else ui.flash = "That PIN isn't right."; }
-  if(f === "restore"){ const o = readBackup(v("codein")); if(o){ me = Object.assign({cls:"", clsName:"", q:{}, rung:0, days:{}}, o); saveMe(); ui.restore = false; ui.flash = "Progress restored."; } else ui.flash = "That doesn't look like a backup code. It should start with MC1."; }
+  if(f === "restore"){ const o = readBackup(v("codein")); if(o){ me = Object.assign({cls:"", clsName:"", q:{}, rung:0, days:{}, log:[]}, o); if(!Array.isArray(me.log)) me.log = []; saveMe(); ui.restore = false; ui.flash = "Progress restored."; } else ui.flash = "That doesn't look like a backup code. It should start with MC1."; }
   if(f === "addclass"){ const n = v("nc"); let id = slug(n), k = 2; while(cls(id)) id = slug(n) + "-" + k++; T.classes.push({id, name:n, open:DEFAULT_OPEN.slice(), now:""}); saveT(); }
   if(f === "addtopic"){ const n = v("nt"); let id = slug(n), k = 2; while(T.topics.some(t => t.id === id)) id = slug(n) + "-" + k++; T.topics.push({id, name:n}); saveT(); }
   if(f === "addres"){ const n = v("r_name"); let id = slug(n), k = 2; while(T.resources.some(r => r.id === id)) id = slug(n) + "-" + k++; T.resources.push(normRes({id, name:n, url:v("r_url"), kind:v("r_kind"), status:v("r_status"), note:v("r_note")})); saveT(); }
@@ -701,9 +790,9 @@ document.addEventListener("input", ev => { if(ev.target.id === "q"){ ui.q = ev.t
 document.addEventListener("change", ev => {
   const t = ev.target, ds = t.dataset;
   if(ds.rstage){ const sg = +t.value, c = mine(ds.rstage) || {};
-    if(sg === 3){ me.q[ds.rstage] = Object.assign(c, {s:"done", d:c.s === "done" ? c.d : today(), st:3}); logDay(ds.rstage); }
+    if(sg === 3){ me.q[ds.rstage] = Object.assign(c, {s:"done", d:c.s === "done" ? c.d : today(), st:3}); logDay(ds.rstage); doneRec(item(ds.rstage), {res:"Finished"}); }
     else if(sg === 0) delete me.q[ds.rstage];
-    else me.q[ds.rstage] = Object.assign(c, {s:"try", st:sg}, c.s === "done" ? {d:today()} : {});
+    else { me.q[ds.rstage] = Object.assign(c, {s:"try", st:sg}, c.s === "done" ? {d:today()} : {}); addRec({id:ds.rstage, nm:item(ds.rstage).title, ok:false, res:STAGES[sg], secs:null}); }
     saveMe(); render(); }
   else if(t.id === "setrung"){ if(checking){ me.rung = +t.value || 0; saveMe(); render(); } }
   else if(ds.open){ const [c, tp] = ds.open.split("|"), k = cls(c); if(t.checked){ if(!k.open.includes(tp)) k.open.push(tp); } else { k.open = k.open.filter(x => x !== tp); if(k.now === tp) k.now = ""; } saveT(); render(); }
@@ -712,6 +801,7 @@ document.addEventListener("change", ev => {
   else if(ds.rstat){ const r = T.resources.find(x => x.id === ds.rstat); r.status = t.value; saveT(); render(); }
 });
 route();
+checkBack();
 </script>
 </body>
 </html>

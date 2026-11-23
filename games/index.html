@@ -41,6 +41,7 @@ p{margin:6px 0}.muted{color:var(--muted)}.small{font-size:14px}.center{text-alig
 .fb{min-height:30px;text-align:center;font-weight:600;margin:8px 0}.fb.ok{color:var(--ok)}.fb.no{color:var(--bad)}.fb.warn{color:var(--warn)}
 .rcv{display:block;width:100%;max-width:720px;margin:6px auto 0;image-rendering:crisp-edges;image-rendering:pixelated;border:1px solid var(--line);border-radius:10px}
 .rkey{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.rtab{border-collapse:collapse;width:100%}.rtab th{text-align:left;font-size:13px;color:var(--muted);padding:6px}.rtab td{border-top:1px solid var(--line);padding:7px 6px;vertical-align:top}
 .rv{max-width:420px;margin:0 auto;font-size:28px;text-align:center;padding:8px;min-height:56px;border:2px solid var(--line);border-radius:12px;background:var(--panel)}
 </style>
 </head>
@@ -111,10 +112,15 @@ const nextUp = op => real(op).find(f => !fDone(f));
      Copied once from Maths Practice's S.race (the race lived there 16-22 Nov 2026) if this page has none.
    rset: the facts in a race: ops (any of A S M D; default ['M']), scope ('level' | 'all' | 'pick'), fam (ids for 'pick'). */
 const KEY = 'mathsGames.v1';
-const fresh = () => ({v: 1, race: null, rset: {ops: ['M'], scope: null, fam: []}});
+/* log (23 Nov 2026): the games record, one entry per game played, in the same shape as Maths Challenges' record so the
+   landing page can show them together (see README, "Records"): {t: ms, d, id: game id, nm: words, ok: true won or finished |
+   false lost or stopped early, res: words shown, secs, sc: right, n: questions, slips, fx: which facts}. Last 400 kept.
+   logFrom: the day the record started on this device. */
+const fresh = () => ({v: 1, race: null, rset: {ops: ['M'], scope: null, fam: []}, log: []});
 let G; try { G = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { G = fresh(); }
 if (!G.race && P?.race?.best) G.race = {st: P.race.st || 0, best: P.race.best, fr: P.race.fr || {}};
 G.rset = Object.assign(fresh().rset, G.rset || {});
+function addRec(e) { G.log.push(Object.assign({t: Date.now(), d: today()}, e)); if (G.log.length > 400) G.log = G.log.slice(-400); }
 let storageOK = true;
 function save() { try { localStorage.setItem(KEY, JSON.stringify(G)); } catch (e) { storageOK = false; } }
 
@@ -130,6 +136,9 @@ const RC = {
     ['Pickup', 30, 120], ['Sports car', 30, 90], ['Racer', 30, 60], ['Turbo', 30, 45], ['Rocket', 30, 30],
     ['Endurance', 60, 120, 8], ['Grand tourer', 60, 90], ['Hypercar', 60, 60]].map(([nm, q_, s, after], i) => ({nm, q: q_, s, after: after ?? i - 1}))
 };
+if (!G.logFrom) {     // first visit since the record started (logFrom: that day): each car's best race goes in, undated in the day
+  G.logFrom = today(); G.log = G.race ? Object.keys(G.race.best).map(i => { const b = G.race.best[i], o = RC.opp[i]?.nm; return {t: null, d: b.d, id: 'race', nm: 'Race: the ' + (o || 'car ' + (+i + 1)), ok: !!b.won, res: b.won ? 'Won (best time)' : 'Best time', secs: b.secs, sc: b.right, n: b.right, slips: b.slips, early: true}; }).sort((a, b) => a.d < b.d ? -1 : 1) : [];
+}
 const OPP_COL = ['--w', '--k', '--f', '--n', '--bad', '--gold'];
 let rClock = () => Date.now();                 // the tests swap this for a scripted clock
 const tSecs = (s, dp = 0) => { const m = Math.floor(s / 60), r = s - m * 60; return m + ':' + (dp ? r.toFixed(dp).padStart(3 + dp, '0') : pad2(Math.round(r))); };
@@ -179,6 +188,7 @@ function poolText() {
   if (p.flat) return `You've done every level here, so all the ${list} facts.`;
   return `Your level in ${list}: facts you've done${p.cur.length ? `, and some from ${p.cur.map(f => f.lab).join(', ')} (next up)` : ''}.`;
 }
+const factsTag = () => G.rset.ops.map(o => OPS[o].sym).join(' ') + ' · ' + ({level: 'my level', all: 'all', pick: 'chosen'})[scopeOf()];
 function racePick(o = {}) { const old = V.view === 'race' ? V.r : {}; return {ph: 'pick', friend: o.friend ?? old.friend ?? false}; }
 function raceMenu() { V = {view: 'race', r: racePick({friend: false})}; if (!G.race) { G.race = rData(); save(); } render(); window.scrollTo(0, 0); }
 // When the race starts: a short countdown alone, or the next 15-second mark (at least 5 seconds away) with a friend.
@@ -208,6 +218,8 @@ function raceKey(c) {
 function raceEnd() {
   const R = V.r, secs = (rClock() - R.t0) / 1000, won = R.oppS == null ? null : secs < R.oppS;
   const res = {secs: +secs.toFixed(1), right: R.N, slips: R.slips, won, i: R.i, N: R.N, newU: [], best: false, prev: null};
+  const oo = R.i >= 0 ? RC.opp[R.i] : null;
+  addRec({id: 'race', nm: oo ? 'Race: the ' + oo.nm : `Race: ${R.N} questions` + (R.friend ? ' with a friend' : ''), ok: oo ? !!won : true, res: oo ? (won ? 'Won' : 'Lost') : 'Finished', secs: res.secs, sc: R.N, n: R.N, slips: R.slips, fx: factsTag()});
   const D = G.race = rData(), before = RC.opp.map((_, j) => rUnlocked(D, j));
   if (R.i >= 0) {
     const b = D.best[R.i]; res.prev = b ? b.secs : null;
@@ -332,22 +344,37 @@ const GAMES = [
 function homeHTML() {
   const fromP = /\/practice\//.test(document.referrer);
   const won = G.race ? RC.opp.filter((_, i) => G.race.best[i]?.won).length : 0;
-  return `<a class="homelink" href="../">← Mr Sawyer's Maths</a>${fromP ? '<a class="homelink" href="../practice/">← Maths Practice</a>' : ''}<h1>Maths Games</h1>
+  return `<div class="row" style="gap:0"><a class="homelink" href="../">← Mr Sawyer's Maths</a>${fromP ? '<a class="homelink" href="../practice/">← Maths Practice</a>' : ''}<span class="sp"></span><button class="btn sm ghost" data-act="rec">📋 My games record${G.log.length ? ` (${G.log.length})` : ''}</button></div><h1>Maths Games</h1>
   <p class="muted">Games that are still maths. Everything you do here is saved on this device only.</p>
   ${GAMES.map(g => `<div class="card game ${g.soon ? 'soon' : ''}" style="--c:var(${g.col})"><div class="row"><span style="font-size:26px">${g.ic}</span><b style="font-size:19px">${g.name}</b><span class="sp"></span>${g.soon ? '<span class="chip">Coming soon</span>' : `<button class="btn pri" data-act="${g.id}">Play</button>`}</div><p class="small" style="margin-bottom:0">${g.blurb}${g.id === 'race' && won ? ` <span class="muted">${won} of ${RC.opp.length} cars beaten.</span>` : ''}</p></div>`).join('')}
   ${storageOK ? '' : '<p class="fb warn">This browser is not saving progress.</p>'}`;
 }
+
+// ---------- the games record ----------
+const hhmm = t => { const x = new Date(t); return pad2(x.getHours()) + ':' + pad2(x.getMinutes()); };
+const niceD = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short'}); };
+function recordHTML() {
+  const L = G.log.slice().reverse(), wk = G.log.filter(e => e.d >= dAgo(6)), mins = Math.round(wk.reduce((a, e) => a + (e.secs || 0), 0) / 60);
+  let h = head('My games record') + `<p class="muted small">Every game you play on this device, newest first. Your teacher can see this here, or on the home page with your practice and challenges.</p>
+    <div class="card"><b>Last 7 days:</b> ${wk.length} game${wk.length === 1 ? '' : 's'}, about ${mins} min.</div>`;
+  if (!L.length) return h + '<p class="muted">No games yet.</p>';
+  return h + `<div class="card" style="padding:6px 10px;overflow-x:auto"><table class="rtab"><tr><th>When</th><th>Game</th><th>Result</th><th>Time</th></tr>${L.slice(0, V.all ? 400 : 30).map(e => `<tr><td class="small muted" style="white-space:nowrap">${niceD(e.d)}${e.t ? '<br>' + hhmm(e.t) : ''}</td><td>${esc(e.nm)}${e.fx ? `<br><span class="muted small">${esc(e.fx)}</span>` : ''}</td><td><b>${esc(e.res)}</b>${e.n ? `<br><span class="muted small">${e.sc}/${e.n} right${e.slips ? `, ${e.slips} slip${e.slips === 1 ? '' : 's'}` : ''}</span>` : ''}${e.early ? '<br><span class="muted small">before the record started</span>' : ''}</td><td class="small">${e.secs != null ? tSecs(e.secs) : ''}</td></tr>`).join('')}</table></div>
+    ${L.length > 30 ? `<button class="btn sm ghost" data-act="recall">${V.all ? 'Show fewer' : 'Show all ' + L.length}</button>` : ''}`;
+}
+const dAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
 
 // ---------- navigation and events ----------
 /* ✕ and the device's Back gesture go up one step: a race to the list of cars, the list to the games list.
    The page keeps one extra history entry while inside a game, so Back never leaves the page by accident. */
 let V = {view: 'home'};
 function render() {
-  $('#app').innerHTML = ({home: homeHTML, race: raceHTML})[V.view]();
+  $('#app').innerHTML = ({home: homeHTML, race: raceHTML, record: recordHTML})[V.view]();
   const atHome = V.view === 'home', extra = history.state && history.state.mg;
   try { if (!atHome && !extra) history.pushState({mg: 1}, ''); else if (atHome && extra) history.back(); } catch (e) {}
 }
 function backBtn() {
+  if (V.view === 'race' && V.r.ph === 'run') { const R = V.r, o = R.i >= 0 ? RC.opp[R.i] : null;
+    addRec({id: 'race', nm: o ? 'Race: the ' + o.nm : `Race: ${R.N} questions`, ok: false, res: 'Stopped early', secs: +((rClock() - R.t0) / 1000).toFixed(1), sc: R.right, n: R.N, slips: R.slips, fx: factsTag()}); save(); }
   if (V.view === 'race' && V.r.ph !== 'pick') { V.r = racePick(); render(); window.scrollTo(0, 0); return; }
   V = {view: 'home'}; render(); window.scrollTo(0, 0);
 }
@@ -358,6 +385,8 @@ document.addEventListener('click', e => {
   switch (a) {
     case 'up': backBtn(); break;
     case 'race': raceMenu(); break;
+    case 'rec': V = {view: 'record'}; render(); window.scrollTo(0, 0); break;
+    case 'recall': V.all = !V.all; render(); break;
     case 'rfriend': V.r.friend = el.dataset.f === '1'; render(); break;
     case 'rop': { const o = el.dataset.o; s.ops = s.ops.includes(o) ? s.ops.filter(x => x !== o) : Object.keys(OPS).filter(x => x === o || s.ops.includes(x)); save(); render(); break; }
     case 'rscope': s.scope = el.dataset.s; if (s.scope === 'pick' && !s.fam.some(id => s.ops.includes(FBY[id]?.op))) s.fam = s.fam.concat(s.ops.flatMap(o => real(o).map(f => f.id))); save(); render(); break;

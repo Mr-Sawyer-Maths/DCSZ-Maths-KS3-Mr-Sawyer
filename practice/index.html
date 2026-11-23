@@ -1783,7 +1783,9 @@ function roundTrophies(R) {
   if (wk >= 3 && !S.trophies.some(t => t.ic === '🔥' && t.d >= dOff(6))) R.tro.push(trophy('🔥', 'Practised on 3 days this week'));
 }
 function keepTimes(s, d) { const m = median(V.tt); if (m == null) return; s.times = (s.times || []).concat({d, med: m, n: V.tt.length}).slice(-5); }
-function logRound(e) { S.log.push(e); if (S.log.length > 400) S.log = S.log.slice(-400); }
+/* The record (23 Nov 2026): each entry also keeps t (when, in ms) and w (the level's name in words), so the landing page can
+   show practice next to Maths Challenges and Maths Games without this file's level list. See README, "Records". */
+function logRound(e) { e.t = Date.now(); e.w = e.w || e.nm || BY[e.id]?.name || e.id; S.log.push(e); if (S.log.length > 400) S.log = S.log.slice(-400); }
 function finishRound(rate) {
   const k = V.sk, d = today(), secs = Math.round((Date.now() - V.t0) / 1000);      // time from opening the round to finishing it
   if (V.book) { V.sc.n += V.book.length; V.sc.c += V.marks.filter(m => m === true).length; }
@@ -1866,7 +1868,7 @@ function speedEnd() {
     if (secs < 30 && err === 0 && !s.sp30) { s.sp30 = true; tro.push(trophy('🚀', '30 in under 30 seconds: ' + k.name)); }
   }
   const dd = day(); dd.q += n; dd.c += n;
-  S.log.push({d: today(), id: k.id, speed: true, sc: n, n, rate: err + ' slip' + (err === 1 ? '' : 's'), pass: false, above: false, secs: +secs.toFixed(1)});
+  logRound({d: today(), id: k.id, speed: true, sc: n, n, rate: err + ' slip' + (err === 1 ? '' : 's'), pass: false, above: false, secs: +secs.toFixed(1)});
   V = {view: 'speeddone', back: V.back, sk: k, n, secs, err, best, prev, tro}; save(); render();
 }
 const speedRow = k => { const sp = S.skills[k.id]?.speed, b = sp && Object.keys(sp).map(n => `${n} in ${sp[n].t} s`).join(', '); return `<div class="row" style="margin:6px 0"><span class="small">⚡ Speed round, typed only:</span>${[10, 20, 30].map(n => `<button class="btn sm" data-act="speed" data-id="${k.id}" data-n="${n}">${n}</button>`).join('')}${b ? `<span class="muted small">Best: ${b}</span>` : ''}</div>`; };
@@ -2131,6 +2133,7 @@ function overviewHTML(P) {
 }
 
 S = migrate(S); syncMax();
+S.log.forEach(l => { if (!l.w) l.w = l.nm || BY[l.id]?.name || l.id; });     // older entries get their names for the landing page's record
 
 // ---------- Learn with fact cards ----------
 /* For facts a student doesn't know by heart yet (Matt, 16 Nov 2026; design in claude/fact-cards-brief.md, from Pershan's and
@@ -2579,7 +2582,7 @@ function gameHTML() {
 // ---------- teacher ----------
 const chkTxt = d => !d ? 'not checked' : /^\d{4}-/.test(d) ? 'checked ' + nice(d) : 'checked ' + d;
 function teacherHTML() {
-  const lk = V.unlocked ? '' : ' 🔒', tabs = [['over', 'Overview'], ['levels', 'Levels'], ['log', 'Log'], ['sheets', 'Sheets' + lk], ['cards', 'Fact cards' + lk], ['class', 'Class' + lk], ['tools', 'Tools' + lk]], t = V.tab || 'over';
+  const lk = V.unlocked ? '' : ' 🔒', tabs = [['over', 'Overview'], ['levels', 'Levels'], ['log', 'Record'], ['sheets', 'Sheets' + lk], ['cards', 'Fact cards' + lk], ['class', 'Class' + lk], ['tools', 'Tools' + lk]], t = V.tab || 'over';
   let h = head('Progress: ' + S.name) + `<div class="tabs">${tabs.map(x => `<button class="${t === x[0] ? 'on' : ''}" data-act="ttab" data-t="${x[0]}">${x[1]}</button>`).join('')}</div>`;
   if (t === 'over') h += overviewHTML(snap()) + `<p class="row"><button class="btn" data-act="celebrate">Mark trophies as celebrated</button><button class="btn" data-act="setexp">Set expected levels to where they are now</button></p><p class="muted small">⭐ trophies are given for securing levels beyond the expected level, so resetting expected every few weeks keeps them meaningful.</p>
     <p class="muted small">Last backup of this device: ${S.lastBackup ? nice(S.lastBackup) : 'never'} (Tools tab).</p>
@@ -2587,7 +2590,7 @@ function teacherHTML() {
   if (t === 'levels') h += `<p class="muted small">Anyone can look. Changing anything here asks "are you sure" and needs the teacher PIN. <b>Start here</b> moves the student's level to that skill (use it to roll back, or to jump forward, for example when sheets have shown a level is known). <b>Needs support</b> puts one skill back into practice without moving anything else. Times are the middle (median) time per typed question in recent rounds.</p>` + Object.keys(L).map(st => `<div class="row" style="margin-top:18px"><h2 style="color:var(${STR[st].col});margin:0">${STR[st].name}</h2><span class="muted small">${chkTxt(S.chk[st])}</span><span class="sp"></span>${st !== 'W' ? `<button class="btn sm" data-act="trecheck" data-st="${st}">Recheck this area</button>` : ''}</div><table>${L[st].map(k => {
     const s = status(k), r = S.skills[k.id], tm = r?.times?.length ? r.times.map(x => (x.med / 1000).toFixed(1)).join(', ') + ' s' : '';
     return `<tr><td>${k.easy ? '·' : lvNum(k)}${k.id === S.exp[st] ? ' <span title="expected level">◆</span>' : ''}</td><td><b>${esc(k.name)}</b> <span class="muted small">${k.id}</span><br><span class="chip ${s}">${STLAB[s]}</span> <span class="muted small">${r?.rounds ? `${r.rounds} round${r.rounds > 1 ? 's' : ''}, last ${Math.round(r.last.acc * 100)}% (${esc(r.last.rate)})` : ''}${r?.auto ? ` · automatic ${r.auto.f}/${r.auto.n}, average ${secsTxt(r.auto.avg)}` : ''}${tm ? ` · typed: ${tm}` : ''}${r?.quizSecured ? ` · secured by quick quiz ${nice(r.quizSecured)}` : ''}${r?.place ? ` · level check: ${esc(r.place)}` : ''}</span></td><td>${k.easy ? '<span class="muted small">Mixed into later levels</span>' : `<button class="btn sm" data-act="tstart" data-id="${k.id}">Start here</button> <button class="btn sm" data-act="tsec" data-id="${k.id}">Secure</button> <button class="btn sm" data-act="tsup" data-id="${k.id}">Needs support</button> <button class="btn sm ghost" data-act="texp" data-id="${k.id}">Expected ◆</button>`}</td></tr>`; }).join('')}</table>`).join('');
-  if (t === 'log') h += S.log.length ? `<table><tr><th>Day</th><th>Skill</th><th>Score</th><th>Felt</th><th>Time</th><th></th></tr>${S.log.slice().reverse().slice(0, 60).map(l => `<tr><td>${nice(l.d)}</td><td>${esc(l.nm || BY[l.id]?.name || l.id)}${l.speed ? ' ⚡ speed round' : ''}${l.quiz ? ' 📝 quick quiz' : ''}</td><td>${l.sc}/${l.n}${l.au ? `<br><span class="muted small">${l.au} automatic</span>` : ''}</td><td>${esc(l.rate)}</td><td>${l.secs != null ? mmss(l.secs) : (l.mins || 0) + ' min'}${l.tmed ? `<br><span class="muted small">typed ${secsTxt(l.tmed)} each</span>` : ''}${l.bsec ? `<br><span class="muted small">book ${mmss(l.bsec)}</span>` : ''}</td><td>${l.pass ? '<span class="chip secure">pass</span>' : ''}${l.above ? ' <span class="chip">above level</span>' : ''}</td></tr>`).join('')}</table>` : '<p class="muted">No rounds yet.</p>';
+  if (t === 'log') h += S.log.length ? `<table><tr><th>Day</th><th>Skill</th><th>Score</th><th>Felt</th><th>Time</th><th></th></tr>${S.log.slice().reverse().slice(0, 60).map(l => `<tr><td>${nice(l.d)}${l.t ? `<br><span class="muted small">${new Date(l.t).toTimeString().slice(0, 5)}</span>` : ''}</td><td>${esc(l.nm || BY[l.id]?.name || l.id)}${l.speed ? ' ⚡ speed round' : ''}${l.quiz ? ' 📝 quick quiz' : ''}</td><td>${l.sc}/${l.n}${l.au ? `<br><span class="muted small">${l.au} automatic</span>` : ''}</td><td>${esc(l.rate)}</td><td>${l.secs != null ? mmss(l.secs) : (l.mins || 0) + ' min'}${l.tmed ? `<br><span class="muted small">typed ${secsTxt(l.tmed)} each</span>` : ''}${l.bsec ? `<br><span class="muted small">book ${mmss(l.bsec)}</span>` : ''}</td><td>${l.pass ? '<span class="chip secure">pass</span>' : ''}${l.above ? ' <span class="chip">above level</span>' : ''}</td></tr>`).join('')}</table>` : '<p class="muted">No rounds yet.</p>';
   if (t === 'sheets') h += sheetsHTML();
   if (t === 'cards') h += fcTeacherHTML();
   if (t === 'class') {
