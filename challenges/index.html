@@ -102,6 +102,7 @@ label.inline{flex-direction:row;align-items:center;gap:6px;font-weight:400}
 .pts{margin-left:auto;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
 .pips{color:var(--gold);letter-spacing:1px}
 .card h3{font-size:1.15rem}
+.site{font-family:var(--body);font-size:.8em;font-weight:400;color:var(--muted);white-space:nowrap}
 .card .blurb{font-size:.95rem}
 .card .how{font-size:.875rem;color:var(--muted)}
 .card .social{font-size:.875rem;border-top:1px dashed var(--line);padding-top:8px;display:flex;flex-direction:column;gap:2px}
@@ -301,7 +302,7 @@ let me = Object.assign({cls:"", clsName:"", q:{}, rung:0, days:{}}, store.get(KE
     secs: time away from the page (null if not timed), note: the student's own words, v: a score}. Last 400 kept. */
 if(!Array.isArray(me.log)){ // first visit since the record started: what was already done goes in, undated in the day
   me.log = PUB ? Object.keys(me.q).filter(id => me.q[id].s === "done" && me.q[id].d).map(id => { const q = PUB.quests.find(x => x.id === id);
-    return {t:null, d:me.q[id].d, id, nm:q ? q.title : id, ok:true, res:"Completed", secs:null, early:true}; }).sort((a, b) => a.d < b.d ? -1 : 1) : [];
+    return {t:null, d:me.q[id].d, id, nm:q ? label(q) : id, ok:true, res:"Completed", secs:null, early:true}; }).sort((a, b) => a.d < b.d ? -1 : 1) : [];
 }
 let T = PUB ? store.get(KEY_T, null) : null; // the teacher's working copy of the content; used only while the Teacher tab is unlocked
 if(T) T = fill(T);
@@ -311,7 +312,11 @@ const ui = {view:"quests", dir:"all", q:"", todo:false, claiming:null, tsub:"cla
 function saveMe(){ const cut = iso(new Date(Date.now() - 400 * 864e5)); Object.keys(me.days).forEach(k => { if(k < cut) delete me.days[k]; }); if(!store.set(KEY_ME, me)) ui.flash = "This browser isn't saving progress. Ask your teacher."; }
 function addRec(e){ me.log.push(Object.assign({t:Date.now(), d:today()}, e)); if(me.log.length > 400) me.log = me.log.slice(-400); }
 function unRec(id){ for(let i = me.log.length - 1; i >= 0; i--) if(me.log[i].id === id && me.log[i].ok){ me.log.splice(i, 1); return; } } // Undo / Remove takes back the last "Completed"
-const doneRec = (it, extra) => addRec(Object.assign({id:it.id, nm:it.title, ok:true, res:"Completed", secs:null}, extra || {}));
+/* The site a quest is on, shown after its name ("Ratio · Transum"). Not shown when the name already says it, or for classics. (24 Nov 2026) */
+function siteOf(it){ return it && it.url && it.src && it.src !== "Classic" && !it.title.toLowerCase().includes(it.src.toLowerCase()) ? it.src : ""; }
+function label(it){ return it.title + (siteOf(it) ? " · " + siteOf(it) : ""); }
+function siteTag(it){ return siteOf(it) ? ' <span class="site">· ' + esc(siteOf(it)) + "</span>" : ""; }
+const doneRec = (it, extra) => addRec(Object.assign({id:it.id, nm:label(it), ok:true, res:"Completed", secs:null}, extra || {}));
 function saveT(){ T.rev = (T.rev||0) + 1; store.set(KEY_T, T); }
 const D = () => (unlocked && T) ? T : PUB;
 const S = () => D().settings;
@@ -390,7 +395,7 @@ function cardHTML(it, pick){
   return '<article class="card k-' + it.dir + (pick ? " pick" : "") + '">' +
     '<div class="top"><span class="kind">' + DIRS[it.dir].n + "</span>" + (pick && it.topic !== "any" ? '<span class="tag">' + esc(topicName(it.topic)) + "</span>" : "") + (isNew(it) ? '<span class="tag new">New</span>' : "") + (it.paper ? '<span class="tag">Paper: ask for a copy</span>' : "") +
     '<span class="pts" title="' + it.pts + ' points">' + pips(it.pts) + " " + TIER[it.pts] + " · " + it.pts + "</span></div>" +
-    "<h3>" + esc(it.title) + "</h3>" +
+    "<h3>" + esc(it.title) + siteTag(it) + "</h3>" +
     '<p class="blurb">' + esc(it.blurb) + "</p>" +
     (it.need ? '<p class="how"><b>You need:</b> ' + esc(it.need) + "</p>" : "") +
     (it.how ? '<p class="how"><b>To finish:</b> ' + esc(it.how) + (it.pass != null ? " Move up a rung with " + it.pass + " or more." : "") + "</p>" : "") +
@@ -430,7 +435,7 @@ function viewPage(it){ // rules first, the outside site last
   let h = '<div class="stack pagewrap"><div><a class="btn quiet" href="#' + ui.view + '" data-act="back">← Back</a></div><article class="card page k-' + it.dir + '">' +
     '<div class="top"><span class="kind">' + DIRS[it.dir].n + "</span>" + (it.topic !== "any" ? '<span class="tag">' + esc(topicName(it.topic)) + "</span>" : "") + (it.paper ? '<span class="tag">Paper: ask for a copy</span>' : "") +
     '<span class="pts">' + pips(it.pts) + " " + TIER[it.pts] + " · " + it.pts + "</span></div>" +
-    "<h2>" + esc(it.title) + "</h2>" + '<p class="blurb">' + esc(it.blurb) + "</p>";
+    "<h2>" + esc(it.title) + siteTag(it) + "</h2>" + '<p class="blurb">' + esc(it.blurb) + "</p>";
   if(it.need) h += '<p class="need"><b>You need:</b> ' + esc(it.need) + "</p>";
   if(it.rules) h += "<h3>" + (it.dir === "play" ? "How to play" : "What to do") + '</h3><ol class="rules">' + it.rules.map(r => "<li>" + esc(r) + "</li>").join("") + "</ol>";
   if(it.how) h += '<p class="fin"><b>To finish:</b> ' + esc(it.how) + (it.pass != null ? " Move up a rung with " + it.pass + " or more." : "") + "</p>";
@@ -441,7 +446,7 @@ function viewPage(it){ // rules first, the outside site last
 }
 function todayCard(o){
   const q = o.q, dt = doneToday(q.id);
-  return '<article class="card pick k-' + q.dir + '"><div class="top"><span class="kind">' + o.slot + "</span>" + (o.slot === "Quick win" && q.topic !== "any" ? '<span class="tag">' + esc(topicName(q.topic)) + "</span>" : "") + '<span class="pts">' + DIRS[q.dir].n + "</span></div><h3>" + esc(q.title) + '</h3><p class="blurb">' + esc(q.blurb) + "</p>" +
+  return '<article class="card pick k-' + q.dir + '"><div class="top"><span class="kind">' + o.slot + "</span>" + (o.slot === "Quick win" && q.topic !== "any" ? '<span class="tag">' + esc(topicName(q.topic)) + "</span>" : "") + '<span class="pts">' + DIRS[q.dir].n + "</span></div><h3>" + esc(q.title) + siteTag(q) + '</h3><p class="blurb">' + esc(q.blurb) + "</p>" +
     (q.need ? '<p class="how"><b>You need:</b> ' + esc(q.need) + "</p>" : "") +
     (q.how ? '<p class="how"><b>To finish:</b> ' + esc(q.how) + "</p>" : "") +
     '<div class="acts">' + (q.rules || q.url ? goBtn(q) : "") + (dt ? '<span class="status ok">Done today ✓</span>' : '<button class="btn gold" data-act="today" data-id="' + q.id + '">Done today</button>') + "</div></article>";
@@ -566,11 +571,11 @@ function checkBack(){
   if(!away || !awayLeft || $("#backdlg").innerHTML) return;
   const it = PUB && item(away.id), gone = Date.now() - away.t;
   if(!it){ clearAway(); return; }
-  if(gone > AWAY_MAX || gone < 0){ addRec({t:away.t, d:iso(new Date(away.t)), id:it.id, nm:it.title, ok:null, res:"Opened, no answer", secs:null}); clearAway(); saveMe(); render(); return; }
+  if(gone > AWAY_MAX || gone < 0){ addRec({t:away.t, d:iso(new Date(away.t)), id:it.id, nm:label(it), ok:null, res:"Opened, no answer", secs:null}); clearAway(); saveMe(); render(); return; }
   const secs = Math.round(gone / 1000), c = mine(it.id), was = c && c.s === "done";
   $("#backdlg").innerHTML = '<div class="ov"><div class="dlg k-' + it.dir + '" role="dialog" aria-modal="true" aria-labelledby="bkh">' +
     '<p class="small muted">Welcome back · you were away ' + (secs < 60 ? "under a minute" : "about " + mins(secs)) + "</p>" +
-    '<h2 id="bkh">What did you do on ' + esc(it.title) + "?</h2>" +
+    '<h2 id="bkh">What did you do on ' + esc(label(it)) + "?</h2>" +
     (it.how ? '<p class="small"><b>To finish:</b> ' + esc(it.how) + "</p>" : "") + (was ? '<p class="small muted">You finished this before, on ' + nice(c.d) + ". Completed again counts as another go.</p>" : "") +
     (it.record ? '<label>' + esc(it.record.label) + ' <span class="muted small" style="font-weight:400">(if you finished)</span><input type="number" step="any" id="bkv"></label>' : "") +
     '<label>What did you get done? <span class="muted small" style="font-weight:400">(optional)</span><input type="text" id="bknote" maxlength="140" placeholder="For example: got to level 3"></label>' +
@@ -582,7 +587,7 @@ function checkBack(){
 }
 function answerBack(ok){
   const it = item(away.id), secs = +$("#backdlg").dataset.secs, note = ($("#bknote").value || "").trim(), vi = $("#bkv"), raw = vi ? vi.value : "", c = mine(it.id) || {};
-  const e = {t:away.t + secs * 1000, id:it.id, nm:it.title, ok, res:ok ? (it.dir === "report" ? "Finished" : "Completed") : "Not completed", secs};
+  const e = {t:away.t + secs * 1000, id:it.id, nm:label(it), ok, res:ok ? (it.dir === "report" ? "Finished" : "Completed") : "Not completed", secs};
   if(note) e.note = note;
   if(ok){
     const v = raw === "" ? null : +raw;
@@ -792,7 +797,7 @@ document.addEventListener("change", ev => {
   if(ds.rstage){ const sg = +t.value, c = mine(ds.rstage) || {};
     if(sg === 3){ me.q[ds.rstage] = Object.assign(c, {s:"done", d:c.s === "done" ? c.d : today(), st:3}); logDay(ds.rstage); doneRec(item(ds.rstage), {res:"Finished"}); }
     else if(sg === 0) delete me.q[ds.rstage];
-    else { me.q[ds.rstage] = Object.assign(c, {s:"try", st:sg}, c.s === "done" ? {d:today()} : {}); addRec({id:ds.rstage, nm:item(ds.rstage).title, ok:false, res:STAGES[sg], secs:null}); }
+    else { me.q[ds.rstage] = Object.assign(c, {s:"try", st:sg}, c.s === "done" ? {d:today()} : {}); addRec({id:ds.rstage, nm:label(item(ds.rstage)), ok:false, res:STAGES[sg], secs:null}); }
     saveMe(); render(); }
   else if(t.id === "setrung"){ if(checking){ me.rung = +t.value || 0; saveMe(); render(); } }
   else if(ds.open){ const [c, tp] = ds.open.split("|"), k = cls(c); if(t.checked){ if(!k.open.includes(tp)) k.open.push(tp); } else { k.open = k.open.filter(x => x !== tp); if(k.now === tp) k.now = ""; } saveT(); render(); }
