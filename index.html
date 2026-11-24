@@ -31,7 +31,7 @@ footer a{color:var(--muted)}
 .tile .n{font-size:22px;font-weight:700;line-height:1.2}
 .tile .l{font-size:13px;color:var(--muted)}
 .seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:999px;overflow:hidden}
-.seg button{border:0;background:none;padding:6px 12px;cursor:pointer;min-height:36px;font-size:15px}
+.seg button{border:0;background:none;padding:6px 12px;cursor:pointer;min-height:44px;font-size:15px}
 .seg button.on{background:var(--ink);color:var(--bg)}
 .day{margin-top:14px}
 .day h3{font-size:15px;margin:0 0 4px;color:var(--muted);font-weight:600}
@@ -44,7 +44,22 @@ footer a{color:var(--muted)}
 .ent .sub{font-size:13px;color:var(--muted)}
 .ok::before{content:"✓ "}.no::before{content:"○ "}
 .sp{--c:var(--sp)}.sc{--c:var(--sc)}.sg{--c:var(--sg)}
-.more{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 14px;cursor:pointer;margin-top:12px;min-height:40px}
+.more{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 14px;cursor:pointer;margin-top:12px;min-height:44px}
+/* My extensions: quests and stretch links, for showing Mr Sawyer (SI-1, 24 Nov 2026) */
+.xr{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:26px}
+.xr .count{font-size:18px;margin:10px 0 4px}
+.xr .open{border:1.5px dashed var(--sc);border-radius:10px;padding:8px 12px;margin:10px 0;font-size:15px}
+.xe{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:10px 0 10px 10px;border-top:1px solid var(--line);border-left:4px solid var(--c)}
+.xe .nm{font-weight:700;min-width:0}
+.xe .when{font-size:13px;color:var(--muted);font-weight:400}
+.xe .facts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 6px;font-size:13px}
+.xe .facts span{border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+.xe .facts .nv{border-style:dashed;font-weight:700}
+.xe .note{grid-column:1/-1;font-size:14px;color:var(--muted)}
+.xe .rs{text-align:right;font-size:15px}
+.xe img{grid-column:1/-1;max-width:160px;max-height:160px;border-radius:8px;border:1px solid var(--line);cursor:zoom-in}
+.zoom{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:800;padding:12px;cursor:zoom-out}
+.zoom img{max-width:100%;max-height:100%;border-radius:8px}
 @media (max-width:420px){.tiles{grid-template-columns:1fr}.tile{display:flex;gap:10px;align-items:baseline}}
 </style>
 </head>
@@ -59,6 +74,8 @@ footer a{color:var(--muted)}
 
 <a class="card" href="games/"><b>Maths Games →</b><br>Games that are still maths: race against the clock with your number facts or a friend on another device, or see how well you can estimate angles.</a>
 
+<section class="xr" id="ext" aria-labelledby="xh"></section>
+
 <section class="rec" id="record" aria-labelledby="rh"></section>
 
 <div class="tip"><b>On an iPad</b>
@@ -69,6 +86,267 @@ footer a{color:var(--muted)}
 </ol></div>
 
 </main>
+<!-- ===== extension log: shared by every page (SI-1, 24 Nov 2026). Keep this block identical in index.html, practice/, challenges/ and games/ (records-tests.py checks). ===== -->
+<style>
+.xl{--xl-bg:#fff;--xl-ink:#1c2230;--xl-muted:#5d6574;--xl-line:#d9dce4;--xl-soft:#f1f3f8;--xl-acc:#274c77;--xl-acc-ink:#fff;--xl-gold:#e9b949;--xl-gold-ink:#2b2100;
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;font-size:16px;line-height:1.45;color:var(--xl-ink)}
+@media (prefers-color-scheme:dark){.xl{--xl-bg:#1f242d;--xl-ink:#eceef2;--xl-muted:#a3abb9;--xl-line:#3a4250;--xl-soft:#283040;--xl-acc:#8bb8ea;--xl-acc-ink:#0f1620;--xl-gold:#f0c55b;--xl-gold-ink:#2b2100}}
+.xl *{box-sizing:border-box}
+.xl-ov{position:fixed;inset:0;background:rgba(10,14,24,.55);display:flex;align-items:flex-start;justify-content:center;padding:16px 10px;overflow-y:auto;z-index:1000}
+.xl-dlg:focus{outline:none}
+.xl-dlg{background:var(--xl-bg);border-radius:14px;border-top:5px solid var(--xl-gold);width:100%;max-width:480px;padding:16px;display:flex;flex-direction:column;gap:12px;margin:auto 0;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.xl-dlg h2{font-size:20px;margin:0;line-height:1.25}
+.xl-m{color:var(--xl-muted);font-size:14px;margin:0}
+.xl-dlg p{margin:0}
+.xl-lab{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:15px}
+.xl-lab span.xl-m{font-weight:400}
+.xl input[type=text],.xl input[type=number]{font:inherit;color:var(--xl-ink);background:var(--xl-bg);border:1.5px solid var(--xl-line);border-radius:8px;padding:9px 10px;min-height:44px;width:100%}
+.xl-btn{font:inherit;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:8px 14px;border-radius:10px;border:1.5px solid var(--xl-line);background:var(--xl-bg);color:var(--xl-ink);cursor:pointer;text-decoration:none;text-align:center}
+.xl-btn.pri{background:var(--xl-acc);border-color:var(--xl-acc);color:var(--xl-acc-ink)}
+.xl-btn.gold{background:var(--xl-gold);border-color:var(--xl-gold);color:var(--xl-gold-ink)}
+.xl-row{display:flex;flex-wrap:wrap;gap:8px}.xl-row>.xl-btn{flex:1 1 140px}
+.xl-seg{display:flex;flex-wrap:wrap;gap:6px}
+.xl-seg label{flex:1 1 120px;display:flex;align-items:center;gap:8px;min-height:44px;padding:6px 10px;border:1.5px solid var(--xl-line);border-radius:10px;cursor:pointer;font-weight:600;font-size:15px}
+.xl-seg label:has(input:checked){border-color:var(--xl-acc);background:var(--xl-soft)}
+.xl-seg input,.xl-tick input{width:20px;height:20px;margin:0;accent-color:var(--xl-acc)}
+.xl-tick{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1.5px dashed var(--xl-line);border-radius:10px;cursor:pointer;font-size:15px;min-height:44px}
+.xl-photo{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.xl-photo img{max-width:120px;max-height:120px;border-radius:8px;border:1px solid var(--xl-line)}
+.xl-file{position:relative;overflow:hidden}.xl-file input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.xl-bar{position:fixed;left:8px;right:8px;bottom:8px;z-index:900;background:var(--xl-bg);border:1.5px solid var(--xl-gold);border-radius:12px;padding:8px 10px 8px 14px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between;box-shadow:0 4px 18px rgba(0,0,0,.18);max-width:640px;margin:0 auto}
+.xl-bar b{font-size:15px}
+.xl-picks{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.xl-picks a{display:block;padding:10px 12px;border:1.5px solid var(--xl-line);border-radius:10px;color:var(--xl-ink);text-decoration:none;min-height:44px}
+.xl-picks a:hover{border-color:var(--xl-acc)}
+.xl-shot{font-size:13px;color:var(--xl-muted)}
+body.xl-lock{overflow:hidden}
+body:has(.xl-bar){padding-bottom:84px}
+</style>
+<script>
+/* What it does (the plan is in Mr Sawyer's private teaching notes; storage keys are in the README, "Extension log"):
+   - one student name for the whole site (mathsSite.name.v1; Maths Practice's own name carries over and is kept in step)
+   - a quest or stretch link "starts" when the student taps its link, or Start on a quest with no link. The visit is saved
+     (mathsSite.away.v1) so the box "What did you do?" appears on ANY page of the site they open next, however much later.
+     The clock stops at 45 minutes ("45 min+"). Only one at a time: they answer the last one before starting another.
+   - "Done it" goes through the same box. The box asks: Completed it / Not completed, what kind of work (website, book, both),
+     the date tick for book work, an optional note and an optional photo. Completed with no photo shows as "not verified".
+   - answers go in the shared extension record (mathsSite.ext.v1 → log, last 400). Photos are shrunk on the device and kept
+     in mathsSite.photos.v1: the last 10 days, at most 10, always the newest one. A pruned photo's entry still says one was added.
+   - turn-taking nudges: after a screen quest, "Next one on paper"; starting a screen quest straight after one, "Try a paper one?"
+   Each page tells it about its quests with XL.describe(id) → {src, id, nm, mode: 'paper'|'screen', url?, how?, rec?: {label}},
+   and may set XL.onLog(entry), XL.onChange(), XL.paperPicks() → [{nm, href}], XL.showPaper(). Nothing is sent anywhere. */
+(function () {
+  'use strict';
+  const KN = 'mathsSite.name.v1', KV = 'mathsSite.away.v1', KE = 'mathsSite.ext.v1', KP = 'mathsSite.photos.v1';
+  const CAP = 45 * 60, PHOTO_DAYS = 10, PHOTO_MAX = 10, PX = 800, Q = 0.6;
+  const SHOT = 'Screenshot where you got to before you come back.';
+  const E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+  const get = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+  const put = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
+  const p2 = n => String(n).padStart(2, '0');
+  const dayOf = t => { const x = new Date(t); return x.getFullYear() + '-' + p2(x.getMonth() + 1) + '-' + p2(x.getDate()); };
+  const hm = t => { const x = new Date(t); return p2(x.getHours()) + ':' + p2(x.getMinutes()); };
+  const mins = s => s == null ? '' : s >= CAP ? '45 min+' : s < 60 ? 'under a minute' : Math.round(s / 60) + ' min';
+  const KIND = {site: 'On the website', book: 'Written in my book', both: 'Both'};
+  let root = null, left = false, box = null, ready = false;
+
+  const XL = {
+    SHOT, KIND, mins, describe: () => null, onLog: null, onChange: null, paperPicks: null, showPaper: null, noAsk: false,
+    name() { const n = get(KN, ''); if (n) return n; const p = get('mathsPractice.v1', null); return p && p.name ? p.name : ''; },
+    setName(n) { n = String(n || '').trim().slice(0, 40); if (n) put(KN, n); return n; },
+    log() { const o = get(KE, null); return o && Array.isArray(o.log) ? o.log : []; },
+    entries(src) { return XL.log().filter(e => !src || e.src === src); },
+    visit() { return get(KV, null); },
+    photo(t) { const p = get(KP, []).find(x => x.t === t); return p ? p.data : null; },
+    lastMode() { const L = XL.log(); return L.length ? L[L.length - 1].mode : ''; },
+    // a quest, started from a link (url) or a Start button; force skips the "try a paper one" nudge
+    start(v, force) {
+      if (!v) return false;
+      const cur = XL.visit();
+      if (cur && cur.id === v.id && cur.src === v.src) { if (v.url) { left = false; } return true; }   // the same one again: the clock keeps running
+      if (cur) { showBox(); return false; }                                                                // the last one first
+      if (!force && v.mode === 'screen' && XL.lastMode() === 'screen') { nudgeStart(v); return false; }
+      put(KV, Object.assign({}, v, {t: Date.now(), at: location.pathname}));
+      left = false; bar(); changed(); return true;
+    },
+    // "Done it", "Done today", or "I've stopped": the box, now. Not started first: the box says it wasn't timed.
+    finish(v) {
+      const cur = XL.visit();
+      if (!cur && v) put(KV, Object.assign({}, v, {t: Date.now(), untimed: true, at: location.pathname}));
+      else if (cur && v && (cur.id !== v.id || cur.src !== v.src)) { showBox(); return; }
+      showBox(true);
+    },
+    adopt(v) { if (v && !XL.visit()) put(KV, v); },   // an older page's visit in progress, moved over
+    unlog(src, id) {   // Undo: take back the last "Completed" for this quest
+      const o = get(KE, {log: []}); if (!Array.isArray(o.log)) return false;
+      for (let i = o.log.length - 1; i >= 0; i--) if (o.log[i].src === src && o.log[i].id === id && o.log[i].ok) {
+        const t = o.log[i].t; o.log.splice(i, 1); put(KE, o); put(KP, get(KP, []).filter(p => p.t !== t)); return true; }
+      return false;
+    },
+    prune, pruneSaved, showBox, askName, render: () => { bar(); }
+  };
+  window.XL = XL;
+  function changed() { if (XL.onChange) try { XL.onChange(); } catch (e) {} }
+
+  /* ---- the bar while a quest is open on this page ---- */
+  function bar() {
+    if (!root) return;
+    const v = XL.visit(), b = root.querySelector('.xl-bar');
+    if (!v || box) { if (b) b.remove(); return; }
+    const h = `<div><b>⏱ ${E(v.nm)}</b><div class="xl-m">${v.untimed ? 'Not timed' : 'Started at ' + hm(v.t)}${v.url ? '' : ' · on paper'}</div></div><button class="xl-btn gold" data-xl="stop">${v.url ? 'Tell me how it went' : "I've stopped"}</button>`;
+    if (b) b.innerHTML = h; else root.insertAdjacentHTML('beforeend', `<div class="xl-bar" role="status">${h}</div>`);
+  }
+
+  /* ---- modal helper ---- */
+  function modal(html, label) {
+    root.querySelectorAll('.xl-ov').forEach(x => x.remove());
+    root.insertAdjacentHTML('beforeend', `<div class="xl-ov"><div class="xl-dlg" role="dialog" aria-modal="true" aria-labelledby="${label}">${html}</div></div>`);
+    document.body.classList.add('xl-lock'); const d = root.querySelector('.xl-dlg'); d.tabIndex = -1; d.focus({preventScroll: true});
+    const bb = root.querySelector('.xl-bar'); if (bb) bb.remove();
+  }
+  function close() { root.querySelectorAll('.xl-ov').forEach(x => x.remove()); document.body.classList.remove('xl-lock'); box = null; bar(); }
+
+  /* ---- the name, asked once for the whole site ---- */
+  function askName(after) {
+    modal(`<h2 id="xlnh">What's your name?</h2><p class="xl-m">So anyone looking at your record can see whose it is. It stays on this device.</p>
+      <label class="xl-lab">First name and the first letter of your surname<input type="text" id="xlname" maxlength="40" autocomplete="off" placeholder="For example: Sam T"></label>
+      <div class="xl-row"><button class="xl-btn pri" data-xl="name">Save</button></div>`, 'xlnh');
+    box = {name: true, after};
+  }
+
+  /* ---- the box: what did you do? ---- */
+  function showBox(now) {
+    const v = XL.visit(); if (!v || !root) return;
+    if (!XL.name() && !XL.noAsk) { askName(() => showBox(now)); return; }
+    if (box && box.v) return;
+    const gone = v.untimed ? null : Math.max(0, Math.round((Date.now() - v.t) / 1000)), secs = gone == null ? null : Math.min(gone, CAP);
+    const kind = v.mode === 'paper' ? 'book' : 'site', nm = XL.name();
+    box = {v, secs, cap: gone != null && gone >= CAP, photo: null};
+    modal(`<p class="xl-m">${nm ? E(nm) + ' · ' : ''}${v.untimed ? "Not timed: you didn't start it here first" : (now ? 'Time on it: ' : 'Welcome back · time on it: ') + mins(secs)}</p>
+      <h2 id="xlbh">What did you do on ${E(v.nm)}?</h2>
+      ${v.how ? `<p style="font-size:15px"><b>To finish:</b> ${E(v.how)}</p>` : ''}
+      ${v.rec ? `<label class="xl-lab">${E(v.rec.label)} <span class="xl-m">(if you finished)</span><input type="number" step="any" id="xlv" inputmode="decimal"></label>` : ''}
+      <fieldset style="border:0;margin:0;padding:0"><legend class="xl-lab" style="margin-bottom:6px">What kind of work was it?</legend><div class="xl-seg">
+      ${Object.keys(KIND).map(k => `<label><input type="radio" name="xlkind" value="${k}"${k === kind ? ' checked' : ''}>${KIND[k]}</label>`).join('')}</div></fieldset>
+      <label class="xl-tick" id="xltickw"><input type="checkbox" id="xldated"><span>I wrote today's date and the quest's name in my book.</span></label>
+      <label class="xl-lab">What did you get done? <span class="xl-m">(optional)</span><input type="text" id="xlnote" maxlength="140" autocomplete="off" placeholder="For example: got to level 3"></label>
+      <div class="xl-photo">${photoHTML(v)}</div>
+      <div class="xl-row"><button class="xl-btn gold" data-xl="ok">✓ Completed it</button><button class="xl-btn" data-xl="no">Not completed</button></div>
+      <p class="xl-m">This goes in your record. Choose one to carry on.</p>`, 'xlbh');
+    tick();
+  }
+  function photoHTML(v) { return `<span class="xl-btn xl-file">📷 Add a photo<input type="file" id="xlfile" accept="image/*" aria-label="Add a photo"></span><span class="xl-m" id="xlph">${v.mode === 'paper' ? 'A photo of your book page' : 'A screenshot of where you got to'}. Optional, but without one it shows as "not verified".</span>`; }
+  function tick() { const k = (root.querySelector('input[name=xlkind]:checked') || {}).value, w = root.querySelector('#xltickw'); if (w) w.style.display = k === 'site' ? 'none' : ''; }
+  function answer(ok) {
+    const v = box.v, q = s => root.querySelector(s), note = (q('#xlnote').value || '').trim(), kind = (q('input[name=xlkind]:checked') || {}).value || (v.mode === 'paper' ? 'book' : 'site');
+    const raw = q('#xlv') ? q('#xlv').value : '', t = Date.now();
+    const e = {t, d: dayOf(t), id: v.id, nm: v.nm, ok, res: ok ? 'Completed' : 'Not completed', secs: box.secs, src: v.src, mode: v.mode || 'screen', kind, start: v.untimed ? null : v.t};
+    if (kind !== 'site') e.dated = !!q('#xldated').checked;
+    if (box.cap) e.cap = true;
+    if (v.untimed) e.untimed = true;
+    if (note) e.note = note;
+    if (ok && raw !== '' && !isNaN(+raw)) e.v = +raw;
+    let msg = '';
+    if (box.photo) { const P = get(KP, []); P.push({t, d: e.d, data: box.photo}); if (put(KP, prune(P))) e.photo = true; else { e.photo = false; msg = "Your photo couldn't be saved: this device is full. Everything else is saved."; } }
+    else e.photo = false;
+    const o = get(KE, {log: []}); if (!Array.isArray(o.log)) o.log = []; o.log.push(e); if (o.log.length > 400) o.log = o.log.slice(-400);
+    if (!put(KE, o)) msg = "This browser isn't saving. Ask Mr Sawyer.";
+    try { localStorage.removeItem(KV); } catch (er) {}
+    close();
+    if (XL.onLog) try { XL.onLog(e); } catch (er) {}
+    changed();
+    if (e.mode === 'screen') nudgeAfter(msg); else if (msg) note1(msg);
+  }
+  /* photos: the last 10 days, at most 10, always the newest; works on the list passed in and returns it */
+  function prune(P) {
+    P = (P || []).slice().sort((a, b) => a.t - b.t);
+    const cut = Date.now() - PHOTO_DAYS * 864e5, newest = P[P.length - 1];
+    let keep = P.filter(p => p.t >= cut).slice(-PHOTO_MAX);
+    if (newest && !keep.includes(newest)) keep = [newest];
+    return keep;
+  }
+  function pruneSaved() { const P = get(KP, []), k = prune(P); if (k.length !== P.length) put(KP, k); }
+  function shrink(file) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onerror = rej;
+      r.onload = () => { const im = new Image(); im.onerror = rej; im.onload = () => {
+        const s = Math.min(1, PX / Math.max(im.width, im.height)), c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(im.width * s)); c.height = Math.max(1, Math.round(im.height * s));
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', Q)); }; im.src = r.result; };
+      r.readAsDataURL(file);
+    });
+  }
+
+  /* ---- taking turns ---- */
+  function picksHTML() {
+    const L = XL.paperPicks ? (XL.paperPicks() || []).slice(0, 3) : [];
+    return L.length ? `<ul class="xl-picks">${L.map(p => `<li><a href="${E(p.href)}" data-xl="pick">${E(p.nm)}</a></li>`).join('')}</ul>` : '';
+  }
+  function paperBtn() { return XL.showPaper ? '<button class="xl-btn pri" data-xl="paper">Show paper quests</button>' : `<a class="xl-btn pri" href="${location.pathname.includes('/challenges/') ? '#paper' : (/\/(practice|games)\//.test(location.pathname) ? '../' : '') + 'challenges/#paper'}">Show paper quests</a>`; }
+  function nudgeAfter(msg) {
+    modal(`${msg ? `<p class="xl-m">${E(msg)}</p>` : ''}<h2 id="xlah">Saved. Next one on paper.</h2><p>Write today's date first.</p>${picksHTML()}
+      <div class="xl-row">${XL.paperPicks && picksHTML() ? '' : paperBtn()}<button class="xl-btn" data-xl="close">OK</button></div>`, 'xlah');
+    box = {info: true};
+  }
+  function nudgeStart(v) {
+    modal(`<h2 id="xlsh">Your last one was on a screen. Try a paper one?</h2>${picksHTML()}
+      <div class="xl-row">${paperBtn()}${v.url ? `<a class="xl-btn" href="${E(v.url)}" target="_blank" rel="noopener" data-xl="go">Go anyway</a>` : '<button class="xl-btn" data-xl="go">Go anyway</button>'}</div>`, 'xlsh');
+    box = {info: true, go: v};
+  }
+  function note1(msg) { modal(`<h2 id="xlmh">Saved</h2><p>${E(msg)}</p><div class="xl-row"><button class="xl-btn" data-xl="close">OK</button></div>`, 'xlmh'); box = {info: true}; }
+
+  /* ---- events ---- */
+  document.addEventListener('click', ev => {
+    const a = ev.target.closest('a[data-away]');
+    if (a && !(root && root.contains(a))) { const v = XL.describe(a.dataset.away); if (v && !XL.start(v)) ev.preventDefault(); return; }
+    const s = ev.target.closest('[data-xstart]'); if (s) { ev.preventDefault(); XL.start(XL.describe(s.dataset.xstart)); return; }
+    const f = ev.target.closest('[data-xdone]'); if (f) { ev.preventDefault(); ev.stopPropagation(); XL.finish(XL.describe(f.dataset.xdone)); return; }
+    const x = ev.target.closest('[data-xl]'); if (!x || !box && x.dataset.xl !== 'stop') return;
+    const k = x.dataset.xl;
+    if (k === 'stop') { showBox(true); }
+    else if (k === 'ok' || k === 'no') answer(k === 'ok');
+    else if (k === 'name') { const n = XL.setName(root.querySelector('#xlname').value); if (!n) return; const af = box.after; close(); changed(); if (af) af(); }
+    else if (k === 'close' || k === 'pick') close();
+    else if (k === 'paper') { close(); XL.showPaper(); }
+    else if (k === 'go') { const v = box.go; close(); if (v) { put(KV, Object.assign({}, v, {t: Date.now(), at: location.pathname})); left = false; bar(); changed(); } }
+  }, true);
+  document.addEventListener('change', ev => {
+    if (!root || !root.contains(ev.target)) return;
+    if (ev.target.name === 'xlkind') tick();
+    if (ev.target.id === 'xlfile' && ev.target.files && ev.target.files[0]) {
+      const sp = root.querySelector('#xlph'); sp.textContent = 'Getting the photo ready…';
+      shrink(ev.target.files[0]).then(d => { if (!box) return; box.photo = d; root.querySelector('.xl-photo').innerHTML = `<img src="${d}" alt="Your photo"><button class="xl-btn" data-xl="rmphoto" type="button">Remove photo</button>`; })
+        .catch(() => { sp.textContent = "That photo couldn't be read. Try another, or carry on without one."; });
+    }
+  });
+  document.addEventListener('click', ev => { const r = ev.target.closest('[data-xl=rmphoto]'); if (r && box && box.v) { box.photo = null; root.querySelector('.xl-photo').innerHTML = photoHTML(box.v); } });
+  document.addEventListener('keydown', ev => {
+    if (!root || !root.querySelector('.xl-ov')) return;
+    if (ev.key === 'Enter' && ev.target.id === 'xlname') { ev.preventDefault(); root.querySelector('[data-xl=name]').click(); return; }
+    if (ev.key === 'Enter' && ev.target.tagName === 'INPUT') ev.preventDefault();
+    if (!root.contains(ev.target) && ev.key !== 'Tab') { ev.preventDefault(); }
+    ev.stopImmediatePropagation();   // the box keeps the keyboard to itself
+  }, true);
+  const back = () => { if (left && XL.visit() && XL.visit().url) { left = false; showBox(); } };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { if (XL.visit()) left = true; } else back(); });
+  addEventListener('blur', () => { if (XL.visit()) setTimeout(() => { if (!document.hasFocus()) left = true; }, 300); });
+  addEventListener('focus', () => setTimeout(back, 50));
+  addEventListener('pageshow', ev => { if (ev.persisted && XL.visit()) { left = true; back(); } });
+  addEventListener('storage', ev => { if (ev.key === KV || ev.key === KE || ev.key === KN) { if (!XL.visit() && box && box.v) close(); bar(); changed(); } });
+
+  function init() {
+    if (ready) return; ready = true;
+    root = document.createElement('div'); root.className = 'xl'; root.id = 'xl'; document.body.appendChild(root);
+    pruneSaved();
+    const v = XL.visit();
+    if (v) showBox();                                                        // any open visit: ask, on whichever page this is
+    else if (!XL.name() && !XL.noAsk) askName();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else setTimeout(init, 0);
+})();
+</script>
+<!-- ===== end of the extension log ===== -->
 <script>
 'use strict';
 /* My record: what this device has saved from Maths Practice, Maths Challenges and Maths Games, read together. Nothing is
@@ -82,15 +360,22 @@ const niceD = s => { const [y, m, d] = s.split('-').map(Number); return s === is
 const hhmm = t => { const x = new Date(t); return pad2(x.getHours()) + ':' + pad2(x.getMinutes()); };
 const dur = s => s == null ? '' : s < 60 ? Math.max(1, Math.round(s)) + ' s' : Math.floor(s / 60) + ':' + pad2(Math.round(s % 60));
 const read = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
-const P = read('mathsPractice.v1'), C = read('mathsChallenges.mine.v1'), G = read('mathsGames.v1');
+let P, C, G;
 
 // Each page's entries in one shape: {s: section, t, d, nm, res, ok, secs, sub}
 const ALL = [];
+function collect() {
+P = read('mathsPractice.v1'); C = read('mathsChallenges.mine.v1'); G = read('mathsGames.v1'); ALL.length = 0;
 (P?.log || []).forEach(l => l.ext ? ALL.push({s: 'p', ext: true, t: l.t || null, d: l.d, nm: l.nm + ' ↗', res: l.res, ok: l.ok, secs: l.secs, sub: l.note ? '“' + l.note + '”' : 'stretch link from Maths Practice'}) : ALL.push({s: 'p', t: l.t || null, d: l.d, nm: (l.w || l.nm || l.id) + (l.speed ? ' ⚡ speed round' : '') + (l.quiz ? ' 📝 quick quiz' : ''),
   res: l.sc + '/' + l.n, ok: l.pass ? true : null, secs: l.secs ?? (l.mins ? l.mins * 60 : null), sub: [l.rate, l.pass ? 'level passed' : '', l.above ? 'above my level' : ''].filter(Boolean).join(' · ')}));
 (C?.log || []).forEach(e => ALL.push({s: 'c', t: e.t, d: e.d, nm: e.nm, res: e.res + (e.v != null ? ' (' + e.v + ')' : ''), ok: e.ok, secs: e.secs, sub: [e.note ? '“' + e.note + '”' : '', e.early ? 'before the record started' : ''].filter(Boolean).join(' · ')}));
 (G?.log || []).forEach(e => ALL.push({s: 'g', t: e.t, d: e.d, nm: e.nm, res: e.res, ok: e.ok, secs: e.secs, sub: [e.fx, e.n ? e.sc + '/' + e.n + ' right' + (e.slips ? ', ' + e.slips + ' slip' + (e.slips === 1 ? '' : 's') : '') : '', e.early ? 'before the record started' : ''].filter(Boolean).join(' · ')}));
+const XKIND = {site: 'website', book: 'in my book', both: 'website and book'};
+const xSub = e => [e.note ? '“' + e.note + '”' : '', e.mode === 'paper' ? 'on paper' : 'on screen', e.ok ? (e.photo ? 'photo' : 'not verified') : ''].filter(Boolean).join(' · ');
+XL.log().forEach(e => ALL.push({s: e.src === 'practice' ? 'p' : 'c', ext: true, t: e.t, d: e.d, nm: e.nm + (e.src === 'practice' ? ' ↗' : ''), res: e.res + (e.v != null ? ' (' + e.v + ')' : ''), ok: e.ok, secs: e.secs, cap: e.cap, sub: xSub(e)}));
 ALL.sort((a, b) => a.d !== b.d ? (a.d < b.d ? 1 : -1) : (b.t || 0) - (a.t || 0));
+}
+collect();
 
 let F = 'all', every = false;
 function render() {
@@ -98,11 +383,12 @@ function render() {
   const pMin = Math.round(Object.keys(P?.days || {}).filter(d => d >= wk).reduce((a, d) => a + (P.days[d].t || 0), 0) / 60);
   const tgMin = Math.round(Object.keys(P?.days || {}).filter(d => d >= wk).reduce((a, d) => a + (P.days[d].g || 0), 0) / 60);
   const pR = by('p').filter(e => !e.ext).length;
+  renderExt();
   const cDone = by('c').filter(e => e.ok).length, cNot = by('c').filter(e => e.ok === false).length;
   const gMin = Math.round(by('g').reduce((a, e) => a + (e.secs || 0), 0) / 60);
   const tile = (s, n, l) => `<div class="tile ${SEC[s].cls}"><div class="n">${n}</div><div class="l">${l}</div></div>`;
-  let h = `<div class="rhead"><h2 id="rh">${P?.name ? esc(P.name) + "'s record" : 'My record'}</h2><span class="muted small">Saved on this device only</span></div>`;
-  if (!ALL.length) { document.getElementById('record').innerHTML = h + '<p class="muted small">Nothing yet. Practice, challenges and games you do on this device will show here, so you and Mr Sawyer can see what you have been up to.</p>'; return; }
+  let h = `<div class="rhead"><h2 id="rh">${XL.name() ? esc(XL.name()) + "'s record" : 'My record'}</h2><span class="muted small">Saved on this device only</span></div>`;
+  if (!ALL.length) { renderExt(); document.getElementById('record').innerHTML = h + '<p class="muted small">Nothing yet. Practice, challenges and games you do on this device will show here, so you and Mr Sawyer can see what you have been up to.</p>'; return; }
   h += `<p class="small" style="margin:8px 0 0"><b>Last 7 days</b></p><div class="tiles">
     ${tile('p', pMin + ' min', `practice · ${pR} round${pR === 1 ? '' : 's'}${tgMin ? ` · ${tgMin} min target game` : ''}`)}
     ${tile('c', cDone + ' done', `challenges${cNot ? ` · ${cNot} not finished` : ''}`)}
@@ -114,16 +400,43 @@ function render() {
   shown.forEach(e => {
     if (e.d !== day) { h += (day ? '</div>' : '') + `<div class="day"><h3>${niceD(e.d)}</h3>`; day = e.d; }
     h += `<div class="ent ${SEC[e.s].cls}"><div class="tm">${e.t ? hhmm(e.t) : ''}</div><div class="wh"><div class="sec">${SEC[e.s].nm}</div>${esc(e.nm)}${e.sub ? `<div class="sub">${esc(e.sub)}</div>` : ''}</div>
-      <div class="rs"><b class="${e.ok ? 'ok' : e.ok === false ? 'no' : ''}">${esc(e.res)}</b>${e.secs != null ? `<div class="sub">${dur(e.secs)}</div>` : ''}</div></div>`;
+      <div class="rs"><b class="${e.ok ? 'ok' : e.ok === false ? 'no' : ''}">${esc(e.res)}</b>${e.secs != null ? `<div class="sub">${e.cap ? '45 min+' : dur(e.secs)}</div>` : ''}</div></div>`;
   });
   if (day) h += '</div>';
   if (list.length > shown.length || every) h += `<button class="more" data-more="1">${every ? 'Show the last two weeks' : 'Show everything (' + list.length + ')'}</button>`;
   h += `<p class="muted small" style="margin-bottom:0">Each page has its own record too: the Record tab under ⚙ in <a href="practice/">Maths Practice</a>, My progress in <a href="challenges/#mine">Maths Challenges</a>, and My games record in <a href="games/">Maths Games</a>.</p>`;
   document.getElementById('record').innerHTML = h;
 }
+/* My extensions: every quest (Maths Challenges) and stretch link (Maths Practice) from the last 14 days, so a student can show
+   Mr Sawyer what they did, how long, paper or screen, and whether there is evidence. Reads mathsSite.ext.v1; changes nothing. */
+let xAll = false;
+function renderExt() {
+  const L = XL.log().slice().sort((a, b) => b.t - a.t), cut = dAgo(13), fn = L.filter(e => e.d >= cut), shown = xAll ? L : fn, v = XL.visit(), nm = XL.name();
+  const paper = fn.filter(e => e.mode === 'paper').length, done = fn.filter(e => e.ok).length;
+  let h = `<div class="rhead"><h2 id="xh">${nm ? esc(nm) + "'s extensions" : 'My extensions'}</h2><span class="muted small">Quests and stretch links · saved on this device only</span></div>`;
+  h += `<p class="count"><b>${fn.length} this fortnight</b>${fn.length ? ` (${done} completed), <b>${paper} on paper</b>` : ''}</p>`;
+  if (v) h += `<div class="open">⏱ Open now: <b>${esc(v.nm)}</b>${v.untimed ? '' : ' since ' + hhmm(v.t)}. You'll be asked what you did when you come back to it.</div>`;
+  if (!shown.length) h += `<p class="muted small">${L.length ? 'Nothing in the last two weeks.' : 'Nothing yet. When you do a quest in Maths Challenges, or a stretch link in Maths Practice, it shows here.'}</p>`;
+  let day = '';
+  shown.forEach(e => {
+    if (e.d !== day) { h += (day ? '</div>' : '') + `<div class="day"><h3>${niceD(e.d)}</h3>`; day = e.d; }
+    const ph = e.photo ? XL.photo(e.t) : null;
+    const facts = [e.mode === 'paper' ? '✎ On paper' : '▭ On screen', e.kind ? XL.KIND[e.kind] : '', e.kind && e.kind !== 'site' ? (e.dated ? 'Dated ✓' : 'Not dated') : '', e.cap ? '45 min+' : e.untimed ? 'Not timed' : e.secs != null ? XL.mins(e.secs) : ''].filter(Boolean);
+    h += `<div class="xe ${e.src === 'practice' ? 'sp' : 'sc'}"><div class="nm">${esc(e.nm)} <span class="when">${hhmm(e.t)} · ${e.src === 'practice' ? 'stretch' : 'quest'}</span></div>
+      <div class="rs"><b class="${e.ok ? 'ok' : 'no'}">${esc(e.res)}</b>${e.v != null ? ` <span class="muted small">(${esc(e.v)})</span>` : ''}</div>
+      <div class="facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}${e.ok ? (e.photo ? (ph ? '' : '<span>📷 photo was added</span>') : '<span class="nv">Not verified: no photo</span>') : ''}</div>
+      ${e.note ? `<div class="note">“${esc(e.note)}”</div>` : ''}${ph ? `<img src="${ph}" alt="Photo for ${esc(e.nm)}" data-zoom="1">` : ''}</div>`;
+  });
+  if (day) h += '</div>';
+  if (L.length > fn.length || xAll) h += `<button class="more" data-xall="1">${xAll ? 'Show the last two weeks' : 'Show everything (' + L.length + ')'}</button>`;
+  document.getElementById('ext').innerHTML = h;
+}
+XL.onChange = () => { collect(); render(); };   // a new answer or name: read everything again
 document.addEventListener('click', e => {
-  const f = e.target.closest('[data-f]'), m = e.target.closest('[data-more]');
-  if (f) { F = f.dataset.f; render(); } else if (m) { every = !every; render(); }
+  const f = e.target.closest('[data-f]'), m = e.target.closest('[data-more]'), x = e.target.closest('[data-xall]'), z = e.target.closest('[data-zoom]'), zz = e.target.closest('.zoom');
+  if (f) { F = f.dataset.f; render(); } else if (m) { every = !every; render(); } else if (x) { xAll = !xAll; renderExt(); }
+  else if (z) document.body.insertAdjacentHTML('beforeend', `<div class="zoom" role="dialog" aria-label="Photo"><img src="${z.src}" alt="${esc(z.alt)}"></div>`);
+  else if (zz) zz.remove();
 });
 render();
 </script>
