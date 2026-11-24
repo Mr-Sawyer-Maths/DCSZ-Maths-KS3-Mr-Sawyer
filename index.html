@@ -57,7 +57,7 @@ footer a{color:var(--muted)}
 
 <a class="card" href="challenges/"><b>Maths Challenges →</b><br>Puzzles, games, investigations and a competition ladder for when you want more. Pick your class, choose a quest, and keep track of what you finish. Your progress stays on your device.</a>
 
-<a class="card" href="games/"><b>Maths Games →</b><br>Games that are still maths: race against the clock with your number facts, or a friend on another device. Guessing games are coming.</a>
+<a class="card" href="games/"><b>Maths Games →</b><br>Games that are still maths: race against the clock with your number facts or a friend on another device, or see how well you can estimate angles.</a>
 
 <section class="rec" id="record" aria-labelledby="rh"></section>
 
@@ -86,7 +86,7 @@ const P = read('mathsPractice.v1'), C = read('mathsChallenges.mine.v1'), G = rea
 
 // Each page's entries in one shape: {s: section, t, d, nm, res, ok, secs, sub}
 const ALL = [];
-(P?.log || []).forEach(l => ALL.push({s: 'p', t: l.t || null, d: l.d, nm: (l.w || l.nm || l.id) + (l.speed ? ' ⚡ speed round' : '') + (l.quiz ? ' 📝 quick quiz' : ''),
+(P?.log || []).forEach(l => l.ext ? ALL.push({s: 'p', ext: true, t: l.t || null, d: l.d, nm: l.nm + ' ↗', res: l.res, ok: l.ok, secs: l.secs, sub: l.note ? '“' + l.note + '”' : 'stretch link from Maths Practice'}) : ALL.push({s: 'p', t: l.t || null, d: l.d, nm: (l.w || l.nm || l.id) + (l.speed ? ' ⚡ speed round' : '') + (l.quiz ? ' 📝 quick quiz' : ''),
   res: l.sc + '/' + l.n, ok: l.pass ? true : null, secs: l.secs ?? (l.mins ? l.mins * 60 : null), sub: [l.rate, l.pass ? 'level passed' : '', l.above ? 'above my level' : ''].filter(Boolean).join(' · ')}));
 (C?.log || []).forEach(e => ALL.push({s: 'c', t: e.t, d: e.d, nm: e.nm, res: e.res + (e.v != null ? ' (' + e.v + ')' : ''), ok: e.ok, secs: e.secs, sub: [e.note ? '“' + e.note + '”' : '', e.early ? 'before the record started' : ''].filter(Boolean).join(' · ')}));
 (G?.log || []).forEach(e => ALL.push({s: 'g', t: e.t, d: e.d, nm: e.nm, res: e.res, ok: e.ok, secs: e.secs, sub: [e.fx, e.n ? e.sc + '/' + e.n + ' right' + (e.slips ? ', ' + e.slips + ' slip' + (e.slips === 1 ? '' : 's') : '') : '', e.early ? 'before the record started' : ''].filter(Boolean).join(' · ')}));
@@ -97,13 +97,14 @@ function render() {
   const wk = dAgo(6), w = ALL.filter(e => e.d >= wk), by = s => w.filter(e => e.s === s);
   const pMin = Math.round(Object.keys(P?.days || {}).filter(d => d >= wk).reduce((a, d) => a + (P.days[d].t || 0), 0) / 60);
   const tgMin = Math.round(Object.keys(P?.days || {}).filter(d => d >= wk).reduce((a, d) => a + (P.days[d].g || 0), 0) / 60);
+  const pR = by('p').filter(e => !e.ext).length;
   const cDone = by('c').filter(e => e.ok).length, cNot = by('c').filter(e => e.ok === false).length;
   const gMin = Math.round(by('g').reduce((a, e) => a + (e.secs || 0), 0) / 60);
   const tile = (s, n, l) => `<div class="tile ${SEC[s].cls}"><div class="n">${n}</div><div class="l">${l}</div></div>`;
   let h = `<div class="rhead"><h2 id="rh">${P?.name ? esc(P.name) + "'s record" : 'My record'}</h2><span class="muted small">Saved on this device only</span></div>`;
   if (!ALL.length) { document.getElementById('record').innerHTML = h + '<p class="muted small">Nothing yet. Practice, challenges and games you do on this device will show here, so you and Mr Sawyer can see what you have been up to.</p>'; return; }
   h += `<p class="small" style="margin:8px 0 0"><b>Last 7 days</b></p><div class="tiles">
-    ${tile('p', pMin + ' min', `practice · ${by('p').length} round${by('p').length === 1 ? '' : 's'}${tgMin ? ` · ${tgMin} min target game` : ''}`)}
+    ${tile('p', pMin + ' min', `practice · ${pR} round${pR === 1 ? '' : 's'}${tgMin ? ` · ${tgMin} min target game` : ''}`)}
     ${tile('c', cDone + ' done', `challenges${cNot ? ` · ${cNot} not finished` : ''}`)}
     ${tile('g', by('g').length + ' played', `games${gMin ? ` · ${gMin} min` : ''}`)}</div>`;
   h += `<div class="seg" role="group" aria-label="Show">${[['all', 'Everything'], ['p', 'Practice'], ['c', 'Challenges'], ['g', 'Games']].map(([k, l]) => `<button class="${F === k ? 'on' : ''}" data-f="${k}" aria-pressed="${F === k}">${l}</button>`).join('')}</div>`;

@@ -27,11 +27,11 @@ One entry: `{t, d, id, nm, ok, res, secs, note?}`
 - `id` the quest, game or level; `nm` its name in words (so the landing page never needs the section's own lists)
 - `ok` `true` completed / won / passed, `false` not completed / lost / stopped early, `null` no answer or not applicable
 - `res` the result in words, as the student sees it; `secs` time spent, or `null`; `note` the student's own words
-- extras a section may add: games `sc`, `n`, `slips`, `fx` (which facts); challenges `v` (a score). Each record keeps its last 400.
+- extras a section may add: games `sc`, `n`, `slips`, `fx` (which facts, or the emoji line for the Angle guesser); game ids so far `race`, `angle-round`, `angle-day`; challenges `v` (a score). Each record keeps its last 400.
 
 Practice entries keep their own fields (`sc`, `n`, `rate`, `pass`, `above`, `secs` …); the landing page maps them: `w` → name, `sc/n` → result, `pass` → ok.
 
-**Leaving for another site (Maths Challenges).** Quest links that open another website are marked `data-away`. When the student comes back to the page, a box asks what they did (Completed it / Not completed, an optional note, and a score for quests that keep one) and stays until they choose. The time away is recorded. If they come back more than 3 hours later, the visit is recorded as "Opened, no answer". The visit in progress is kept in `mathsChallenges.away.v1`.
+**Leaving for another site (Maths Challenges, and Maths Practice's stretch links).** Every link to an outside activity is marked `data-away` (quest links in Maths Challenges; the stretch links in Maths Practice, such as Beast Academy and Transum). When the student comes back to the page, a box asks what they did (Completed it / Not completed, an optional note, and a score for quests that keep one) and stays until they choose. The time away is recorded. If they come back more than 3 hours later, the visit is recorded as "Opened, no answer". The visit in progress is kept in `mathsChallenges.away.v1` / `mathsPractice.away.v1`. In Maths Practice these visits go in its log with `ext: true` (`nm`, `ok`, `res`, `secs`, `note`). Any new link to an outside activity should get the same box. Information-only links (the Real competitions list, credits, teacher resources) don't.
 
 All progress is saved in each person's own browser. Nothing about students is stored in this repo.
 
