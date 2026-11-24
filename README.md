@@ -37,4 +37,4 @@ All progress is saved in each person's own browser. Nothing about students is st
 
 **Keep these addresses the same.** Progress is tied to the web address, so moving the site to another GitHub account, organisation or host, or renaming this repo, would start everyone fresh. Changing what's inside the files is fine.
 
-Design notes and plans are kept in the Claude project "Student Retrieval Tracker": `maths-practice-principles.md`, `maths-practice-number-map.md`, `maths-practice-handoff-brief.md`, `maths-practice-tests.py` (run it before pushing a change to `practice/`) and `side-quests-notes.md` (Maths Challenges).
+Design notes, plans and the test scripts are kept in Mr Sawyer's private teaching notes (the `student-site/` folder), not in this public repo. Run the page's test script before pushing a change to it.
