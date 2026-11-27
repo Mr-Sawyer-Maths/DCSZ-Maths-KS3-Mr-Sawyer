@@ -1,6 +1,6 @@
 /* Maths Challenges content. Publish next to index.html. It holds no student information. The Teacher tab writes this file: Setup and publish > Copy data.js. */
 window.SQ_DATA = {
- "rev": 306,
+ "rev": 308,
  "published": "2026-11-24",
  "settings": {
   "title": "Maths Challenges",
@@ -72,29 +72,43 @@ window.SQ_DATA = {
    "name": "Year 7 2026-27",
    "open": [
     "number",
-    "factors"
+    "factors",
+    "fdp",
+    "powers",
+    "ratio"
    ],
-   "now": ""
+   "now": "ratio"
   },
   {
    "id": "y8",
    "name": "Year 8 2026-27",
    "open": [
     "number",
-    "factors"
+    "factors",
+    "powers",
+    "algebra",
+    "sequences",
+    "angles",
+    "pythag"
    ],
-   "now": ""
+   "now": "angles"
   },
   {
    "id": "y9",
    "name": "Year 9 2026-27",
    "open": [
     "number",
-    "factors"
+    "factors",
+    "fdp",
+    "ratio",
+    "powers",
+    "algebra",
+    "sequences"
    ],
-   "now": ""
+   "now": "sequences"
   }
  ],
+
  "spotlight": [],
  "today": {
   "daily": [
@@ -266,7 +280,7 @@ window.SQ_DATA = {
   {"id":"transum-shelf","title":"Puzzle shelf","dir":"puzzle","topic":"any","pts":2,"mode":"screen","url":"https://www.transum.org/Software/Puzzles/","src":"Transum","blurb":"Pick a puzzle you have never tried and finish its hardest level.","how":"Show me the finished screen and tell me which one you'd recommend.","hidden":true},
   {"id":"mindbenders","title":"Mindbenders","dir":"puzzle","topic":"any","pts":3,"mode":"paper","url":"https://momath.org/mindbenders/","src":"MoMath","blurb":"A collection of well-known puzzles from the Museum of Mathematics. Pick one and crack it before you look at any answer.","how":"Explain one puzzle and its solution to me without notes.","hidden":true},
   {"id":"high-minus-low","title":"High minus low","dir":"explore","topic":"number","pts":2,"mode":"paper","url":"https://playwithyourmath.com/2024/10/01/28-high-minus-low/","src":"Play With Your Math","blurb":"Pick some digits, do one simple thing again and again, and watch something strange happen.","how":"Show me three different starts and tell me what you noticed."},
-  {"id":"exploding-dots","title":"Exploding Dots","dir":"explore","topic":"number","pts":3,"mode":"paper","url":"https://gdaymath.com/?p=1799","src":"Global Math Project","blurb":"A different way to see place value that makes other number bases and long division feel obvious. Work through the story from the start.","how":"Show me 13 in base 2 using dots, then teach it to someone else."},
+  {"id":"exploding-dots","title":"Exploding Dots","dir":"explore","topic":"number","pts":3,"mode":"paper","url":"https://gdaymath.com/?p=1799","src":"Global Math Project","blurb":"A different way to see place value that makes other number bases and long division feel obvious. Work through the story from the start.","how":"After the videos: on paper, draw a 1←2 machine, put 13 dots in it and explode them to write 13 in base 2. Then do 13 in a 1←3 machine. Show me both, then teach it to someone else.","home":true,"go":"The Global Math Project's Exploding Dots videos (YouTube, so watch them at home)."},
   {"id":"mountain-ranges","title":"Mountain ranges","dir":"explore","topic":"sequences","pts":3,"mode":"paper","url":"https://playwithyourmath.com/2019/08/03/19-mountain-ranges/","src":"Play With Your Math","blurb":"How many ways can you draw a mountain range? More than you'd think, and the answers make a famous sequence.","how":"Show me your drawings for 4 and how you know none are missing."},
   {"id":"circle-regions","title":"Dividing a circle","dir":"explore","topic":"sequences","pts":2,"mode":"paper","src":"Glimpses","blurb":"A pattern that looks obvious, until it isn't. Count very carefully.","task":"Put points on a circle and join every pair with straight lines. Count the regions: 1 point gives 1, 2 give 2, 3 give 4, 4 give 8. Predict 5 and 6. Then draw them and count very carefully. No looking it up, it spoils the surprise.","how":"Show me your drawing for 6 points and your count.","more":"https://en.wikipedia.org/wiki/Dividing_a_circle_into_areas"},
   {"id":"visual-patterns","title":"Visual patterns","dir":"explore","topic":"sequences","pts":2,"mode":"paper","url":"https://www.visualpatterns.org/","src":"Visual Patterns","blurb":"Growing patterns made of squares and dots. Challenge another student to work out how one grows.","how":"Show me three patterns you cracked, each with your rule for any step.","players":"2 players","rules":["Find a partner who has finished their work, and tick the box below. The link to Visual Patterns appears.","One of you opens it and picks a pattern. The number under each pattern is the answer for step 43, so keep it hidden.","Show your partner only the picture: steps 1, 2 and 3.","Your partner draws step 4 in their book, then works out how many there are in step 43, and a rule for any step.","Check against the hidden number, then swap roles."],"go":"Visual Patterns shows the answer under each pattern. Only the person setting the challenge looks at it."},
@@ -318,7 +332,7 @@ window.SQ_DATA = {
   {"id":"bowland-case","title":"Bowland case study","dir":"report","topic":"any","pts":5,"mode":"paper","url":"https://www.bowlandmaths.org.uk/","src":"Bowland Maths","blurb":"Real-life problem-solving projects written for this age group. Work through one and write up your recommendation and the maths behind it.","how":"Hand in the finished report.","hidden":true},
   {"id":"own-puzzle","title":"Write your own puzzle","dir":"create","topic":"any","pts":3,"mode":"paper","src":"Side Quests","blurb":"Make a puzzle in the style of one you have solved: an area maze, a Shikaku, a make-24, a skyscraper grid. It has to have exactly one answer. It counts when a friend solves it.","how":"Show me the puzzle, your solution and your friend's attempt."},
   {"id":"teach-it","title":"Teach a quest","dir":"create","topic":"any","pts":3,"mode":"paper","src":"Side Quests","blurb":"Pick a quest you have finished and teach it to a group in three minutes, without giving the answer away.","how":"Book a slot with me."},
-  {"id":"hexaflexagon","title":"Hexaflexagons","dir":"create","topic":"any","pts":2,"mode":"paper","url":"https://www.youtube.com/watch?v=nlgXT6WotQk","src":"Vi Hart","blurb":"Fold a strip of paper triangles into a hexagon with hidden faces. Make one, colour each face as you find it, and work out how many faces it has.","how":"Bring me one that works.","need":"A strip of paper triangles (ask for a template), scissors, glue or tape, and coloured pens.","go":"Vi Hart's video showing how to fold one (YouTube)."},
+  {"id":"hexaflexagon","title":"Hexaflexagons","dir":"create","topic":"any","pts":2,"mode":"paper","url":"https://www.youtube.com/watch?v=nlgXT6WotQk","src":"Vi Hart","blurb":"Fold a strip of paper triangles into a hexagon with hidden faces. Make one, colour each face as you find it, and work out how many faces it has.","how":"After the video: make one, colour each face as you find it, and bring it in with how many faces you found.","need":"A strip of paper triangles (ask for a template), scissors, glue or tape, and coloured pens.","go":"Vi Hart's video showing how to fold one (YouTube, so watch it at home).","home":true,"more":"https://www.auntannie.com/patterns/geometric/tri-hexaflexagon/","moreText":"Made one? Printable patterns to make more, with a colouring guide"},
   {"id":"logo-shapes","title":"Turtle drawings","dir":"create","topic":"angles","pts":2,"mode":"screen","url":"https://www.transum.org/software/Logo/","src":"Transum","blurb":"Steer a turtle with typed commands. Draw a square, then a regular hexagon, then a five-pointed star. The turns are the interesting part.","how":"Show me your star and the commands that drew it."},
   {"id":"desmos-picture","title":"Draw with equations","dir":"create","topic":"graphs","pts":3,"mode":"screen","url":"https://www.desmos.com/calculator","src":"Desmos","blurb":"Make a picture on Desmos using only equations of straight lines. Ten lines or more. Restrict each line so it stops where you want it to.","how":"Show me the picture and tell me how you chose three of the equations."}
  ]

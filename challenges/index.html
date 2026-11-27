@@ -172,6 +172,7 @@ tr.me td{background:var(--gold-soft);font-weight:700}
 .tier b{color:var(--ink)}
 .tag.mode{font-weight:600}
 .tag.players{font-weight:800;font-size:.95rem;border:2px solid currentColor;padding:2px 9px}
+.tag.home{font-weight:700}
 .partner{border:2px solid var(--gold);border-radius:10px;padding:10px 12px;margin:10px 0;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .partner .tickrow{display:flex;flex-direction:row;gap:12px;align-items:center;font-weight:700;min-height:44px;cursor:pointer;margin:0}
 .partner .tickrow input{flex:none;width:24px;height:24px;margin:0;accent-color:var(--gold)}
@@ -531,6 +532,8 @@ function norm(it, topics){
   if(it.need) o.need = it.need;
   if(it.more && /^https?:\/\//.test(it.more)) o.more = it.more; // "learn more" link, shown only once Completed (Matt, 27 Nov)
   if(it.players) o.players = String(it.players).trim(); // "2 players": a game with another student (Matt, 25 Nov)
+  if(it.home) o.home = true; // uses YouTube, which isn't allowed in class time (Matt, 27 Nov)
+  if(o.more && it.moreText) o.moreText = String(it.moreText).trim(); // words on the after-Completed link
   const rl = Array.isArray(it.rules) ? it.rules : typeof it.rules === "string" ? it.rules.split(/\n/) : [];
   if(rl.map(x => String(x).trim()).filter(Boolean).length) o.rules = rl.map(x => String(x).trim()).filter(Boolean);
   if(it.go && o.url) o.go = it.go;
@@ -668,7 +671,7 @@ function cardHTML(it, pick){
     '<div class="top"><span class="kind">' + DIRS[it.dir].n + "</span>" + (pick && it.topic !== "any" ? '<span class="tag">' + esc(topicName(it.topic)) + "</span>" : "") + (isNew(it) ? '<span class="tag new">New</span>' : "") + playersTag(it) + modeTags(it) +
     '<span class="pts" title="' + it.pts + ' points">' + pips(it.pts) + " " + TIER[it.pts] + " · " + it.pts + "</span></div>" +
     "<h3>" + esc(it.title) + siteTag(it) + "</h3>" +
-    '<p class="blurb">' + esc(it.blurb) + "</p>" + pairLine(it) + taskHTML(it) + moreHTML(it) +
+    '<p class="blurb">' + esc(it.blurb) + "</p>" + pairLine(it) + homeLine(it) + taskHTML(it) + moreHTML(it) +
     (it.need ? '<p class="how"><b>You need:</b> ' + esc(it.need) + "</p>" : "") +
     (it.how ? '<p class="how"><b>To finish:</b> ' + esc(it.how) + (it.pass != null ? " Move up a rung with " + it.pass + " or more." : "") + "</p>" : "") +
     (isRep ? reportHelp() : "") +
@@ -688,8 +691,10 @@ const needsPartner = it => !!(it.url && it.players && !/^1\b/.test(it.players));
 const partnerGate = it => '<div class="partner"><label class="tickrow"><input type="checkbox" data-act="partner" data-id="' + esc(it.id) + '"' + (ui.partner === it.id ? " checked" : "") + "> I have a partner who has finished their work</label>" +
   (ui.partner === it.id ? '<p class="small muted">' + esc(it.go || "The original is on another website.") + '</p><a class="btn primary" href="' + esc(it.url) + '" target="_blank" rel="noopener" data-away="' + esc(it.id) + '">Open ' + esc(it.src || "the site") + " ↗</a>" + shotHint(it) : '<p class="small muted">Tick this and the link appears.</p>') + "</div>";
 const playersTag = it => it.players ? '<span class="tag players">👥 ' + esc(it.players) + "</span>" : "";
+const homeLine = it => it.home ? '<p class="pair">Do this one at home: YouTube isn\'t allowed in class time.</p>' : "";
 const pairLine = it => it.players ? '<p class="pair">' + (/^1\b/.test(it.players) ? "Play on your own against the computer, or with another student who has finished their work." : "Only with another student who has finished their work.") + "</p>" : "";
-const modeTags = it => '<span class="tag mode">' + MODE[it.mode] + "</span>" + (it.paper ? '<span class="tag">Ask for a copy</span>' : "");
+const modeTags = it => '<span class="tag mode">' + MODE[it.mode] + "</span>" + homeTag(it) + (it.paper ? '<span class="tag">Ask for a copy</span>' : "");
+const homeTag = it => it.home ? '<span class="tag home">🏠 At home only</span>' : "";
 const shotHint = it => it.url && it.mode === "screen" ? '<p class="shot small muted">📸 ' + esc(XL.SHOT) + "</p>" : "";
 const rulesLabel = it => it.dir === "play" ? "How to play →" : "How it works →";
 function goBtn(it){ // a quest with rules opens its own page first; the outside site is at the bottom of that page
@@ -702,7 +707,7 @@ function goBtn(it){ // a quest with rules opens its own page first; the outside 
    without rules keep "Done it": the task is on the other site. */
 const needsStart = it => !it.url || !!it.rules;
 /* After solving: a link to read more (often Wikipedia, which gives the answer away). Only once the quest is Completed. */
-const moreHTML = it => it.more && done(it.id) ? '<p class="more-link small"><a href="' + esc(it.more) + '" target="_blank" rel="noopener">Solved it? Learn more about it ↗</a></p>' : "";
+const moreHTML = it => it.more && done(it.id) ? '<p class="more-link small"><a href="' + esc(it.more) + '" target="_blank" rel="noopener">' + esc(it.moreText || "Solved it? Learn more about it") + ' ↗</a></p>' : "";
 const taskHTML = it => it.task && openHere(it.id) ? '<p class="task"><b>The quest:</b> ' + esc(it.task) + "</p>" : "";
 const startBtn = (it, w) => '<button class="btn primary" data-xstart="' + it.id + '">▶ ' + (w || "Start") + "</button>"; // quests with no link: the clock starts here
 function stateActs(it){
@@ -726,7 +731,7 @@ function viewPage(it){ // rules first, the outside site last
   let h = '<div class="stack pagewrap"><div><a class="btn quiet" href="#' + ui.view + '" data-act="back">← Back</a></div><article class="card page k-' + it.dir + '">' +
     '<div class="top"><span class="kind">' + DIRS[it.dir].n + "</span>" + (it.topic !== "any" ? '<span class="tag">' + esc(topicName(it.topic)) + "</span>" : "") + playersTag(it) + modeTags(it) +
     '<span class="pts">' + pips(it.pts) + " " + TIER[it.pts] + " · " + it.pts + "</span></div>" +
-    "<h2>" + esc(it.title) + siteTag(it) + "</h2>" + '<p class="blurb">' + esc(it.blurb) + "</p>" + pairLine(it) + taskHTML(it) + moreHTML(it);
+    "<h2>" + esc(it.title) + siteTag(it) + "</h2>" + '<p class="blurb">' + esc(it.blurb) + "</p>" + pairLine(it) + homeLine(it) + taskHTML(it) + moreHTML(it);
   if(it.need) h += '<p class="need"><b>You need:</b> ' + esc(it.need) + "</p>";
   if(it.rules && openHere(it.id)) h += "<h3>" + (it.dir === "play" ? "How to play" : "What to do") + '</h3><ol class="rules">' + it.rules.map(r => "<li>" + esc(r) + "</li>").join("") + "</ol>";
   else if(it.rules) h += '<p class="need muted">' + (it.dir === "play" ? "How to play" : "What to do") + " shows here when you press Start.</p>";
@@ -739,7 +744,7 @@ function viewPage(it){ // rules first, the outside site last
 }
 function todayCard(o){
   const q = o.q, dt = doneToday(q.id);
-  return '<article class="card pick k-' + q.dir + '"><div class="top"><span class="kind">' + o.slot + "</span>" + (o.slot === "Quick win" && q.topic !== "any" ? '<span class="tag">' + esc(topicName(q.topic)) + "</span>" : "") + playersTag(q) + '<span class="tag mode">' + MODE[q.mode] + '</span><span class="pts">' + DIRS[q.dir].n + "</span></div><h3>" + esc(q.title) + siteTag(q) + '</h3><p class="blurb">' + esc(q.blurb) + "</p>" + pairLine(q) + taskHTML(q) +
+  return '<article class="card pick k-' + q.dir + '"><div class="top"><span class="kind">' + o.slot + "</span>" + (o.slot === "Quick win" && q.topic !== "any" ? '<span class="tag">' + esc(topicName(q.topic)) + "</span>" : "") + playersTag(q) + '<span class="tag mode">' + MODE[q.mode] + "</span>" + homeTag(q) + '<span class="pts">' + DIRS[q.dir].n + "</span></div><h3>" + esc(q.title) + siteTag(q) + '</h3><p class="blurb">' + esc(q.blurb) + "</p>" + pairLine(q) + homeLine(q) + taskHTML(q) +
     (q.need ? '<p class="how"><b>You need:</b> ' + esc(q.need) + "</p>" : "") +
     (q.how ? '<p class="how"><b>To finish:</b> ' + esc(q.how) + "</p>" : "") +
     '<div class="acts">' + (q.rules || q.url ? goBtn(q) : "") + (openHere(q.id) ? stateActs(q) : dt ? '<span class="status ok">Done today ✓</span>' : (needsStart(q) ? startBtn(q) : '<button class="btn gold" data-xdone="' + q.id + '">Done today</button>')) + "</div>" + (q.rules ? "" : shotHint(q)) + "</article>";
@@ -915,6 +920,7 @@ function tQuests(){
       '<label class="full">What they need (optional)<input type="text" id="f_need" value="' + esc(it.need) + '" placeholder="e.g. One dice, paper"></label>' +
       '<label>Players, for a game with another student (e.g. 2 players)<input id="f_players" value="' + esc(it.players || "") + '"></label>' +
       '<label>Learn more link, shown only after Completed (optional)<input id="f_more" value="' + esc(it.more || "") + '"></label>' +
+      '<label>Words on that link (optional)<input id="f_moreText" value="' + esc(it.moreText || "") + '" placeholder="Solved it? Learn more about it"></label>' +
       '<label class="full">Rules or steps, one per line (optional). Students see these on the quest\'s page once they press Start, with the link at the bottom.<textarea id="f_rules" style="font-family:inherit;font-size:.9rem">' + esc((it.rules || []).join("\n")) + "</textarea></label>" +
       '<label class="full">Words beside the link on that page (optional)<input type="text" id="f_go" value="' + esc(it.go) + '" placeholder="e.g. Printable boards (PDF)"></label>' +
       '<label>Personal best to track (optional)<input type="text" id="f_rec" value="' + esc(it.record ? it.record.label : "") + '" placeholder="e.g. Fewest moves"></label>' +
@@ -923,6 +929,7 @@ function tQuests(){
       '<label>Score that opens the next rung (optional)<input type="number" id="f_pass" min="0" value="' + (it.pass != null ? it.pass : "") + '"></label>' +
       '<label>Where the work happens<select id="f_mode"><option value="paper">On paper</option><option value="screen"' + (it.mode === "screen" ? " selected" : "") + ">On screen</option></select></label>" +
       '<label class="inline"><input type="checkbox" id="f_paper"' + (it.paper ? " checked" : "") + "> Students ask me for a paper copy</label>" +
+      '<label class="inline"><input type="checkbox" id="f_home"' + (it.home ? " checked" : "") + "> At home only (uses YouTube)</label>" +
       '<div class="row full"><button class="btn primary">Save quest</button><button type="button" class="btn quiet" data-act="edit" data-id="">Cancel</button></div></form>';
   } else h += '<p class="lede">Found something good? Add it here. It gets a New tag for two weeks.</p><div><button class="btn primary" data-act="edit" data-id="new">Add a quest</button></div>';
   h += '</section><section class="panel"><h2>Import quests or resources</h2><p class="lede">Paste lines written for you (for example by Claude from a list of links), one per line. Anything with an id you already have is replaced.</p><form data-form="import" class="stack"><textarea id="imp" aria-label="Lines to import" placeholder=\'{"id":"...","title":"...","dir":"puzzle","topic":"any","pts":2, ...}\'></textarea><div class="row"><button class="btn primary">Import</button></div></form></section>';
@@ -1046,7 +1053,7 @@ document.addEventListener("submit", ev => {
   if(f === "quest"){
     const isNewQ = ui.edit === "new", old = isNewQ ? null : item(ui.edit);
     let id = old ? old.id : slug(v("f_title")); if(isNewQ){ let n = 2, base = id; while(item(id)) id = base + "-" + n++; }
-    const q = norm({id, title:v("f_title"), url:v("f_url"), dir:v("f_dir"), topic:v("f_topic"), pts:+v("f_pts"), src:v("f_src"), paper:$("#f_paper").checked, mode:v("f_mode"), blurb:v("f_blurb"), task:v("f_task"), how:v("f_how"), need:v("f_need"), players:v("f_players"), more:v("f_more"), rules:$("#f_rules").value, go:v("f_go"),
+    const q = norm({id, title:v("f_title"), url:v("f_url"), dir:v("f_dir"), topic:v("f_topic"), pts:+v("f_pts"), src:v("f_src"), paper:$("#f_paper").checked, mode:v("f_mode"), blurb:v("f_blurb"), task:v("f_task"), how:v("f_how"), need:v("f_need"), players:v("f_players"), more:v("f_more"), moreText:v("f_moreText"), home:$("#f_home").checked, rules:$("#f_rules").value, go:v("f_go"),
       record:v("f_rec") ? {label:v("f_rec"), best:v("f_best")} : null, rung:+v("f_rung") || 0, pass:v("f_pass"), added:old ? old.added : today(), hidden:old ? old.hidden : false}, T.topics);
     const i = T.quests.findIndex(x => x.id === q.id); if(i >= 0) T.quests[i] = q; else T.quests.push(q);
     saveT(); ui.edit = null; ui.flash = "Saved on this device. Publish data.js to share it.";
